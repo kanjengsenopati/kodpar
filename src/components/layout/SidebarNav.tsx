@@ -1,6 +1,8 @@
 
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LogOut, PiggyBank } from "lucide-react";
+import { logoutUser } from "@/services/authService";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +18,7 @@ import { useBusinessTab } from "@/contexts/BusinessTabContext";
 
 export function SidebarNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { activeTab } = useBusinessTab();
 
   // Filter menu sections by active business tab
@@ -68,6 +71,11 @@ export function SidebarNav() {
             variant="outline"
             tooltip="Keluar"
             className="w-full justify-start bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 text-red-700 hover:text-red-800 border-2 border-red-200 hover:border-red-300 text-sm rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
+            onClick={() => {
+              logoutUser();
+              toast.success("Berhasil keluar");
+              navigate("/login");
+            }}
           >
             <LogOut className="h-4 w-4 flex-shrink-0" />
             <span className="group-data-[collapsible=icon]:hidden font-semibold">Keluar</span>

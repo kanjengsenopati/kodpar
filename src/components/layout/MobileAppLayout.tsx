@@ -2,8 +2,18 @@
 import { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Home, CreditCard, Users, Settings, PlusCircle } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { logoutUser } from "@/services/authService";
+import { toast } from "sonner";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 type LayoutProps = {
   children: ReactNode;
@@ -15,6 +25,7 @@ type LayoutProps = {
  */
 export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { label: "Beranda", icon: Home, path: "/" },
@@ -32,9 +43,34 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
           <h1 className="text-xl font-bold text-slate-900">{pageTitle}</h1>
           <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Koperasi Digital</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600 font-bold">
-          JD
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600 font-bold active:scale-95 transition-transform">
+              JD
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 border-none shadow-xl">
+            <DropdownMenuLabel className="font-bold text-slate-900">John Doe</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuItem className="rounded-xl py-3 text-sm font-medium focus:bg-slate-50 transition-colors">
+              Profil Saya
+            </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl py-3 text-sm font-medium focus:bg-slate-50 transition-colors">
+              Pengaturan
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuItem 
+              className="rounded-xl py-3 text-sm font-bold text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors cursor-pointer"
+              onClick={() => {
+                logoutUser();
+                toast.success("Berhasil keluar");
+                navigate("/login");
+              }}
+            >
+              Keluar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Main Content Area */}

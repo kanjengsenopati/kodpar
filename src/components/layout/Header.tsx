@@ -14,6 +14,8 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useBusinessTab, BusinessTab } from "@/contexts/BusinessTabContext";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { logoutUser } from "@/services/authService";
+import { toast } from "sonner";
 
 type HeaderProps = {
   pageTitle: string;
@@ -76,7 +78,16 @@ export default function Header({ pageTitle }: HeaderProps) {
               <DropdownMenuItem className="text-sm">Profil</DropdownMenuItem>
               <DropdownMenuItem className="text-sm">Pengaturan</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-sm">Keluar</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-sm text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
+                onClick={() => {
+                  logoutUser();
+                  toast.success("Berhasil keluar");
+                  navigate("/login");
+                }}
+              >
+                Keluar
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
