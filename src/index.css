@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 91% 95%;
+    --sidebar-accent-foreground: 217 91% 45%;
+    --sidebar-border: 217 50% 90%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    
+    --sidebar-background: 217.2 32.6% 17.5%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 217.2 32.6% 25%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 30%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .stat-card {
+    @apply p-3 sm:p-4 md:p-6 bg-white rounded-lg shadow flex flex-col space-y-2 border;
+  }
+
+  .stat-value {
+    @apply text-lg sm:text-xl md:text-2xl font-bold;
+  }
+
+  .stat-label {
+    @apply text-xs sm:text-sm text-gray-500;
+  }
+
+  /* Responsive container utilities */
+  .container-responsive {
+    @apply w-full max-w-none px-3 sm:px-4 md:px-6 lg:px-8;
+  }
+
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6;
+  }
+
+  .text-responsive {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+
+  .button-responsive {
+    @apply px-2 py-1 sm:px-3 sm:py-2 md:px-4 md:py-2 text-xs sm:text-sm md:text-base;
+  }
+
+  .card-responsive {
+    @apply p-2 sm:p-3 md:p-4 lg:p-6;
+  }
+
+  /* Mobile-first input styles */
+  .input-responsive {
+    @apply h-10 sm:h-11 md:h-12 text-sm sm:text-base;
+  }
+
+  /* Mobile-first button styles */
+  .btn-responsive {
+    @apply h-9 sm:h-10 md:h-11 px-3 sm:px-4 md:px-6 text-xs sm:text-sm md:text-base;
+  }
+
+  /* Touch-friendly interactive elements */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .sidebar-mobile-overlay {
+    @apply fixed inset-0 bg-black/50 z-40;
+  }
+  
+  .mobile-scroll-container {
+    @apply overflow-x-auto;
+  }
+  
+  .mobile-table {
+    @apply min-w-full text-xs;
+  }
+  
+  .mobile-padding {
+    @apply px-2 py-1;
+  }
+
+  /* Ensure touch-friendly spacing */
+  .mobile-touch-spacing {
+    @apply space-y-3;
+  }
+
+  /* Mobile-specific card styles */
+  .mobile-card {
+    @apply rounded-lg shadow-sm border mx-2;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-layout {
+    @apply px-4 py-3;
+  }
+
+  .tablet-grid {
+    @apply grid-cols-2 gap-4;
+  }
+}
+
+@media (min-width: 1025px) {
+  .desktop-layout {
+    @apply px-6 py-4;
+  }
+
+  .desktop-grid {
+    @apply grid-cols-3 gap-6;
+  }
+}
+
+/* Fix for forms on mobile - prevents zoom on iOS */
+@media (max-width: 640px) {
+  input, select, textarea {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+
+  /* Ensure proper spacing for mobile forms */
+  .form-field {
+    @apply mb-4;
+  }
+
+  .form-label {
+    @apply text-sm font-medium mb-1;
+  }
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  h1 { @apply text-xl; }
+  h2 { @apply text-lg; }
+  h3 { @apply text-base; }
+  h4 { @apply text-sm; }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  h1 { @apply text-2xl; }
+  h2 { @apply text-xl; }
+  h3 { @apply text-lg; }
+  h4 { @apply text-base; }
+}
+
+@media (min-width: 1025px) {
+  h1 { @apply text-3xl; }
+  h2 { @apply text-2xl; }
+  h3 { @apply text-xl; }
+  h4 { @apply text-lg; }
+}
+
+/* Responsive navigation */
+@media (max-width: 768px) {
+  .nav-mobile {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t z-50;
+  }
+
+  .nav-item {
+    @apply flex-1 py-2 px-1 text-center;
+  }
+}
+
+/* Safe area handling for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  .safe-area-inset-top {
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}

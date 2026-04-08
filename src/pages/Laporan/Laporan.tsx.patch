@@ -1,0 +1,19 @@
+
+// Apply these fixes to the Laporan.tsx file:
+
+// Line 142-143: Fix the getOverdueLoans and getUpcomingDueLoans calls to pass anggotaId
+const rawTunggakan = getOverdueLoans("ALL"); // Pass "ALL" to get all overdue loans
+const jatuhTempo = getUpcomingDueLoans("ALL", 30); // Pass "ALL" and days parameter
+
+// Line 1405-1406: Fix date parameter issue
+const pinjaman = filterTransaksi(
+  transaksiList.filter(t => t.jenis === "Pinjam"),
+  filterDateStart.toISOString().split('T')[0],
+  filterDateEnd.toISOString().split('T')[0]
+);
+
+// Line 1413: Fix date parameter issue
+const simpanan = filterTransaksi(
+  transaksiList.filter(t => t.jenis === "Simpan"),
+  filterDateStart.toISOString().split('T')[0]
+);
