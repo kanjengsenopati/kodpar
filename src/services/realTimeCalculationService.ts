@@ -17,9 +17,9 @@ export interface FinancialData {
   totalSHU?: number;
 }
 
-export const calculateAggregateFinancialData = (): FinancialData => {
+export const calculateAggregateFinancialData = async (): Promise<FinancialData> => {
   // Use centralized financial calculations for consistent data
-  const summary = getAllMembersFinancialSummary();
+  const summary = await getAllMembersFinancialSummary();
   
   return {
     totalSimpanan: summary.totalSimpanan,
@@ -31,11 +31,13 @@ export const calculateAggregateFinancialData = (): FinancialData => {
 };
 
 // Real-time calculation for specific member using centralized service
-export const calculateRealTimeFinancialData = (anggotaId: string): FinancialData => {
-  const totalSimpanan = calculateMemberTotalSimpanan(anggotaId);
-  const sisaPinjaman = calculateMemberRemainingLoan(anggotaId);
-  const totalAngsuran = calculateMemberTotalAngsuran(anggotaId);
-  const totalSHU = calculateSHU(anggotaId);
+export const calculateRealTimeFinancialData = async (anggotaId: string): Promise<FinancialData> => {
+  const [totalSimpanan, sisaPinjaman, totalAngsuran, totalSHU] = await Promise.all([
+    calculateMemberTotalSimpanan(anggotaId),
+    calculateMemberRemainingLoan(anggotaId),
+    calculateMemberTotalAngsuran(anggotaId),
+    calculateSHU(anggotaId)
+  ]);
   
   // For individual member, totalPinjaman shows original loan amounts
   // sisaPinjaman shows remaining balance

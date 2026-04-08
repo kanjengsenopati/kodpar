@@ -6,15 +6,28 @@ import { calculateRealTimeFinancialData } from '@/services/realTimeCalculationSe
  * Hook untuk real-time sync financial data anggota
  */
 export function useAnggotaRealTimeSync(anggotaId: string) {
-  const [financialData, setFinancialData] = useState(() => 
-    calculateRealTimeFinancialData(anggotaId)
-  );
+  const [financialData, setFinancialData] = useState<any>({
+    totalSimpanan: 0,
+    totalPinjaman: 0,
+    totalAngsuran: 0,
+    sisaPinjaman: 0,
+    totalPenarikan: 0,
+    totalSHU: 0
+  });
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState(true);
 
-  const refreshFinancialData = () => {
-    const updatedData = calculateRealTimeFinancialData(anggotaId);
-    setFinancialData(updatedData);
-    setLastUpdate(new Date());
+  const refreshFinancialData = async () => {
+    try {
+      setIsLoading(true);
+      const updatedData = await calculateRealTimeFinancialData(anggotaId);
+      setFinancialData(updatedData);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error("Error refreshing financial data:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {

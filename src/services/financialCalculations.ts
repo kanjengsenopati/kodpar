@@ -8,10 +8,15 @@ import { Transaksi } from "@/types";
  */
 
 /**
+ * Centralized Financial Calculation Service
+ * Provides consistent calculations across all modules
+ */
+
+/**
  * Calculate remaining loan balance for a specific member with CONSISTENT logic
  */
-export function calculateMemberRemainingLoan(anggotaId: string): number {
-  const transaksiList = getAllTransaksi();
+export async function calculateMemberRemainingLoan(anggotaId: string): Promise<number> {
+  const transaksiList = await getAllTransaksi();
   
   // Get all successful loans for this member
   const memberLoans = transaksiList.filter(
@@ -51,8 +56,8 @@ export function calculateMemberRemainingLoan(anggotaId: string): number {
 /**
  * Calculate remaining loan balance for a SPECIFIC loan transaction
  */
-export function calculateSpecificLoanRemainingBalance(loanId: string): number {
-  const transaksiList = getAllTransaksi();
+export async function calculateSpecificLoanRemainingBalance(loanId: string): Promise<number> {
+  const transaksiList = await getAllTransaksi();
   
   // Find the specific loan
   const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam" && t.status === "Sukses");
@@ -89,8 +94,8 @@ export function calculateSpecificLoanRemainingBalance(loanId: string): number {
 /**
  * Calculate total savings for a member (net savings after withdrawals)
  */
-export function calculateMemberTotalSimpanan(anggotaId: string): number {
-  const transaksiList = getAllTransaksi();
+export async function calculateMemberTotalSimpanan(anggotaId: string): Promise<number> {
+  const transaksiList = await getAllTransaksi();
   
   // Calculate total deposits
   const totalDeposits = transaksiList
@@ -112,8 +117,8 @@ export function calculateMemberTotalSimpanan(anggotaId: string): number {
 /**
  * Calculate total installment payments for a member
  */
-export function calculateMemberTotalAngsuran(anggotaId: string): number {
-  const transaksiList = getAllTransaksi();
+export async function calculateMemberTotalAngsuran(anggotaId: string): Promise<number> {
+  const transaksiList = await getAllTransaksi();
   return transaksiList
     .filter(t => t.anggotaId === anggotaId && t.jenis === "Angsuran" && t.status === "Sukses")
     .reduce((total, t) => total + t.jumlah, 0);
@@ -122,8 +127,8 @@ export function calculateMemberTotalAngsuran(anggotaId: string): number {
 /**
  * Get comprehensive financial summary for all members
  */
-export function getAllMembersFinancialSummary() {
-  const transaksiList = getAllTransaksi();
+export async function getAllMembersFinancialSummary() {
+  const transaksiList = await getAllTransaksi();
   
   // Calculate total original loan amounts
   const totalPinjaman = transaksiList
@@ -150,9 +155,9 @@ export function getAllMembersFinancialSummary() {
     .filter(t => t.jenis === "Pinjam" && t.status === "Sukses")
     .map(t => t.anggotaId))];
   
-  const totalSisaPinjaman = uniqueAnggotaIds.reduce((total, anggotaId) => {
-    return total + calculateMemberRemainingLoan(anggotaId);
-  }, 0);
+  const loanBalancePromises = uniqueAnggotaIds.map(anggotaId => calculateMemberRemainingLoan(anggotaId));
+  const loanBalances = await Promise.all(loanBalancePromises);
+  const totalSisaPinjaman = loanBalances.reduce((total, balance) => total + balance, 0);
   
   return {
     totalPinjaman,

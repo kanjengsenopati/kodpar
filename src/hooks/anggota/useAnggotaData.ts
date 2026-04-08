@@ -6,8 +6,8 @@ import { getAllAnggota } from "@/services/anggotaService";
 export function useAnggotaData() {
   const [anggotaList, setAnggotaList] = useState<Anggota[]>([]);
 
-  const loadAnggota = () => {
-    const loadedAnggota = getAllAnggota();
+  const loadAnggota = async () => {
+    const loadedAnggota = await getAllAnggota();
     setAnggotaList(loadedAnggota);
     return loadedAnggota;
   };
@@ -16,8 +16,8 @@ export function useAnggotaData() {
     loadAnggota();
   }, []);
 
-  const refreshAnggotaList = () => {
-    setAnggotaList(getAllAnggota());
+  const refreshAnggotaList = async () => {
+    setAnggotaList(await getAllAnggota());
   };
 
   return {

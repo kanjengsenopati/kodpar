@@ -76,49 +76,53 @@ export const useAnggotaFormState = () => {
 
   // Load data if in edit mode
   useEffect(() => {
-    if (isEditMode) {
-      try {
-        const anggota = getAnggotaById(id);
-        if (anggota) {
-          setFormData({
-            nama: anggota.nama,
-            nip: anggota.nip || "", 
-            alamat: anggota.alamat,
-            noHp: anggota.noHp,
-            jenisKelamin: anggota.jenisKelamin,
-            agama: anggota.agama,
-            foto: anggota.foto || "",
-            email: anggota.email || "",
-            unitKerja: anggota.unitKerja || "",
-            tanggalRegistrasi: convertToMonthYearFormat(anggota.tanggalRegistrasi || "")
+    async function loadAnggotaData() {
+      if (isEditMode && id) {
+        try {
+          const anggota = await getAnggotaById(id);
+          if (anggota) {
+            setFormData({
+              nama: anggota.nama,
+              nip: anggota.nip || "", 
+              alamat: anggota.alamat,
+              noHp: anggota.noHp,
+              jenisKelamin: anggota.jenisKelamin,
+              agama: anggota.agama,
+              foto: anggota.foto || "",
+              email: anggota.email || "",
+              unitKerja: anggota.unitKerja || "",
+              tanggalRegistrasi: convertToMonthYearFormat(anggota.tanggalRegistrasi || "")
+            });
+            
+            if (anggota.foto) {
+              setPreviewImage(anggota.foto);
+            }
+            
+            if (anggota.dokumen) {
+              setDokumen(anggota.dokumen);
+              setInitialDokumenCount(anggota.dokumen.length);
+            }
+            
+            if (anggota.keluarga) {
+              setKeluarga(anggota.keluarga);
+              setInitialKeluargaCount(anggota.keluarga.length);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading anggota data:", error);
+          toast({
+            title: "Error",
+            description: "Terjadi kesalahan saat memuat data anggota",
+            variant: "destructive",
           });
-          
-          if (anggota.foto) {
-            setPreviewImage(anggota.foto);
-          }
-          
-          if (anggota.dokumen) {
-            setDokumen(anggota.dokumen);
-            setInitialDokumenCount(anggota.dokumen.length);
-          }
-          
-          if (anggota.keluarga) {
-            setKeluarga(anggota.keluarga);
-            setInitialKeluargaCount(anggota.keluarga.length);
-          }
         }
-      } catch (error) {
-        console.error("Error loading anggota data:", error);
-        toast({
-          title: "Error",
-          description: "Terjadi kesalahan saat memuat data anggota",
-          variant: "destructive",
-        });
       }
+      
+      // Reset form dirty state after initial load
+      setIsFormDirty(false);
     }
-    
-    // Reset form dirty state after initial load
-    setIsFormDirty(false);
+
+    loadAnggotaData();
   }, [id, isEditMode, toast]);
   
   // Track changes to mark form as dirty

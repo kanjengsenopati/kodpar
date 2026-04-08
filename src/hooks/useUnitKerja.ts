@@ -15,12 +15,13 @@ export function useUnitKerja() {
   // Load unit kerja data
   const loadUnitKerja = async () => {
     try {
+      setIsLoading(true);
       setError(null);
       const data = getAllUnitKerja();
       setUnitKerjaList(data);
       
       // Auto-sync with anggota data if needed
-      const syncedCount = syncUnitKerjaWithAnggota();
+      const syncedCount = await syncUnitKerjaWithAnggota();
       if (syncedCount > 0) {
         console.log(`Synced ${syncedCount} new unit kerja from anggota data`);
         // Reload after sync
@@ -72,8 +73,8 @@ export function useUnitKerja() {
   };
 
   // Function to manually sync with anggota data
-  const syncWithAnggota = () => {
-    const syncedCount = syncUnitKerjaWithAnggota();
+  const syncWithAnggota = async () => {
+    const syncedCount = await syncUnitKerjaWithAnggota();
     if (syncedCount > 0) {
       refreshUnitKerja();
       return syncedCount;

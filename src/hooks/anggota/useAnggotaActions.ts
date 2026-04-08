@@ -19,9 +19,9 @@ export function useAnggotaActions() {
     setIsConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = (onRefresh: () => void) => {
+  const handleDeleteConfirm = async (onRefresh: () => void) => {
     if (anggotaToDelete) {
-      const success = deleteAnggota(anggotaToDelete);
+      const success = await deleteAnggota(anggotaToDelete);
       
       if (success) {
         toast({
@@ -46,9 +46,9 @@ export function useAnggotaActions() {
     setIsResetConfirmOpen(true);
   };
 
-  const handleResetDataConfirm = (onRefresh: () => void) => {
-    resetAnggotaData();
-    resetTransaksiData();
+  const handleResetDataConfirm = async (onRefresh: () => void) => {
+    await resetAnggotaData();
+    await resetTransaksiData();
     onRefresh();
     
     toast({

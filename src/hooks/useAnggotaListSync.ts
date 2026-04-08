@@ -10,8 +10,8 @@ export function useAnggotaListSync() {
   const [anggotaList, setAnggotaList] = useState<Anggota[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const loadAnggotaList = () => {
-    const loadedAnggota = getAllAnggota();
+  const loadAnggotaList = async () => {
+    const loadedAnggota = await getAllAnggota();
     setAnggotaList(loadedAnggota);
     setLastUpdate(new Date());
     return loadedAnggota;
