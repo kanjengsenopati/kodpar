@@ -69,6 +69,26 @@ export function PengajuanDetailCard({
           </div>
         </div>
 
+        {pengajuan.buktiTransfer && (
+          <div className="mt-6 p-4 border rounded-xl bg-slate-50">
+            <p className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <span className="p-1 bg-emerald-100 text-emerald-600 rounded">📸</span>
+              Bukti Transfer
+            </p>
+            <div className="relative group overflow-hidden rounded-xl border-2 border-slate-200 bg-white">
+              <img 
+                src={pengajuan.buktiTransfer} 
+                alt="Bukti Transfer" 
+                className="max-h-[400px] w-auto mx-auto object-contain transition-transform group-hover:scale-105 cursor-zoom-in"
+                onClick={() => window.open(pengajuan.buktiTransfer, '_blank')}
+              />
+              <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="px-3 py-1 bg-black/60 text-white text-[10px] font-bold rounded-full">Klik untuk memperbesar</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6">
           <p className="text-sm font-medium text-muted-foreground mb-3">Informasi Anggota</p>
           

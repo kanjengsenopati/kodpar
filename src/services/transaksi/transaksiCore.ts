@@ -5,16 +5,27 @@ import { generateTransaksiId } from "./idGenerator";
 import { getAnggotaById } from "@/services/anggotaService";
 import { getJenisByType } from "@/services/jenisService";
 import { syncTransactionToAccounting } from "@/services/akuntansi/accountingSyncService";
+import { getCurrentUser } from "@/services/auth/sessionManagement";
 
 /**
  * Get all transaksi from IndexedDB
  */
 export async function getAllTransaksi(): Promise<Transaksi[]> {
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
   const count = await db.transaksi.count();
   if (count === 0) {
     await db.transaksi.bulkAdd(initialTransaksi);
-    return initialTransaksi;
+    return isAnggota && user?.anggotaId
+      ? initialTransaksi.filter(t => t.anggotaId === user.anggotaId)
+      : initialTransaksi;
   }
+  
+  if (isAnggota && user?.anggotaId) {
+    return await db.transaksi.where('anggotaId').equals(user.anggotaId).toArray();
+  }
+  
   return await db.transaksi.toArray();
 }
 
@@ -29,7 +40,16 @@ export async function getTransaksiByAnggotaId(anggotaId: string): Promise<Transa
  * Get transaksi by ID
  */
 export async function getTransaksiById(id: string): Promise<Transaksi | undefined> {
-  return await db.transaksi.get(id);
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
+  const transaction = await db.transaksi.get(id);
+  if (isAnggota && user?.anggotaId && transaction?.anggotaId !== user.anggotaId) {
+    console.warn(`An anggota (${user.anggotaId}) tried to access another user's transaction (${id})`);
+    return undefined;
+  }
+  
+  return transaction;
 }
 
 /**

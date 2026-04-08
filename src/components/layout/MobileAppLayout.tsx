@@ -6,6 +6,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { logoutUser } from "@/services/authService";
 import { toast } from "sonner";
+import { getCurrentUser } from "@/services/auth/sessionManagement";
+import * as Text from "@/components/ui/text";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -27,13 +29,24 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+
+  const navItems = isAnggota ? [
+    { label: "Beranda", icon: Home, path: "/" },
+    { label: "Tabungan", icon: PiggyBank, path: "/transaksi/simpan" },
+    { label: "Aksi", icon: PlusCircle, path: "/dashboard", primary: true },
+    { label: "Pinjaman", icon: CreditCard, path: "/transaksi/pinjam" },
+    { label: "Profil", icon: User, path: "/master/anggota/" + (user?.anggotaId || "") },
+  ] : [
     { label: "Beranda", icon: Home, path: "/" },
     { label: "Transaksi", icon: CreditCard, path: "/transaksi" },
-    { label: "Aksi", icon: PlusCircle, path: "/transaksi/baru", primary: true },
+    { label: "Aksi", icon: PlusCircle, path: "/transaksi/tambah", primary: true },
     { label: "Anggota", icon: Users, path: "/anggota" },
     { label: "Menu", icon: Settings, path: "/pengaturan" },
   ];
+
+  const userInitial = user?.nama ? user.nama.charAt(0).toUpperCase() : "U";
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 overflow-hidden pb-20">
@@ -45,12 +58,12 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600 font-bold active:scale-95 transition-transform">
-              JD
+            <div className="w-10 h-10 rounded-full bg-blue-600/10 flex items-center justify-center text-blue-600 font-bold active:scale-95 transition-transform cursor-pointer">
+              {userInitial}
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 border-none shadow-xl">
-            <DropdownMenuLabel className="font-bold text-slate-900">John Doe</DropdownMenuLabel>
+            <DropdownMenuLabel className="font-bold text-slate-900">{user?.nama || "User"}</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-100" />
             <DropdownMenuItem className="rounded-xl py-3 text-sm font-medium focus:bg-slate-50 transition-colors">
               Profil Saya

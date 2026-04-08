@@ -6,12 +6,21 @@ import { calculateTotalSimpanan } from "./transaksi/financialOperations";
 import { calculateLoanDetails, generateLoanDescription } from "../utils/loanCalculations";
 import { ensureAutoDeductionCategories } from "./keuangan/baseService";
 import { centralizedSync } from "./sync/centralizedSyncService";
+import { getCurrentUser } from "./auth/sessionManagement";
 
 /**
  * Get all pengajuan from IndexedDB
  */
 export async function getPengajuanList(): Promise<Pengajuan[]> {
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
   const data = await db.table('pengajuan').toArray();
+  
+  if (isAnggota && user?.anggotaId) {
+    return data.filter(p => p.anggotaId === user.anggotaId);
+  }
+  
   return data || [];
 }
 
@@ -19,7 +28,16 @@ export async function getPengajuanList(): Promise<Pengajuan[]> {
  * Get pengajuan by ID
  */
 export async function getPengajuanById(id: string): Promise<Pengajuan | undefined> {
-  return await db.table('pengajuan').get(id);
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
+  const pengajuan = await db.table('pengajuan').get(id);
+  if (isAnggota && user?.anggotaId && pengajuan?.anggotaId !== user.anggotaId) {
+    console.warn(`An anggota (${user.anggotaId}) tried to access another user's application (${id})`);
+    return undefined;
+  }
+  
+  return pengajuan;
 }
 
 /**
@@ -129,6 +147,9 @@ export async function approvePengajuan(id: string): Promise<boolean> {
     const tenor = (pengajuan as any).tenor;
     const loanCalculation = calculateLoanDetails(pengajuan.kategori, pengajuan.jumlah, tenor);
     finalKeterangan = generateLoanDescription(loanCalculation, finalKeterangan);
+  } else if (pengajuan.jenis === "Angsuran" && pengajuan.referensiPinjamanId) {
+    // Add loan reference to keterangan for angsuranSync to pick up
+    finalKeterangan = `${finalKeterangan} (Ref Pinjaman: ${pengajuan.referensiPinjamanId})`.trim();
   }
   
   const transaction = await createTransaksi({
@@ -192,6 +213,15 @@ export async function getPengajuanByStatus(status: "Menunggu" | "Disetujui" | "D
 /**
  * Get pengajuan by jenis
  */
-export async function getPengajuanByJenis(jenis: "Simpan" | "Pinjam" | "Penarikan"): Promise<Pengajuan[]> {
-  return await db.table('pengajuan').where('jenis').equals(jenis).toArray();
+export async function getPengajuanByJenis(jenis: "Simpan" | "Pinjam" | "Penarikan" | "Angsuran"): Promise<Pengajuan[]> {
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
+  const data = await db.table('pengajuan').where('jenis').equals(jenis).toArray();
+  
+  if (isAnggota && user?.anggotaId) {
+    return data.filter(p => p.anggotaId === user.anggotaId);
+  }
+  
+  return data;
 }

@@ -5,8 +5,8 @@ import { getPengaturan } from "@/services/pengaturanService";
 /**
  * Get remaining loan amount for a specific loan with accurate calculation
  */
-export function getRemainingLoanAmount(loanId: string): number {
-  const transaksiList = getAllTransaksi();
+export async function getRemainingLoanAmount(loanId: string): Promise<number> {
+  const transaksiList = await getAllTransaksi();
   
   // Find the loan
   const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam");
@@ -86,13 +86,13 @@ export function getLoanInterestRate(kategori: string): number {
 /**
  * Get overdue loans
  */
-export function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): { 
+export async function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): Promise<{ 
   transaksi: Transaksi; 
   jatuhTempo: string;
   daysOverdue: number;
   penalty: number;
-}[] {
-  const transaksiList = getAllTransaksi();
+}[]> {
+  const transaksiList = await getAllTransaksi();
   const currentDate = new Date();
   const results = [];
   
@@ -123,7 +123,7 @@ export function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): {
     // Check if overdue
     if (daysOverdue > 0) {
       // Get remaining amount
-      const remainingAmount = getRemainingLoanAmount(pinjaman.id);
+      const remainingAmount = await getRemainingLoanAmount(pinjaman.id);
       
       // Only include if there's still an outstanding balance
       if (remainingAmount > 0) {
@@ -146,12 +146,12 @@ export function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): {
 /**
  * Get upcoming due loans (not yet overdue)
  */
-export function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", daysThreshold: number = 30): { 
+export async function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", daysThreshold: number = 30): Promise<{ 
   transaksi: Transaksi; 
   jatuhTempo: string;
   daysUntilDue: number;
-}[] {
-  const transaksiList = getAllTransaksi();
+}[]> {
+  const transaksiList = await getAllTransaksi();
   const currentDate = new Date();
   const results = [];
   
@@ -182,7 +182,7 @@ export function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", daysThres
     // Check if within threshold and not overdue
     if (daysUntilDue > 0 && daysUntilDue <= daysThreshold) {
       // Get remaining amount
-      const remainingAmount = getRemainingLoanAmount(pinjaman.id);
+      const remainingAmount = await getRemainingLoanAmount(pinjaman.id);
       
       // Only include if there's still an outstanding balance
       if (remainingAmount > 0) {
@@ -196,4 +196,22 @@ export function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", daysThres
   }
   
   return results;
+}
+
+/**
+ * Get all active loans (remaining balance > 0) for a specific member
+ */
+export async function getActiveLoansByAnggotaId(anggotaId: string): Promise<Transaksi[]> {
+  const transaksiList = await getAllTransaksi();
+  const loans = transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses" && t.anggotaId === anggotaId);
+  
+  const activeLoans = [];
+  for (const loan of loans) {
+    const remaining = await getRemainingLoanAmount(loan.id);
+    if (remaining > 0) {
+      activeLoans.push(loan);
+    }
+  }
+  
+  return activeLoans;
 }

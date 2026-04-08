@@ -18,13 +18,15 @@ export interface Pengajuan {
   id: string;
   anggotaId: string;
   anggotaNama: string;
-  jenis: "Simpan" | "Pinjam" | "Penarikan";
+  jenis: "Simpan" | "Pinjam" | "Penarikan" | "Angsuran";
   jumlah: number;
   tanggal: string;
   status: "Menunggu" | "Disetujui" | "Ditolak";
   kategori: string;
   keterangan?: string;
   dokumen?: PersyaratanDokumen[];
+  buktiTransfer?: string; // Base64 image
+  referensiPinjamanId?: string; // ID of the loan being paid
   createdAt: string;
   updatedAt: string;
 }

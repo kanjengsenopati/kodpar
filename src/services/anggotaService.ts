@@ -2,6 +2,7 @@ import { Anggota, AnggotaKeluarga } from "@/types/anggota";
 import { db } from "@/db/db";
 import { getAllUnitKerja, syncUnitKerjaWithAnggota } from "./unitKerjaService";
 import { logAuditEntry } from "./auditService";
+import { getCurrentUser } from "./auth/sessionManagement";
 
 // Initial sample data with the specified dummy data
 const initialAnggota: Anggota[] = [
@@ -100,11 +101,21 @@ export async function resetAnggotaData(): Promise<Anggota[]> {
  * Get all anggota from IndexedDB
  */
 export async function getAllAnggota(): Promise<Anggota[]> {
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
   const count = await db.anggota.count();
   if (count === 0) {
     await db.anggota.bulkAdd(initialAnggota);
-    return initialAnggota;
+    return isAnggota && user?.anggotaId 
+      ? initialAnggota.filter(a => a.id === user.anggotaId)
+      : initialAnggota;
   }
+  
+  if (isAnggota && user?.anggotaId) {
+    return await db.anggota.where('id').equals(user.anggotaId).toArray();
+  }
+  
   return await db.anggota.toArray();
 }
 
@@ -117,6 +128,14 @@ export async function getAnggotaList(): Promise<Anggota[]> {
  * Get anggota by ID
  */
 export async function getAnggotaById(id: string): Promise<Anggota | undefined> {
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
+  
+  if (isAnggota && user?.anggotaId && user.anggotaId !== id) {
+    console.warn(`An anggota (${user.anggotaId}) tried to access another anggota's data (${id})`);
+    return undefined;
+  }
+  
   return await db.anggota.get(id);
 }
 

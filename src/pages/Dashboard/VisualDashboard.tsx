@@ -5,15 +5,25 @@ import { KoperasiVisualDashboard } from '@/components/dashboard/KoperasiVisualDa
 import { RetailDashboard } from '@/components/dashboard/RetailDashboard';
 import { ManufakturPlaceholder } from '@/components/dashboard/ManufakturPlaceholder';
 import { useBusinessTab } from '@/contexts/BusinessTabContext';
+import { getCurrentUser } from '@/services/auth/sessionManagement';
+import { MemberDashboard } from '@/components/dashboard/MemberDashboard';
 
 export default function VisualDashboard() {
   const { activeTab } = useBusinessTab();
+  const user = getCurrentUser();
+  const isAnggota = user?.roleId === 'role_anggota' || user?.roleId === 'anggota';
 
   return (
-    <Layout pageTitle="Dashboard">
-      {activeTab === 'koperasi' && <KoperasiVisualDashboard />}
-      {activeTab === 'retail' && <RetailDashboard />}
-      {activeTab === 'manufaktur' && <ManufakturPlaceholder />}
+    <Layout pageTitle={isAnggota ? "Dashboard Anggota" : "Dashboard"}>
+      {isAnggota ? (
+        <MemberDashboard />
+      ) : (
+        <>
+          {activeTab === 'koperasi' && <KoperasiVisualDashboard />}
+          {activeTab === 'retail' && <RetailDashboard />}
+          {activeTab === 'manufaktur' && <ManufakturPlaceholder />}
+        </>
+      )}
     </Layout>
   );
 }

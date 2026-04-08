@@ -108,10 +108,11 @@ const getDemoUser = (userId: string): ExtendedUser | null => {
     case "demo-user-003":
       return {
         id: "demo-user-003",
-        username: 'demo',
-        nama: 'Demo User',
+        username: 'mariyem',
+        nama: 'MARIYEM',
         email: 'demo@email.com',
         roleId: 'role_anggota',
+        anggotaId: "AG0001",
         aktif: true,
         lastLogin: new Date().toISOString(),
         createdAt: new Date().toISOString(),
@@ -119,7 +120,7 @@ const getDemoUser = (userId: string): ExtendedUser | null => {
         role: {
           id: 'role_anggota',
           name: 'Anggota',
-          permissions: ['view_own_data']
+          permissions: ['view_own_data', 'update_own_profile']
         }
       };
     default:

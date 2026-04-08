@@ -76,14 +76,15 @@ export const handleDemoLogin = async (email: string, password: string): Promise<
     return extendedUser;
   }
 
-  // Demo User
+  // Demo Member (Mariyem)
   if (email === "demo@email.com" && password === "demo") {
     const extendedUser: ExtendedUser = {
       id: "demo-user-003",
-      username: 'demo',
-      nama: 'Demo User',
+      username: 'mariyem',
+      nama: 'MARIYEM',
       email: email,
       roleId: 'role_anggota',
+      anggotaId: "AG0001",
       aktif: true,
       lastLogin: new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -91,7 +92,7 @@ export const handleDemoLogin = async (email: string, password: string): Promise<
       role: {
         id: 'role_anggota',
         name: 'Anggota',
-        permissions: ['view_own_data']
+        permissions: ['view_own_data', 'update_own_profile']
       }
     };
 
@@ -100,7 +101,7 @@ export const handleDemoLogin = async (email: string, password: string): Promise<
     storeSession(extendedUser.id, token, refreshToken);
     clearFailedAttempts(email);
     
-    console.log("Demo User login successful for:", email);
+    console.log("Demo Member login successful for:", email);
     return extendedUser;
   }
 

@@ -25,26 +25,29 @@ export default function PengajuanDetail() {
   const [newStatus, setNewStatus] = useState<"Menunggu" | "Disetujui" | "Ditolak" | "">("");
 
   useEffect(() => {
-    if (id) {
-      const pengajuanData = getPengajuanById(id);
-      if (pengajuanData) {
-        setPengajuan(pengajuanData);
-        
-        // Load anggota data
-        const anggotaData = getAnggotaById(pengajuanData.anggotaId);
-        if (anggotaData) {
-          setAnggota(anggotaData);
+    async function loadData() {
+      if (id) {
+        const pengajuanData = await getPengajuanById(id);
+        if (pengajuanData) {
+          setPengajuan(pengajuanData);
+          
+          // Load anggota data
+          const anggotaData = await getAnggotaById(pengajuanData.anggotaId);
+          if (anggotaData) {
+            setAnggota(anggotaData);
+          }
+        } else {
+          toast({
+            title: "Data tidak ditemukan",
+            description: `Pengajuan dengan ID ${id} tidak ditemukan`,
+            variant: "destructive",
+          });
+          navigate("/transaksi/pengajuan");
         }
-      } else {
-        toast({
-          title: "Data tidak ditemukan",
-          description: `Pengajuan dengan ID ${id} tidak ditemukan`,
-          variant: "destructive",
-        });
-        navigate("/transaksi/pengajuan");
       }
+      setLoading(false);
     }
-    setLoading(false);
+    loadData();
   }, [id, navigate, toast]);
 
   const handleDelete = () => {
@@ -67,12 +70,12 @@ export default function PengajuanDetail() {
     }
   };
 
-  const handleUpdateStatus = (status: "Menunggu" | "Disetujui" | "Ditolak") => {
+  const handleUpdateStatus = async (status: "Menunggu" | "Disetujui" | "Ditolak") => {
     if (id && pengajuan) {
       let success;
       
       if (status === "Disetujui") {
-        success = approvePengajuan(id);
+        success = await approvePengajuan(id);
         if (success) {
           toast({
             title: "Pengajuan disetujui",
@@ -80,7 +83,7 @@ export default function PengajuanDetail() {
           });
         }
       } else if (status === "Ditolak") {
-        success = rejectPengajuan(id);
+        success = await rejectPengajuan(id);
         if (success) {
           toast({
             title: "Pengajuan ditolak",
@@ -88,7 +91,7 @@ export default function PengajuanDetail() {
           });
         }
       } else {
-        success = updatePengajuan(id, { status });
+        success = await updatePengajuan(id, { status });
         if (success) {
           toast({
             title: "Status berhasil diperbarui",
@@ -99,14 +102,14 @@ export default function PengajuanDetail() {
       
       if (success) {
         // Refresh pengajuan data
-        const updatedPengajuan = getPengajuanById(id);
+        const updatedPengajuan = await getPengajuanById(id);
         if (updatedPengajuan) {
           setPengajuan(updatedPengajuan);
         }
       } else {
         toast({
           title: "Gagal memperbarui status",
-          description: "Terjadi kesalahan saat memperbarui status pengajuan",
+          description: "Terjadi kesalahan saat memperbarui status pengajuan. Pastikan saldo mencukupi (untuk penarikan) atau data valid.",
           variant: "destructive",
         });
       }
