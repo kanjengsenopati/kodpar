@@ -24,27 +24,37 @@ export default function PenarikanDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      const transaksiData = getTransaksiById(id);
-      
-      if (transaksiData && transaksiData.jenis === "Penarikan") {
-        setTransaksi(transaksiData);
+    if (!id) return;
+    
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const transaksiData = await getTransaksiById(id);
         
-        // Load anggota data
-        const anggotaData = getAnggotaById(transaksiData.anggotaId);
-        if (anggotaData) {
-          setAnggota(anggotaData);
+        if (transaksiData && transaksiData.jenis === "Penarikan") {
+          setTransaksi(transaksiData);
+          
+          // Load anggota data
+          const anggotaData = await getAnggotaById(transaksiData.anggotaId);
+          if (anggotaData) {
+            setAnggota(anggotaData);
+          }
+        } else {
+          toast({
+            title: "Data tidak ditemukan",
+            description: `Penarikan dengan ID ${id} tidak ditemukan`,
+            variant: "destructive",
+          });
+          navigate("/transaksi/penarikan");
         }
-      } else {
-        toast({
-          title: "Data tidak ditemukan",
-          description: `Penarikan dengan ID ${id} tidak ditemukan`,
-          variant: "destructive",
-        });
-        navigate("/transaksi/penarikan");
+      } catch (error) {
+        console.error("Error loading penarikan detail:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    loadData();
   }, [id, navigate, toast]);
 
   const handleAfterPrint = () => {

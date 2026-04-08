@@ -5,7 +5,7 @@ import { createJurnalEntry } from "../jurnalService";
 import { formatCurrency } from "./journalUtils";
 
 /**
- * Create journal entry for Simpanan transaction following SAK ETAP
+ * Create journal entry for Simpanan transaction following SAK EP (Entitas Privat)
  */
 export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<JurnalEntry | null> {
   try {
@@ -15,13 +15,13 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
     const kategori = transaksi.kategori?.toLowerCase() || "";
     
     if (kategori.includes("pokok")) {
-      // Simpanan Pokok - Recorded as Equity per SAK ETAP
+      // Simpanan Pokok - Recorded as Equity per SAK EP
       details = [
         {
           id: "1",
           jurnalId: "",
           coaId: "2", // Kas
-          debit: transaksi.jumlah,
+          debit: transaksi.jumlah || 0,
           kredit: 0,
           keterangan: `Penerimaan simpanan pokok dari ${transaksi.anggotaNama}`
         },
@@ -30,18 +30,18 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
           jurnalId: "",
           coaId: "8", // Simpanan Pokok (Ekuitas)
           debit: 0,
-          kredit: transaksi.jumlah,
-          keterangan: `Simpanan pokok anggota - ${transaksi.anggotaNama} (SAK ETAP)`
+          kredit: transaksi.jumlah || 0,
+          keterangan: `Simpanan pokok anggota - ${transaksi.anggotaNama} (SAK EP)`
         }
       ];
     } else if (kategori.includes("wajib")) {
-      // Simpanan Wajib - Recorded as Equity per SAK ETAP
+      // Simpanan Wajib - Recorded as Equity per SAK EP
       details = [
         {
           id: "1",
           jurnalId: "",
           coaId: "2", // Kas
-          debit: transaksi.jumlah,
+          debit: transaksi.jumlah || 0,
           kredit: 0,
           keterangan: `Penerimaan simpanan wajib dari ${transaksi.anggotaNama}`
         },
@@ -50,18 +50,18 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
           jurnalId: "",
           coaId: "9", // Simpanan Wajib (Ekuitas)
           debit: 0,
-          kredit: transaksi.jumlah,
-          keterangan: `Simpanan wajib anggota - ${transaksi.anggotaNama} (SAK ETAP)`
+          kredit: transaksi.jumlah || 0,
+          keterangan: `Simpanan wajib anggota - ${transaksi.anggotaNama} (SAK EP)`
         }
       ];
     } else {
-      // Simpanan Sukarela - Recorded as Liability per SAK ETAP
+      // Simpanan Sukarela - Recorded as Liability per SAK EP
       details = [
         {
           id: "1",
           jurnalId: "",
           coaId: "2", // Kas
-          debit: transaksi.jumlah,
+          debit: transaksi.jumlah || 0,
           kredit: 0,
           keterangan: `Penerimaan simpanan sukarela dari ${transaksi.anggotaNama}`
         },
@@ -70,8 +70,8 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
           jurnalId: "",
           coaId: "6", // Utang Simpanan Sukarela
           debit: 0,
-          kredit: transaksi.jumlah,
-          keterangan: `Simpanan sukarela anggota - ${transaksi.anggotaNama} (SAK ETAP)`
+          kredit: transaksi.jumlah || 0,
+          keterangan: `Simpanan sukarela anggota - ${transaksi.anggotaNama} (SAK EP)`
         }
       ];
     }
@@ -82,7 +82,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
     return await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
-      deskripsi: `SAK ETAP SIMPANAN - ${transaksi.anggotaNama} | ${transaksi.kategori || 'Umum'}: ${formatCurrency(transaksi.jumlah)}`,
+      deskripsi: `SAK EP SIMPANAN - ${transaksi.anggotaNama} | ${transaksi.kategori || 'Umum'}: ${formatCurrency(transaksi.jumlah || 0)}`,
       referensi: `TXN-${transaksi.id}`,
       status: "POSTED",
       createdBy: "system_auto_sync",
@@ -91,7 +91,8 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
       details
     });
   } catch (error) {
-    console.error("Error creating SAK ETAP simpanan journal entry:", error);
+    console.error("Error creating SAK EP simpanan journal entry:", error);
     return null;
   }
 }
+

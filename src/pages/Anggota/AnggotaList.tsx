@@ -8,6 +8,7 @@ import { AnggotaListFilters } from "@/components/anggota/list/AnggotaListFilters
 import { AnggotaTableView } from "@/components/anggota/list/AnggotaTableView";
 import { AnggotaListHeader } from "@/components/anggota/list/AnggotaListHeader";
 import { DeleteConfirmDialog, ResetConfirmDialog, ResetSHUDialog } from "@/components/anggota/list/ConfirmationDialogs";
+import { Loader2 } from "lucide-react";
 
 export default function AnggotaList() {
   // Menggunakan hook baru untuk real-time sync anggota list
@@ -34,10 +35,12 @@ export default function AnggotaList() {
     setIsResetSHUConfirmOpen,
     handleResetSHUClick,
     handleResetSHUConfirm,
+    handleLoadDemoData,
     getTotalSimpanan,
     getTotalPinjaman,
     getTotalSHU,
     getPetugas,
+    isCalculating,
     handleViewDetail,
     handleEdit,
   } = useAnggotaList();
@@ -50,6 +53,7 @@ export default function AnggotaList() {
       <AnggotaListHeader 
         onResetData={handleResetDataClick}
         onResetSHU={handleResetSHUClick}
+        onLoadDemoData={handleLoadDemoData}
       />
       
       <Card>
@@ -63,7 +67,12 @@ export default function AnggotaList() {
             onToggleColumn={handleToggleColumn}
           />
           
-          {viewMode === "table" ? (
+          {isCalculating ? (
+            <div className="flex flex-col items-center justify-center p-20 space-y-4">
+              <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+              <p className="text-slate-500 font-medium">Menghitung data keuangan anggota...</p>
+            </div>
+          ) : viewMode === "table" ? (
             <AnggotaTableView 
               anggotaList={displayAnggotaList}
               columns={columns}

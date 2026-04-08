@@ -20,7 +20,7 @@ export interface KategoriTransaksi {
   jenis: "Pemasukan" | "Pengeluaran";
 }
 
-export interface NeracaKeuangan {
+export interface PosisiKeuangan {
   bulan: string;
   tahun: number;
   totalPemasukan: number;
@@ -28,3 +28,4 @@ export interface NeracaKeuangan {
   saldoAwal: number;
   saldoAkhir: number;
 }
+

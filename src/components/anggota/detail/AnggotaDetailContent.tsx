@@ -28,23 +28,40 @@ export function AnggotaDetailContent({ anggota }: AnggotaDetailContentProps) {
   // Menggunakan hook baru untuk real-time sync
   const { financialData, lastUpdate, refreshFinancialData } = useAnggotaRealTimeSync(idAsString);
 
-  const transaksi = getTransaksiByAnggotaId(idAsString);
-  const simpananTransaksi = transaksi.filter(t => t.jenis === "Simpan");
-  const pinjamanTransaksi = transaksi.filter(t => t.jenis === "Pinjam");
-  const angsuranTransaksi = transaksi.filter(t => t.jenis === "Angsuran");
-  
-  // Get upcoming loans and overdues
-  const jatuhTempo = getUpcomingDueLoans(idAsString, 30);
-  const rawTunggakan = getOverdueLoans(idAsString);
+  const [transaksi, setTransaksi] = useState<any[]>([]);
+  const [simpananTransaksi, setSimpananTransaksi] = useState<any[]>([]);
+  const [pinjamanTransaksi, setPinjamanTransaksi] = useState<any[]>([]);
+  const [angsuranTransaksi, setAngsuranTransaksi] = useState<any[]>([]);
+  const [filteredJatuhTempo, setFilteredJatuhTempo] = useState<any[]>([]);
+  const [filteredTunggakan, setFilteredTunggakan] = useState<any[]>([]);
+  const [totalTunggakan, setTotalTunggakan] = useState(0);
 
-  // Filter data specific to this member and add penalty information
-  const filteredJatuhTempo = jatuhTempo;
-  const filteredTunggakan = rawTunggakan.map(item => ({
-    ...item,
-    penalty: calculatePenalty(item.transaksi.jumlah, item.daysOverdue)
-  }));
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const tr = await getTransaksiByAnggotaId(idAsString);
+        setTransaksi(tr);
+        setSimpananTransaksi(tr.filter(t => t.jenis === "Simpan"));
+        setPinjamanTransaksi(tr.filter(t => t.jenis === "Pinjam"));
+        setAngsuranTransaksi(tr.filter(t => t.jenis === "Angsuran"));
+        
+        const jt = await getUpcomingDueLoans(idAsString, 30);
+        setFilteredJatuhTempo(jt);
+        
+        const rawT = await getOverdueLoans(idAsString);
+        const mappedTunggakan = rawT.map(item => ({
+          ...item,
+          penalty: calculatePenalty(item.transaksi.jumlah, item.daysOverdue)
+        }));
+        setFilteredTunggakan(mappedTunggakan);
+        setTotalTunggakan(mappedTunggakan.reduce((sum, item) => sum + item.penalty, 0));
+      } catch (error) {
+        console.error("Error fetching detail data:", error);
+      }
+    };
 
-  const totalTunggakan = filteredTunggakan.reduce((sum, item) => sum + item.penalty, 0);
+    fetchData();
+  }, [idAsString, lastUpdate]);
 
   const keluargaCount = anggota?.keluarga?.length || 0;
   const dokumenCount = anggota?.dokumen?.length || 0;

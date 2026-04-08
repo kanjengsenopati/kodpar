@@ -14,7 +14,7 @@ export class SHUCalculator {
    * @param anggotaId The anggota ID as a string or number
    * @returns The SHU amount
    */
-  static calculate(anggotaId: string | number): number {
+  static async calculate(anggotaId: string | number): Promise<number> {
     // Convert anggotaId to string if it's a number
     const idAsString = String(anggotaId);
     
@@ -27,8 +27,6 @@ export class SHUCalculator {
     const formula = settings.shu?.formula || 
       "simpanan_khusus * 0.03 + simpanan_wajib * 0.05 + pendapatan * 0.02";
     
-    console.log(`Using formula for SHU calculation: ${formula}`);
-    
     // Check if we should force recalculation due to formula update
     const formulaUpdated = localStorage.getItem('shu_formula_updated');
     if (formulaUpdated) {
@@ -37,17 +35,13 @@ export class SHUCalculator {
       const currentTime = Date.now();
       if (currentTime - updateTime < 60000) { // within the last minute
         localStorage.removeItem(`shu_result_${idAsString}`);
-        console.log("Forcing recalculation due to recent formula update");
       }
     }
     
     // Prepare variables for formula evaluation
-    const variables = this.prepareVariables(idAsString);
+    const variables = await this.prepareVariables(idAsString);
     
     try {
-      console.log(`Calculating SHU for anggota ${idAsString} with formula: ${formula}`);
-      console.log("Variables:", variables);
-      
       // Evaluate the formula with the updated formula string and variables
       const result = evaluateFormulaWithVariables(formula, variables);
       
@@ -55,16 +49,15 @@ export class SHUCalculator {
         console.error("Error calculating SHU with formula:", formula);
         // Fallback to simple calculation
         const fallbackResult = Math.round(variables.totalSimpanan * 0.05);
-        console.log(`Falling back to default calculation: ${fallbackResult}`);
         return Math.max(minValue, Math.min(maxValue, fallbackResult));
       }
       
       // Apply min/max constraints and round to nearest integer
       const finalResult = Math.max(minValue, Math.min(maxValue, Math.round(result)));
-      console.log(`SHU calculation result: ${finalResult}`);
       
-      // Store the result temporarily in localStorage for debugging purposes
+      // Store the result temporarily in localStorage for debugging/caching purposes
       localStorage.setItem(`shu_result_${idAsString}`, finalResult.toString());
+      localStorage.setItem(`shu_result_timestamp_${idAsString}`, Date.now().toString());
       
       return finalResult;
     } catch (error) {
@@ -80,31 +73,40 @@ export class SHUCalculator {
    * @param anggotaId The anggota ID as a string
    * @returns Record of variable names and their values
    */
-  private static prepareVariables(anggotaId: string): Record<string, number> {
+  private static async prepareVariables(anggotaId: string): Promise<Record<string, number>> {
     // Get all transactions for this member
-    const allTransaksi = getAllTransaksi();
-    const memberTransaksi = allTransaksi.filter(t => t.anggotaId === anggotaId);
+    const allTransaksi = await getAllTransaksi();
+    const memberTransaksi = allTransaksi.filter(t => t.anggotaId === anggotaId && t.status === "Sukses");
     
-    // Calculate simpanan-related variables
-    const totalSimpanan = this.calculateTotalSimpanan(anggotaId);
-    const simpanan_khusus = totalSimpanan * 0.4; // 40% of total simpanan as simpanan khusus
-    const simpanan_wajib = totalSimpanan * 0.6;  // 60% of total simpanan as simpanan wajib
-    const simpanan_pokok = totalSimpanan * 0.2;  // 20% of total simpanan as simpanan pokok
+    // Calculate simpanan-related variables from real categorized data
+    const simpanan_pokok = memberTransaksi
+      .filter(t => t.jenis === "Simpan" && t.kategori === "Simpanan Pokok")
+      .reduce((total, t) => total + (t.jumlah || 0), 0);
+      
+    const simpanan_wajib = memberTransaksi
+      .filter(t => t.jenis === "Simpan" && t.kategori === "Simpanan Wajib")
+      .reduce((total, t) => total + (t.jumlah || 0), 0);
+      
+    const simpanan_khusus = memberTransaksi
+      .filter(t => t.jenis === "Simpan" && (t.kategori === "Simpanan Sukarela" || t.kategori === "Simpanan Khusus"))
+      .reduce((total, t) => total + (t.jumlah || 0), 0);
+      
+    const totalSimpanan = simpanan_pokok + simpanan_wajib + simpanan_khusus;
     
     // Calculate loan-related variables
     const loans = memberTransaksi.filter(t => t.jenis === "Pinjam");
-    const totalPinjaman = loans.reduce((total, loan) => total + loan.jumlah, 0);
+    const totalPinjaman = loans.reduce((total, loan) => total + (loan.jumlah || 0), 0);
     
     // Calculate jasa - sum of interest payments from loan transactions
     let jasa = this.calculateJasa(loans);
     
     // Derive additional values
-    const pendapatan = jasa * 0.2;  // 20% of jasa as pendapatan (estimation)
+    const pendapatan = jasa * 0.2;  // 20% of jasa as pendapatan (standard cooperative estimation)
     const lama_keanggotaan = this.calculateMembershipDuration(memberTransaksi);
-    const transaksi_amount = memberTransaksi.reduce((total, t) => total + t.jumlah, 0);
+    const transaksi_amount = memberTransaksi.reduce((total, t) => total + (t.jumlah || 0), 0);
     const angsuran_total = memberTransaksi
       .filter(t => t.jenis === "Angsuran")
-      .reduce((total, t) => total + t.jumlah, 0);
+      .reduce((total, t) => total + (t.jumlah || 0), 0);
     
     // Prepare variables for formula evaluation
     const variables: Record<string, number> = {
@@ -133,8 +135,8 @@ export class SHUCalculator {
   /**
    * Calculate total simpanan for an anggota
    */
-  private static calculateTotalSimpanan(anggotaId: string): number {
-    const transaksiList = getAllTransaksi();
+  private static async calculateTotalSimpanan(anggotaId: string): Promise<number> {
+    const transaksiList = await getAllTransaksi();
     
     // Sum up all simpanan transactions
     return transaksiList

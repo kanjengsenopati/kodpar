@@ -4,17 +4,20 @@ import { calculateRealTimeFinancialData } from "../realTimeCalculationService";
 /**
  * Wrapper functions for consistent API using real-time calculations
  */
-export function calculateTotalSimpanan(anggotaId: string): number {
-  const data = calculateRealTimeFinancialData(anggotaId);
+/**
+ * Wrapper functions for consistent API using real-time calculations
+ */
+export async function calculateTotalSimpanan(anggotaId: string): Promise<number> {
+  const data = await calculateRealTimeFinancialData(anggotaId);
   return data.totalSimpanan;
 }
 
-export function calculateTotalPinjaman(anggotaId: string): number {
-  const data = calculateRealTimeFinancialData(anggotaId);
+export async function calculateTotalPinjaman(anggotaId: string): Promise<number> {
+  const data = await calculateRealTimeFinancialData(anggotaId);
   return data.sisaPinjaman;
 }
 
-export function calculateTotalAngsuran(anggotaId: string): number {
-  const data = calculateRealTimeFinancialData(anggotaId);
+export async function calculateTotalAngsuran(anggotaId: string): Promise<number> {
+  const data = await calculateRealTimeFinancialData(anggotaId);
   return data.totalAngsuran;
 }

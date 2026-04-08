@@ -59,7 +59,7 @@ export interface BukuBesarDetail {
   saldo: number;
 }
 
-export interface NeracaItem {
+export interface PosisiKeuanganItem {
   coaId: string;
   kodeAkun: string;
   namaAkun: string;
@@ -68,7 +68,7 @@ export interface NeracaItem {
   isGroup: boolean;
 }
 
-export interface LabaRugiItem {
+export interface PenghasilanKomprehensifItem {
   coaId: string;
   kodeAkun: string;
   namaAkun: string;
@@ -88,20 +88,20 @@ export interface PerubahanModalItem {
   jumlah: number;
 }
 
-export interface Neraca {
+export interface PosisiKeuangan {
   periode: string;
-  aset: NeracaItem[];
-  kewajiban: NeracaItem[];
-  modal: NeracaItem[];
+  aset: PosisiKeuanganItem[];
+  kewajiban: PosisiKeuanganItem[];
+  modal: PosisiKeuanganItem[];
   totalAset: number;
   totalKewajiban: number;
   totalModal: number;
 }
 
-export interface LabaRugi {
+export interface PenghasilanKomprehensif {
   periode: string;
-  pendapatan: LabaRugiItem[];
-  beban: LabaRugiItem[];
+  pendapatan: PenghasilanKomprehensifItem[];
+  beban: PenghasilanKomprehensifItem[];
   totalPendapatan: number;
   totalBeban: number;
   labaKotor: number;
@@ -129,7 +129,8 @@ export interface PerubahanModal {
 }
 
 // Report types for components
-export type NeracaReport = Neraca;
-export type LabaRugiReport = LabaRugi;
+export type PosisiKeuanganReport = PosisiKeuangan;
+export type PenghasilanKomprehensifReport = PenghasilanKomprehensif;
 export type ArusKasReport = ArusKas;
 export type PerubahanModalReport = PerubahanModal;
+

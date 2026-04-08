@@ -37,8 +37,13 @@ export default function PinjamList() {
 
   useEffect(() => { loadData(); }, []);
 
-  const loadData = () => {
-    setTransaksiList(getAllTransaksi().filter(t => t.jenis === "Pinjam"));
+  const loadData = async () => {
+    try {
+      const data = await getAllTransaksi();
+      setTransaksiList(data.filter(t => t.jenis === "Pinjam"));
+    } catch (error) {
+      console.error("Error loading pinjaman list:", error);
+    }
   };
 
   const handleDeleteClick = (id: string) => {

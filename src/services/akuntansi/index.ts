@@ -4,7 +4,7 @@ export * from './coaService';
 export * from './jurnalService';
 export * from './bukuBesarService';
 export * from './laporanService';
-export * from './sakEtapService';
+export * from './sakEpService';
 export * from './allocationService';
 
 // Import specific functions to avoid conflicts

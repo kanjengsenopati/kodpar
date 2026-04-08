@@ -1,7 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, RotateCcw, Users, AlertTriangle } from "lucide-react";
+import { RotateCcw, Plus, AlertTriangle, Database } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   AlertDialog,
@@ -18,9 +16,10 @@ import {
 interface AnggotaListHeaderProps {
   onResetData: () => void;
   onResetSHU: () => void;
+  onLoadDemoData: () => void;
 }
 
-export function AnggotaListHeader({ onResetData, onResetSHU }: AnggotaListHeaderProps) {
+export function AnggotaListHeader({ onResetData, onResetSHU, onLoadDemoData }: AnggotaListHeaderProps) {
   return (
     <div className="flex justify-between items-start mb-6">
       <div>
@@ -31,6 +30,33 @@ export function AnggotaListHeader({ onResetData, onResetSHU }: AnggotaListHeader
       </div>
       
       <div className="flex gap-3">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm" className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700">
+              <Database className="h-4 w-4 mr-2" />
+              Muat Data Demo
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-blue-600" />
+                Konfirmasi Muat Data Demo
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                <span className="font-bold text-destructive underline block mb-2">PERINGATAN: DATA AKAN DIHAPUS</span>
+                Tindakan ini akan **MENGHAPUS SEMUA DATA SAAT INI** (Anggota, Transaksi, Jurnal) dan menggantinya dengan data demo standar presentasi. Apakah Anda yakin ingin melanjutkan?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogAction onClick={onLoadDemoData} className="bg-blue-600 hover:bg-blue-700">
+                Ya, Muat Data Demo
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="outline" size="sm">

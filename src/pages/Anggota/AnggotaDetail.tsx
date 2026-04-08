@@ -20,17 +20,24 @@ export default function AnggotaDetail() {
   useEffect(() => {
     if (!id) return;
     
-    setIsLoading(true);
-    const anggotaData = getAnggotaById(id);
-    
-    if (anggotaData) {
-      setAnggota(anggotaData);
-    }
-    
-    // Simulate loading delay for demo
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const anggotaData = await getAnggotaById(id);
+        if (anggotaData) {
+          setAnggota(anggotaData);
+        }
+      } catch (error) {
+        console.error("Error loading anggota:", error);
+      } finally {
+        // Brief delay for smooth transition as per original demo intent
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
+      }
+    };
+
+    loadData();
   }, [id]);
 
   // Render the appropriate content based on loading state and user role

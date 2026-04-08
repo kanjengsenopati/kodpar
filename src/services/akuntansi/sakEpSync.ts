@@ -1,9 +1,9 @@
 
 /**
- * SAK ETAP sync service placeholder
+ * SAK EP (Entitas Privat) sync service
  */
 
-export function batchSyncToSAKETAP() {
+export function batchSyncToSAKEP() {
   return {
     totalProcessed: 0,
     successful: 0,

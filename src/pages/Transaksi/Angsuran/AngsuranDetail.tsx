@@ -30,25 +30,35 @@ export default function AngsuranDetail() {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      const transaksiData = getTransaksiById(id);
-      if (transaksiData && transaksiData.jenis === "Angsuran") {
-        setTransaksi(transaksiData);
-        
-        const anggotaData = getAnggotaById(transaksiData.anggotaId);
-        if (anggotaData) {
-          setAnggota(anggotaData);
+    if (!id) return;
+    
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const transaksiData = await getTransaksiById(id);
+        if (transaksiData && transaksiData.jenis === "Angsuran") {
+          setTransaksi(transaksiData);
+          
+          const anggotaData = await getAnggotaById(transaksiData.anggotaId);
+          if (anggotaData) {
+            setAnggota(anggotaData);
+          }
+        } else {
+          toast({
+            title: "Data tidak ditemukan",
+            description: `Angsuran dengan ID ${id} tidak ditemukan`,
+            variant: "destructive",
+          });
+          navigate("/transaksi/angsuran");
         }
-      } else {
-        toast({
-          title: "Data tidak ditemukan",
-          description: `Angsuran dengan ID ${id} tidak ditemukan`,
-          variant: "destructive",
-        });
-        navigate("/transaksi/angsuran");
+      } catch (error) {
+        console.error("Error loading angsuran detail:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    loadData();
   }, [id, navigate, toast]);
 
   const handlePrintReceipt = () => {

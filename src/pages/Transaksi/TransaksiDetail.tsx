@@ -29,26 +29,36 @@ export default function TransaksiDetail() {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      const transaksiData = getTransaksiById(id);
-      if (transaksiData) {
-        setTransaksi(transaksiData);
-        
-        // Load anggota data
-        const anggotaData = getAnggotaById(transaksiData.anggotaId);
-        if (anggotaData) {
-          setAnggota(anggotaData);
+    if (!id) return;
+    
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const transaksiData = await getTransaksiById(id);
+        if (transaksiData) {
+          setTransaksi(transaksiData);
+          
+          // Load anggota data
+          const anggotaData = await getAnggotaById(transaksiData.anggotaId);
+          if (anggotaData) {
+            setAnggota(anggotaData);
+          }
+        } else {
+          toast({
+            title: "Data tidak ditemukan",
+            description: `Transaksi dengan ID ${id} tidak ditemukan`,
+            variant: "destructive",
+          });
+          navigate("/transaksi");
         }
-      } else {
-        toast({
-          title: "Data tidak ditemukan",
-          description: `Transaksi dengan ID ${id} tidak ditemukan`,
-          variant: "destructive",
-        });
-        navigate("/transaksi");
+      } catch (error) {
+        console.error("Error loading transaksi detail:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    loadData();
   }, [id, navigate, toast]);
 
   const handlePrintReceipt = () => {

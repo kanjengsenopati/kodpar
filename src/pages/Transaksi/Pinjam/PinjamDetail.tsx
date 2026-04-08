@@ -30,25 +30,35 @@ export default function PinjamDetail() {
   const [isLoanReceiptOpen, setIsLoanReceiptOpen] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      const transaksiData = getTransaksiById(id);
-      if (transaksiData && transaksiData.jenis === "Pinjam") {
-        setTransaksi(transaksiData);
-        
-        const anggotaData = getAnggotaById(transaksiData.anggotaId);
-        if (anggotaData) {
-          setAnggota(anggotaData);
+    if (!id) return;
+    
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const transaksiData = await getTransaksiById(id);
+        if (transaksiData && transaksiData.jenis === "Pinjam") {
+          setTransaksi(transaksiData);
+          
+          const anggotaData = await getAnggotaById(transaksiData.anggotaId);
+          if (anggotaData) {
+            setAnggota(anggotaData);
+          }
+        } else {
+          toast({
+            title: "Data tidak ditemukan",
+            description: `Pinjaman dengan ID ${id} tidak ditemukan`,
+            variant: "destructive",
+          });
+          navigate("/transaksi/pinjam");
         }
-      } else {
-        toast({
-          title: "Data tidak ditemukan",
-          description: `Pinjaman dengan ID ${id} tidak ditemukan`,
-          variant: "destructive",
-        });
-        navigate("/transaksi/pinjam");
+      } catch (error) {
+        console.error("Error loading pinjaman detail:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    loadData();
   }, [id, navigate, toast]);
 
   const handlePrintReceipt = () => {

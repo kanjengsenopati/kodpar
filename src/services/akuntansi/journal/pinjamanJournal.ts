@@ -5,7 +5,7 @@ import { createJurnalEntry, getJurnalEntryByReference } from "../jurnalService";
 import { formatCurrency } from "./journalUtils";
 
 /**
- * Create journal entry for Pinjaman transaction following SAK ETAP with enhanced duplicate prevention
+ * Create journal entry for Pinjaman transaction following SAK EP (Entitas Privat) with enhanced duplicate prevention
  */
 export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<JurnalEntry | null> {
   try {
@@ -31,7 +31,7 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
         coaId: "4", // Piutang Anggota
         debit: transaksi.jumlah,
         kredit: 0,
-        keterangan: `Piutang pinjaman kepada ${transaksi.anggotaNama} (SAK ETAP)`
+        keterangan: `Piutang pinjaman kepada ${transaksi.anggotaNama} (SAK EP)`
       },
       {
         id: "2",
@@ -49,7 +49,7 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
     const journalEntry = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
-      deskripsi: `SAK ETAP PINJAMAN - ${transaksi.anggotaNama} | ${transaksi.kategori || 'Reguler'}: ${formatCurrency(transaksi.jumlah)}`,
+      deskripsi: `SAK EP PINJAMAN - ${transaksi.anggotaNama} | ${transaksi.kategori || 'Reguler'}: ${formatCurrency(transaksi.jumlah)}`,
       referensi: `TXN-${transaksi.id}`, // Use consistent reference pattern
       status: "POSTED",
       createdBy: "system_auto_sync",
@@ -64,7 +64,8 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
 
     return journalEntry;
   } catch (error) {
-    console.error("Error creating SAK ETAP pinjaman journal entry:", error);
+    console.error("Error creating SAK EP pinjaman journal entry:", error);
     return null;
   }
 }
+

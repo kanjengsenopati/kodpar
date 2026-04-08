@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import { SimpananPieChart } from './charts/SimpananPieChart';
 import { PinjamanBarChart } from './charts/PinjamanBarChart';
 import { SHULineChart } from './charts/SHULineChart';
@@ -18,91 +19,93 @@ export function KoperasiVisualDashboard() {
     console.log('Downloading as PDF...');
   };
 
-  return (
-    <div className="p-4 bg-gradient-to-br from-koperasi-light via-koperasi-light to-koperasi-light min-h-screen">
+  const cardStyle = "rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none bg-white transition-all duration-300 hover:scale-[1.01]";
+  const headerStyle = "pb-2 pt-4 px-5";
 
+  return (
+    <div className="p-5 bg-[#F8FAFC] min-h-screen">
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart - Komposisi Simpanan */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className={cardStyle}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
               📊 Komposisi Simpanan Anggota
-            </CardTitle>
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <SimpananPieChart />
           </CardContent>
         </Card>
 
         {/* Bar Chart - Pertumbuhan Pinjaman */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className={cardStyle}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
               📈 Pertumbuhan Pinjaman Per Bulan
-            </CardTitle>
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <PinjamanBarChart />
           </CardContent>
         </Card>
 
         {/* Line Chart - Tren SHU */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className={cardStyle}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
               📊 Tren SHU 5 Tahun Terakhir
-            </CardTitle>
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <SHULineChart />
           </CardContent>
         </Card>
 
         {/* Stacked Bar Chart - Piutang */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className={cardStyle}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
               📊 Analisis Piutang Bulanan
-            </CardTitle>
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <PiutangStackedBarChart />
           </CardContent>
         </Card>
 
         {/* Area Chart - Simpanan vs Pinjaman */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className={cardStyle}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
               📈 Perbandingan Simpanan & Pinjaman
-            </CardTitle>
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <SimpananPinjamanAreaChart />
           </CardContent>
         </Card>
 
         {/* Donut Chart - Distribusi Anggota */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              👥 Distribusi Anggota Berdasarkan Pekerjaan
-            </CardTitle>
+        <Card className={cardStyle}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
+              👥 Distribusi Anggota
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <AnggotaDonutChart />
           </CardContent>
         </Card>
 
         {/* Radar Chart - Kinerja Koperasi */}
-        <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-koperasi-light lg:col-span-2 hover:shadow-lg transition-all duration-300">
-          <CardHeader className="pb-2 bg-gradient-to-r from-koperasi-blue to-koperasi-green text-white rounded-t-lg py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <Card className={`${cardStyle} lg:col-span-2`}>
+          <CardHeader className={headerStyle}>
+            <Text.H2 className="flex items-center gap-2">
               🎯 Penilaian Kinerja Koperasi
-            </CardTitle>
+            </Text.H2>
           </CardHeader>
-          <CardContent className="pt-3 p-3">
+          <CardContent className="px-5 pb-5">
             <KinerjaRadarChart />
           </CardContent>
         </Card>
@@ -110,3 +113,4 @@ export function KoperasiVisualDashboard() {
     </div>
   );
 }
+

@@ -77,8 +77,8 @@ export function extractLoanDetailsFromKeterangan(keterangan: string): {
 /**
  * Get comprehensive loan details for a specific loan
  */
-export function getLoanDetails(loanId: string): LoanDetails | null {
-  const allTransaksi = getAllTransaksi();
+export async function getLoanDetails(loanId: string): Promise<LoanDetails | null> {
+  const allTransaksi = await getAllTransaksi();
   const loan = allTransaksi.find(t => t.id === loanId && t.jenis === "Pinjam");
   
   if (!loan) return null;
@@ -122,23 +122,25 @@ export function getLoanDetails(loanId: string): LoanDetails | null {
 /**
  * Get all loans for a member
  */
-export function getMemberLoans(anggotaId: string): LoanDetails[] {
-  const allTransaksi = getAllTransaksi();
+export async function getMemberLoans(anggotaId: string): Promise<LoanDetails[]> {
+  const allTransaksi = await getAllTransaksi();
   const loans = allTransaksi.filter(
     t => t.jenis === "Pinjam" && t.anggotaId === anggotaId && t.status === "Sukses"
   );
 
-  return loans.map(loan => getLoanDetails(loan.id)).filter(Boolean) as LoanDetails[];
+  const loanDetailPromises = loans.map(loan => getLoanDetails(loan.id));
+  const loanDetails = await Promise.all(loanDetailPromises);
+  return loanDetails.filter(Boolean) as LoanDetails[];
 }
 
 /**
  * Generate installment schedule for a loan
  */
-export function generateInstallmentSchedule(loanId: string): InstallmentDetails[] {
-  const loanDetails = getLoanDetails(loanId);
+export async function generateInstallmentSchedule(loanId: string): Promise<InstallmentDetails[]> {
+  const loanDetails = await getLoanDetails(loanId);
   if (!loanDetails) return [];
 
-  const allTransaksi = getAllTransaksi();
+  const allTransaksi = await getAllTransaksi();
   const payments = allTransaksi.filter(
     t => t.jenis === "Angsuran" && 
         t.status === "Sukses" && 
@@ -188,16 +190,16 @@ export function generateInstallmentSchedule(loanId: string): InstallmentDetails[
 /**
  * Calculate total remaining loans for a member
  */
-export function calculateMemberTotalPinjaman(anggotaId: string): number {
-  const loans = getMemberLoans(anggotaId);
+export async function calculateMemberTotalPinjaman(anggotaId: string): Promise<number> {
+  const loans = await getMemberLoans(anggotaId);
   return loans.reduce((total, loan) => total + loan.sisaPinjaman, 0);
 }
 
 /**
  * Calculate total payments made by a member
  */
-export function calculateMemberTotalAngsuran(anggotaId: string): number {
-  const allTransaksi = getAllTransaksi();
+export async function calculateMemberTotalAngsuran(anggotaId: string): Promise<number> {
+  const allTransaksi = await getAllTransaksi();
   return allTransaksi
     .filter(t => t.jenis === "Angsuran" && t.anggotaId === anggotaId && t.status === "Sukses")
     .reduce((total, t) => total + t.jumlah, 0);

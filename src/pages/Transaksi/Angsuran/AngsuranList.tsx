@@ -37,8 +37,13 @@ export default function AngsuranList() {
 
   useEffect(() => { loadData(); }, []);
 
-  const loadData = () => {
-    setTransaksiList(getAllTransaksi().filter(t => t.jenis === "Angsuran"));
+  const loadData = async () => {
+    try {
+      const data = await getAllTransaksi();
+      setTransaksiList(data.filter(t => t.jenis === "Angsuran"));
+    } catch (error) {
+      console.error("Error loading angsuran list:", error);
+    }
   };
 
   const handleDeleteClick = (id: string) => {

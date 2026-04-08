@@ -1,11 +1,11 @@
 
-import { PemasukanPengeluaran, NeracaKeuangan } from "@/types";
+import { PemasukanPengeluaran, PosisiKeuangan } from "@/types";
 import { getAllPemasukanPengeluaran, getPemasukanPengeluaranByPeriod } from "./transaksiService";
 
 /**
- * Calculate financial balance for a specific period
+ * Calculate financial position for a specific period
  */
-export function calculateNeracaKeuangan(bulan: string, tahun: number): NeracaKeuangan {
+export function calculatePosisiKeuangan(bulan: string, tahun: number): PosisiKeuangan {
   const startDate = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const endDate = `${tahun}-${bulan.padStart(2, '0')}-31`;
   
@@ -34,11 +34,12 @@ export function calculateNeracaKeuangan(bulan: string, tahun: number): NeracaKeu
 }
 
 /**
- * Generate financial balance report (alias for calculateNeracaKeuangan)
+ * Generate financial position report (alias for calculatePosisiKeuangan)
  */
-export function generateNeracaKeuangan(bulan: number, tahun: number): NeracaKeuangan {
-  return calculateNeracaKeuangan(bulan.toString(), tahun);
+export function generatePosisiKeuangan(bulan: number, tahun: number): PosisiKeuangan {
+  return calculatePosisiKeuangan(bulan.toString(), tahun);
 }
+
 
 /**
  * Get financial summary for dashboard

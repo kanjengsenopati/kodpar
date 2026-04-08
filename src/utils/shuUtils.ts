@@ -5,10 +5,10 @@ import { getAllTransaksi } from "@/services/transaksi/transaksiCore";
 import { toast } from "sonner";
 
 // Helper function to calculate SHU for sample members
-export function calculateSHUForSamples() {
+export async function calculateSHUForSamples() {
   try {
     // Get actual anggota IDs from anggotaList
-    const anggotaList = getAnggotaList();
+    const anggotaList = await getAnggotaList();
     const anggotaIds = anggotaList.map(anggota => anggota.id).slice(0, 8); // Take up to 8 members
     
     // If no anggota data, use sample IDs
@@ -25,16 +25,17 @@ export function calculateSHUForSamples() {
     });
     
     // Force recalculation for each anggota
-    return anggotaIds.map(id => {
+    const results = [];
+    for (const id of anggotaIds) {
       const anggota = anggotaList.find(a => a.id === id);
-      // Force recalculation by calling calculateSHU directly
-      const shuAmount = calculateSHU(id);
-      return {
+      const shuAmount = await calculateSHU(id);
+      results.push({
         id,
         name: anggota ? anggota.nama : `Anggota ${id}`,
         shu: shuAmount
-      };
-    });
+      });
+    }
+    return results;
   } catch (error) {
     console.error('Error calculating SHU samples:', error);
     toast.error('Gagal menghitung sampel SHU');
@@ -43,68 +44,41 @@ export function calculateSHUForSamples() {
 }
 
 // Helper function to test if the SHU formula produces valid results
-export function testSHUFormula(formula: string): boolean {
+export async function testSHUFormula(formula: string): Promise<boolean> {
   try {
-    // Get a sample anggota ID
-    const anggotaList = getAnggotaList();
-    if (anggotaList.length === 0) return true; // No data to test with
+    const anggotaList = await getAnggotaList();
+    if (anggotaList.length === 0) return true;
     
     const sampleAnggotaId = anggotaList[0].id;
+    const { getPengaturan, savePengaturan } = await import('@/services/pengaturanService');
+    const currentSettings = getPengaturan();
+    const originalFormula = currentSettings.shu?.formula;
     
-    // Store the original formula to restore later
-    const settings = import('@/services/pengaturanService').then(({ getPengaturan, savePengaturan }) => {
-      const currentSettings = getPengaturan();
-      const originalFormula = currentSettings.shu?.formula;
+    const testSettings = {
+      ...currentSettings,
+      shu: { ...(currentSettings.shu || {}), formula }
+    };
+    
+    try {
+      savePengaturan(testSettings);
+      await calculateSHU(sampleAnggotaId);
       
-      // Temporarily update the formula
-      const testSettings = {
-        ...currentSettings,
-        shu: {
-          ...(currentSettings.shu || {}),
-          formula: formula
-        }
-      };
-      
-      try {
-        // Save the test formula temporarily
-        savePengaturan(testSettings);
-        
-        // Try calculating SHU with the test formula
-        const shuAmount = calculateSHU(sampleAnggotaId);
-        
-        // Restore original formula
-        if (originalFormula) {
-          const originalSettings = {
-            ...currentSettings,
-            shu: {
-              ...(currentSettings.shu || {}),
-              formula: originalFormula
-            }
-          };
-          savePengaturan(originalSettings);
-        }
-        
-        // If we got here without errors, the formula is valid
-        return true;
-      } catch (e) {
-        // Restore original formula
-        if (originalFormula) {
-          const originalSettings = {
-            ...currentSettings,
-            shu: {
-              ...(currentSettings.shu || {}),
-              formula: originalFormula
-            }
-          };
-          savePengaturan(originalSettings);
-        }
-        
-        console.error('Formula test failed:', e);
-        return false;
+      if (originalFormula) {
+        savePengaturan({
+          ...currentSettings,
+          shu: { ...(currentSettings.shu || {}), formula: originalFormula }
+        });
       }
-    });
-    
-    return true; // Assume valid if we can't test immediately
+      return true;
+    } catch (e) {
+      if (originalFormula) {
+        savePengaturan({
+          ...currentSettings,
+          shu: { ...(currentSettings.shu || {}), formula: originalFormula }
+        });
+      }
+      return false;
+    }
   } catch (error) {
     console.error('Error testing SHU formula:', error);
     return false;
@@ -112,56 +86,35 @@ export function testSHUFormula(formula: string): boolean {
 }
 
 // Helper function to calculate total savings by type
-export function calculateTotalSavings(
+export async function calculateTotalSavings(
   type: 'simpanan_wajib' | 'simpanan_pokok' | 'simpanan_khusus' | 'all' = 'all'
-): number {
+): Promise<number> {
   try {
-    const transaksiList = getAllTransaksi();
+    const transaksiList = await getAllTransaksi();
+    const suksesSimpanan = transaksiList.filter(t => t.jenis === "Simpan" && t.status === "Sukses");
     
-    // If no transaction data, return sample values
-    if (transaksiList.length === 0) {
-      return type === 'simpanan_wajib' ? 12500000 :
-             type === 'simpanan_pokok' ? 5000000 :
-             type === 'simpanan_khusus' ? 8750000 : 26250000;
+    if (suksesSimpanan.length === 0) {
+      return 0; // Remove hardcoded fallbacks
     }
-    
-    // Filter and sum based on type
-    let total = 0;
     
     if (type === 'simpanan_wajib') {
-      total = transaksiList
-        .filter(t => 
-          t.jenis === "Simpan" && 
-          t.status === "Sukses" && 
-          t.keterangan?.toLowerCase().includes("wajib"))
-        .reduce((sum, t) => sum + t.jumlah, 0);
+      return suksesSimpanan
+        .filter(t => t.kategori === "Simpanan Wajib")
+        .reduce((sum, t) => sum + (t.jumlah || 0), 0);
     } else if (type === 'simpanan_pokok') {
-      total = transaksiList
-        .filter(t => 
-          t.jenis === "Simpan" && 
-          t.status === "Sukses" && 
-          t.keterangan?.toLowerCase().includes("pokok"))
-        .reduce((sum, t) => sum + t.jumlah, 0);
+      return suksesSimpanan
+        .filter(t => t.kategori === "Simpanan Pokok")
+        .reduce((sum, t) => sum + (t.jumlah || 0), 0);
     } else if (type === 'simpanan_khusus') {
-      total = transaksiList
-        .filter(t => 
-          t.jenis === "Simpan" && 
-          t.status === "Sukses" && 
-          (t.keterangan?.toLowerCase().includes("khusus") || 
-           t.keterangan?.toLowerCase().includes("sukarela")))
-        .reduce((sum, t) => sum + t.jumlah, 0);
-    } else if (type === 'all') {
-      total = transaksiList
-        .filter(t => t.jenis === "Simpan" && t.status === "Sukses")
-        .reduce((sum, t) => sum + t.jumlah, 0);
+      return suksesSimpanan
+        .filter(t => t.kategori === "Simpanan Sukarela" || t.kategori === "Simpanan Khusus")
+        .reduce((sum, t) => sum + (t.jumlah || 0), 0);
     }
     
-    return total;
+    return suksesSimpanan.reduce((sum, t) => sum + (t.jumlah || 0), 0);
   } catch (error) {
     console.error(`Error calculating ${type} total:`, error);
-    // Return sample values on error
-    return type === 'simpanan_wajib' ? 12500000 :
-           type === 'simpanan_pokok' ? 5000000 :
-           type === 'simpanan_khusus' ? 8750000 : 26250000;
+    return 0;
   }
 }
+

@@ -3,7 +3,7 @@ import { getAllJurnalEntries } from "./jurnalService";
 import { getAllChartOfAccounts } from "./coaService";
 import { JurnalEntry, ChartOfAccount } from "@/types/akuntansi";
 
-export interface SAKETAPBalanceSheet {
+export interface SAKEPFinancialPosition {
   periode: string;
   aset: {
     asetLancar: {
@@ -30,7 +30,7 @@ export interface SAKETAPBalanceSheet {
   };
 }
 
-export interface SAKETAPIncomeStatement {
+export interface SAKEPComprehensiveIncome {
   periode: string;
   pendapatan: {
     pendapatanJasaPinjaman: number;
@@ -47,16 +47,16 @@ export interface SAKETAPIncomeStatement {
 }
 
 /**
- * Generate SAK ETAP compliant Balance Sheet (Neraca)
+ * Generate SAK EP compliant Statement of Financial Position (Laporan Posisi Keuangan)
  */
-export function generateSAKETAPBalanceSheet(periode: string): SAKETAPBalanceSheet {
+export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialPosition {
   const journals = getAllJurnalEntries();
   const accounts = getAllChartOfAccounts();
   
   // Calculate account balances
   const balances = calculateAccountBalances(journals, accounts, periode);
   
-  const report: SAKETAPBalanceSheet = {
+  const report: SAKEPFinancialPosition = {
     periode,
     aset: {
       asetLancar: {
@@ -108,9 +108,9 @@ export function generateSAKETAPBalanceSheet(periode: string): SAKETAPBalanceShee
 }
 
 /**
- * Generate SAK ETAP compliant Income Statement (Laporan Laba Rugi)
+ * Generate SAK EP compliant Statement of Comprehensive Income (Laporan Penghasilan Komprehensif)
  */
-export function generateSAKETAPIncomeStatement(periode: string): SAKETAPIncomeStatement {
+export function generateSAKEPComprehensiveIncome(periode: string): SAKEPComprehensiveIncome {
   const journals = getAllJurnalEntries();
   const accounts = getAllChartOfAccounts();
   
@@ -122,7 +122,7 @@ export function generateSAKETAPIncomeStatement(periode: string): SAKETAPIncomeSt
   
   const balances = calculateAccountBalances(periodJournals, accounts, periode);
   
-  const report: SAKETAPIncomeStatement = {
+  const report: SAKEPComprehensiveIncome = {
     periode,
     pendapatan: {
       pendapatanJasaPinjaman: Math.abs(balances["13"] || 0), // Pendapatan Jasa Pinjaman
@@ -187,23 +187,24 @@ function calculateAccountBalances(
 }
 
 /**
- * Generate comprehensive SAK ETAP compliance report
+ * Generate comprehensive SAK EP compliance report
  */
-export function generateSAKETAPComplianceReport(periode: string) {
-  const balanceSheet = generateSAKETAPBalanceSheet(periode);
-  const incomeStatement = generateSAKETAPIncomeStatement(periode);
+export function generateSAKEPComplianceReport(periode: string) {
+  const financialPosition = generateSAKEPFinancialPosition(periode);
+  const comprehensiveIncome = generateSAKEPComprehensiveIncome(periode);
   
   return {
     periode,
-    balanceSheet,
-    incomeStatement,
+    financialPosition,
+    comprehensiveIncome,
     complianceNotes: [
-      "Laporan disusun berdasarkan SAK ETAP untuk koperasi",
+      "Laporan disusun berdasarkan SAK EP (Entitas Privat) untuk koperasi",
       "Simpanan Pokok dan Wajib dicatat sebagai ekuitas anggota",
       "Simpanan Sukarela dicatat sebagai kewajiban jangka pendek",
       "Pendapatan jasa pinjaman diakui secara kas basis",
-      "SHU belum dibagi menunggu keputusan RAT"
+      "SHU (Sisa Hasil Usaha) belum dibagi menunggu keputusan RAT"
     ],
-    disclaimer: "Laporan ini disusun sesuai dengan Standar Akuntansi Keuangan Entitas Tanpa Akuntabilitas Publik (SAK ETAP) yang berlaku untuk koperasi di Indonesia."
+    disclaimer: "Laporan ini disusun sesuai dengan Standar Akuntansi Keuangan Entitas Privat (SAK EP) yang berlaku sebagai pengganti SAK ETAP untuk koperasi di Indonesia."
   };
 }
+
