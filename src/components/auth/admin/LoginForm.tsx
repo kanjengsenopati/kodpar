@@ -7,7 +7,12 @@ interface LoginFormProps {
   title?: string;
   subtitle?: string;
   onSuccessRedirect?: string;
-  demoCredentials?: Array<{
+  adminDemo?: Array<{
+    label: string;
+    username: string;
+    password: string;
+  }>;
+  anggotaDemo?: Array<{
     label: string;
     username: string;
     password: string;
@@ -18,10 +23,9 @@ export function LoginForm({
   title = "Login",
   subtitle = "Enter your credentials to access your account",
   onSuccessRedirect = "/",
-  demoCredentials,
+  adminDemo,
+  anggotaDemo,
 }: LoginFormProps) {
-  const filteredDemoCredentials = demoCredentials;
-  
   const { form, onSubmit, isLoading, handleDemoLogin } = useLoginForm({
     onSuccessRedirect,
   });
@@ -41,7 +45,8 @@ export function LoginForm({
               form={form}
               onSubmit={onSubmit}
               isLoading={isLoading}
-              demoCredentials={filteredDemoCredentials}
+              adminDemo={adminDemo}
+              anggotaDemo={anggotaDemo}
               onDemoLogin={handleDemoLogin}
             />
           </div>
