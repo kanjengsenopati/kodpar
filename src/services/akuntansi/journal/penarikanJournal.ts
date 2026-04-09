@@ -46,7 +46,7 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
       details
     });
   } catch (error) {
-    console.error("Error creating SAK ETAP penarikan journal entry:", error);
+    console.error("Error creating SAK EP penarikan journal entry:", error);
     return null;
   }
 }

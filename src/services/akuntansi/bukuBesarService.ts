@@ -34,10 +34,30 @@ export async function getBukuBesarByAccount(coaId: string, periode: string): Pro
     })
     .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
   
-  console.log(`📊 Processing ${journals.length} posted journals for account ${account.nama} in period ${periode}`);
+  // Calculate Saldo Awal by summing all journals BEFORE the period starts
+  let saldoAwal = 0;
+  allJournals
+    .filter(journal => {
+      const journalDate = new Date(journal.tanggal);
+      return journal.status === 'POSTED' && journalDate < startDate;
+    })
+    .forEach(journal => {
+      const detail = journal.details.find(d => d.coaId === coaId);
+      if (detail) {
+        const debit = detail.debit || 0;
+        const kredit = detail.kredit || 0;
+        if (account.saldoNormal === 'DEBIT') {
+          saldoAwal += debit - kredit;
+        } else {
+          saldoAwal += kredit - debit;
+        }
+      }
+    });
+
+  console.log(`📊 Processing ${journals.length} posted journals for account ${account.nama} in period ${periode}. Saldo Awal: ${saldoAwal}`);
   
   const transaksi: BukuBesarDetail[] = [];
-  let saldo = 0;
+  let saldo = saldoAwal;
   
   journals.forEach(journal => {
     const detail = journal.details.find(d => d.coaId === coaId);
@@ -66,13 +86,13 @@ export async function getBukuBesarByAccount(coaId: string, periode: string): Pro
   const totalDebit = transaksi.reduce((sum, t) => sum + t.debit, 0);
   const totalKredit = transaksi.reduce((sum, t) => sum + t.kredit, 0);
   
-  console.log(`📈 Account ${account.nama}: ${transaksi.length} transactions, Total Debit: ${totalDebit}, Total Credit: ${totalKredit}`);
+  console.log(`📈 Account ${account.nama}: ${transaksi.length} transactions, Total Debit: ${totalDebit}, Total Credit: ${totalKredit}, Saldo Akhir: ${saldo}`);
   
   return {
     coaId,
     coa: account,
     periode,
-    saldoAwal: 0, // Could be enhanced to get from previous period
+    saldoAwal: Math.abs(saldoAwal),
     totalDebit,
     totalKredit,
     saldoAkhir: Math.abs(saldo),

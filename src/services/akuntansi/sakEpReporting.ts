@@ -49,11 +49,17 @@ export interface SAKEPComprehensiveIncome {
  * Generate SAK EP compliant Statement of Financial Position (Laporan Posisi Keuangan)
  */
 export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialPosition {
-  const journals = getAllJurnalEntries();
-  const accounts = getAllChartOfAccounts();
+  // SAK EP: Balance Sheet (Financial Position) is cumulative up to the end of period
+  const [year, month] = periode.split('-');
+  const endDate = new Date(parseInt(year), parseInt(month), 0); // Last day of month
   
-  // Calculate account balances
-  const balances = calculateAccountBalances(journals, accounts, periode);
+  const filteredJournals = journals.filter(j => {
+    const journalDate = new Date(j.tanggal);
+    return j.status === 'POSTED' && journalDate <= endDate;
+  });
+  
+  // Calculate account balances using filtered cumulative journals
+  const balances = calculateAccountBalances(filteredJournals, accounts, periode);
   
   // Dynamic ID resolution for SAK EP standards
   const coaIds = {
@@ -226,7 +232,7 @@ export function generateSAKEPComplianceReport(periode: string) {
       "Pendapatan jasa pinjaman diakui secara kas basis",
       "SHU (Sisa Hasil Usaha) belum dibagi menunggu keputusan RAT"
     ],
-    disclaimer: "Laporan ini disusun sesuai dengan Standar Akuntansi Keuangan Entitas Privat (SAK EP) yang berlaku sebagai pengganti SAK ETAP untuk koperasi di Indonesia."
+    disclaimer: "Laporan ini disusun sesuai dengan Standar Akuntansi Keuangan Entitas Privat (SAK EP) yang berlaku sebagai pengganti standar akuntansi lama untuk koperasi di Indonesia."
   };
 }
 
