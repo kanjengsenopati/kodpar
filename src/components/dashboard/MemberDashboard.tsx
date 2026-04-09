@@ -22,8 +22,8 @@ import {
 import { getCurrentUser } from '@/services/auth/sessionManagement';
 import { getAnggotaById, updateAnggota } from '@/services/anggotaService';
 import { getPengajuanByAnggotaId, createPengajuan } from '@/services/pengajuanService';
-import { calculateTotalSimpanan, calculateTotalPinjaman } from '@/services/transaksi/calculationWrappers';
-import { getActiveLoansByAnggotaId } from '@/services/transaksi/loanOperations';
+import { calculateTotalSimpanan, calculateTotalPinjaman } from "@/services/transaksiService";
+import { getActiveLoansByAnggotaId } from '@/services/transaksiService';
 import { getActiveJenisByType } from '@/services/jenisService';
 import { formatCurrency } from '@/utils/formatters';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -488,3 +488,4 @@ export function MemberDashboard() {
     </div>
   );
 }
+

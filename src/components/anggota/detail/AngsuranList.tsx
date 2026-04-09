@@ -5,12 +5,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { 
   getTransaksiById, 
   calculateTotalSimpanan
-} from "@/services/transaksi";
+} from "@/services/transaksiService";
 
 import { 
   getRemainingLoanAmount, 
   generateInstallmentSchedule 
-} from "@/services/transaksi/loanOperations";
+} from "@/services/transaksiService";
 
 import { AngsuranListProps } from "./angsuran/types";
 import { LoanSelector } from "./angsuran/LoanSelector";
@@ -129,3 +129,4 @@ export function AngsuranList({ pinjamanTransaksi, disableSelfPayment = false }: 
     </Card>
   );
 }
+

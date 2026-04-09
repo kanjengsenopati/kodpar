@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpFromLine } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { createTransaksi } from "@/services/transaksiService";
-import { calculateTotalSimpanan } from "@/services/transaksi/financialOperations";
+import { calculateTotalSimpanan } from "@/services/transaksiService";
 import { getJenisOptions } from "@/services/jenisService";
 import { Transaksi } from "@/types";
 import { toast } from "@/components/ui/use-toast";
@@ -35,12 +35,12 @@ export function PenarikanForm({ anggotaList, initialData, onSuccess }: Penarikan
   // Get available simpanan categories
   const simpananCategories = getJenisOptions("Simpanan");
 
-  const handleAnggotaChange = (anggotaId: string) => {
+  const handleAnggotaChange = async (anggotaId: string) => {
     setFormData(prev => ({ ...prev, anggotaId }));
     
     // Calculate available balance when anggota is selected
     if (anggotaId) {
-      const totalSimpanan = calculateTotalSimpanan(anggotaId);
+      const totalSimpanan = await calculateTotalSimpanan(anggotaId);
       setAvailableBalance(totalSimpanan);
     } else {
       setAvailableBalance(0);
@@ -218,3 +218,4 @@ export function PenarikanForm({ anggotaList, initialData, onSuccess }: Penarikan
     </Card>
   );
 }
+

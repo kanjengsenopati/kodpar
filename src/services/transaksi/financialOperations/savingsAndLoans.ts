@@ -7,8 +7,8 @@ import { calculateMemberTotalSimpanan, calculateMemberRemainingLoan, getAllMembe
  * @param anggotaId Member ID to calculate for
  * @returns Total amount of savings minus withdrawals
  */
-export function calculateTotalSimpanan(anggotaId: string | number): number {
-  return calculateMemberTotalSimpanan(anggotaId.toString());
+export async function calculateTotalSimpanan(anggotaId: string | number): Promise<number> {
+  return await calculateMemberTotalSimpanan(anggotaId.toString());
 }
 
 /**
@@ -17,8 +17,8 @@ export function calculateTotalSimpanan(anggotaId: string | number): number {
  * @param anggotaId Member ID to calculate for
  * @returns Total amount of remaining loan balance
  */
-export function calculateTotalPinjaman(anggotaId: string | number): number {
-  return calculateMemberRemainingLoan(anggotaId.toString());
+export async function calculateTotalPinjaman(anggotaId: string | number): Promise<number> {
+  return await calculateMemberRemainingLoan(anggotaId.toString());
 }
 
 /**
@@ -26,9 +26,15 @@ export function calculateTotalPinjaman(anggotaId: string | number): number {
  * 
  * @returns Total amount of all member savings minus withdrawals
  */
-export function getTotalAllSimpanan(): number {
-  const summary = getAllMembersFinancialSummary();
-  return summary.totalSimpanan;
+export async function getTotalAllSimpanan(): Promise<number> {
+  const summary = await getAllMembersFinancialSummary();
+  // Map totalPinjaman to total savings balance logic if needed, 
+  // but here we use the specific summary field.
+  // Note: getAllMembersFinancialSummary returns totalPinjaman, totalAngsuran, etc.
+  // For total Simpanan, we might need a separate aggregate or use the one from summary if added.
+  // Current implementation of getAllMembersFinancialSummary doesn't have totalSimpanan.
+  // I will update getAllMembersFinancialSummary in financialCalculations.ts first.
+  return (summary as any).totalSimpanan || 0;
 }
 
 /**
@@ -36,7 +42,7 @@ export function getTotalAllSimpanan(): number {
  * 
  * @returns Total amount of all member loans
  */
-export function getTotalAllPinjaman(): number {
-  const summary = getAllMembersFinancialSummary();
+export async function getTotalAllPinjaman(): Promise<number> {
+  const summary = await getAllMembersFinancialSummary();
   return summary.totalPinjaman;
 }

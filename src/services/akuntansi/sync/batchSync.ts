@@ -1,6 +1,6 @@
 
 import { Transaksi, Pengajuan } from "@/types";
-import { getAllTransaksi } from "../../transaksiService";
+import { getAllTransaksi } from "../../transaksi/transaksiCore";
 import { syncTransactionToAccounting } from "./transactionSync";
 
 /**

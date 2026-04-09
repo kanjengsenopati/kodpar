@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Printer, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { getTransaksiById, getRemainingLoanAmount } from "@/services/transaksi";
+import { getTransaksiById, getRemainingLoanAmount } from "@/services/transaksiService";
 import { TransaksiReceipt } from "@/components/transaksi/receipt/TransaksiReceipt";
 import { useReactToPrint } from "react-to-print";
 

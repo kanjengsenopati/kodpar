@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpFromLine, Info } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { createTransaksi } from "@/services/transaksiService";
-import { getTransaksiByAnggotaId } from "@/services/transaksi/transaksiCore";
+import { getTransaksiByAnggotaId } from "@/services/transaksiService";
 import { getJenisOptions } from "@/services/jenisService";
 import { Transaksi } from "@/types";
 import { toast } from "@/components/ui/use-toast";
@@ -297,3 +297,4 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
     </Card>
   );
 }
+

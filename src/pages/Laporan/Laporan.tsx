@@ -7,7 +7,7 @@ import {
   getOverdueLoans, 
   calculatePenalty,
   getAllTransaksi
-} from "@/services/transaksi";
+} from "@/services/transaksiService";
 import { getAnggotaList } from "@/services/anggotaService";
 import { getPengajuanList } from "@/services/pengajuanService";
 import { getAllMembersFinancialSummary } from "@/services/financialCalculations";

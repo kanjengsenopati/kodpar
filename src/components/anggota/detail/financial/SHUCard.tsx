@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BadgeDollarSign, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { calculateSHU } from "@/services/transaksi/financialOperations/shuOperations";
+import { calculateSHU } from "@/services/transaksiService";
 
 interface SHUCardProps {
   totalSHU: number;
@@ -15,7 +15,7 @@ interface SHUCardProps {
 export function SHUCard({ totalSHU, anggotaId, onRefresh }: SHUCardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const refreshSHU = () => {
+  const refreshSHU = async () => {
     if (!anggotaId) return;
     
     setIsRefreshing(true);
@@ -24,7 +24,7 @@ export function SHUCard({ totalSHU, anggotaId, onRefresh }: SHUCardProps) {
       localStorage.removeItem(`shu_result_${anggotaId}`);
       
       // Then call the service to calculate
-      const newSHU = calculateSHU(anggotaId);
+      const newSHU = await calculateSHU(anggotaId);
       
       console.log(`SHU recalculated for ${anggotaId}: ${newSHU}`);
       toast.success("Nilai SHU berhasil diperbarui");
@@ -70,3 +70,6 @@ export function SHUCard({ totalSHU, anggotaId, onRefresh }: SHUCardProps) {
     </Card>
   );
 }
+
+
+

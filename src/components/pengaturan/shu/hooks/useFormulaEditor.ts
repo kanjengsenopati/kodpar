@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Pengaturan } from "@/types";
-import { refreshAllSHUCalculations } from "@/services/transaksi/financialOperations/shuOperations";
+import { refreshAllSHUCalculations } from "@/services/transaksiService";
 
 interface UseFormulaEditorProps {
   settings: Pengaturan;
@@ -178,3 +178,6 @@ export function useFormulaEditor({
     handleUseFormula
   };
 }
+
+
+

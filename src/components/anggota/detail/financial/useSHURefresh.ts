@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { calculateSHU } from "@/services/transaksi/financialOperations/shuOperations";
+import { calculateSHU } from "@/services/transaksiService";
 
 export function useSHURefresh(initialSHU: number, anggotaId?: string) {
   const [totalSHU, setTotalSHU] = useState(initialSHU);
@@ -46,7 +46,7 @@ export function useSHURefresh(initialSHU: number, anggotaId?: string) {
     };
   }, [anggotaId]);
   
-  const refreshSHU = () => {
+  const refreshSHU = async () => {
     if (!anggotaId) return;
     
     try {
@@ -54,7 +54,7 @@ export function useSHURefresh(initialSHU: number, anggotaId?: string) {
       localStorage.removeItem(`shu_result_${anggotaId}`);
       
       // Then call the service to calculate
-      const newSHU = calculateSHU(anggotaId);
+      const newSHU = await calculateSHU(anggotaId);
       setTotalSHU(newSHU);
       console.log(`SHU recalculated for ${anggotaId}: ${newSHU}`);
     } catch (error) {
@@ -64,3 +64,6 @@ export function useSHURefresh(initialSHU: number, anggotaId?: string) {
   
   return { totalSHU, setTotalSHU, refreshSHU };
 }
+
+
+

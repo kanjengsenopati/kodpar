@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
-import { getCurrentSHUFormula, getSHUVariableExplanations } from "@/services/transaksi/financialOperations/shuOperations";
+import { getCurrentSHUFormula, getSHUVariableExplanations } from "@/services/transaksiService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export function SHUFormulaInfo() {
@@ -49,3 +49,6 @@ export function SHUFormulaInfo() {
     </div>
   );
 }
+
+
+

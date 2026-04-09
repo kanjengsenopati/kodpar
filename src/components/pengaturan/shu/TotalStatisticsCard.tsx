@@ -5,7 +5,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wallet } from "lucide-react";
 import { getAnggotaList } from "@/services/anggotaService";
-import { getAllTransaksi } from "@/services/transaksi/transaksiCore";
+import { getAllTransaksi } from "@/services/transaksiService";
 
 interface TotalStatisticsCardProps {
   title: string;
@@ -124,3 +124,4 @@ export function TotalStatisticsCard({
     </Card>
   );
 }
+

@@ -12,7 +12,7 @@ import {
 import { Wallet, Calculator, DollarSign, Building, TrendingUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AngsuranDetail } from "./types";
-import { getTransaksiById, createTransaksi } from "@/services/transaksi";
+import { getTransaksiById, createTransaksi } from "@/services/transaksiService";
 import { getPengaturan } from "@/services/pengaturanService";
 import { calculateAngsuranAllocation } from "@/services/akuntansi/accountingSyncService";
 import { formatCurrency } from "@/utils/formatters";

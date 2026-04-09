@@ -1,26 +1,20 @@
 
-import { getAllTransaksi } from "../transaksiCore";
+import { 
+  calculateMemberTotalSimpanan, 
+  getAllMembersFinancialSummary 
+} from "../../financialCalculations";
 
 /**
- * Calculate total simpanan for an anggota
+ * Calculate total simpanan for an anggota (net balance)
  */
-export function calculateTotalSimpanan(anggotaId: string): number {
-  const transaksiList = getAllTransaksi();
-  
-  // Sum up all simpanan transactions
-  return transaksiList
-    .filter(t => t.anggotaId === anggotaId && t.jenis === "Simpan" && t.status === "Sukses")
-    .reduce((total, t) => total + t.jumlah, 0);
+export async function calculateTotalSimpanan(anggotaId: string): Promise<number> {
+  return await calculateMemberTotalSimpanan(anggotaId);
 }
 
 /**
- * Get total simpanan for all members
+ * Get total simpanan for all members (net balance)
  */
-export function getTotalAllSimpanan(): number {
-  const transaksiList = getAllTransaksi();
-  
-  // Sum up all simpanan transactions
-  return transaksiList
-    .filter(t => t.jenis === "Simpan" && t.status === "Sukses")
-    .reduce((total, t) => total + t.jumlah, 0);
+export async function getTotalAllSimpanan(): Promise<number> {
+  const summary = await getAllMembersFinancialSummary();
+  return summary.totalSimpanan;
 }

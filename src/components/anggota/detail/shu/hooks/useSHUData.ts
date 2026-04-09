@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { getPengaturan } from "@/services/pengaturanService";
-import { calculateSHU } from "@/services/transaksi/financialOperations/shuOperations";
+import { calculateSHU } from "@/services/transaksiService";
 
 /**
  * Custom hook for managing SHU data and update operations
@@ -17,12 +17,12 @@ export function useSHUData(anggotaId: string, initialSHU: number) {
   }, []);
   
   // Update SHU value when needed
-  const updateSHUValue = () => {
+  const updateSHUValue = async () => {
     // Force recalculation of SHU by clearing cache first
     localStorage.removeItem(`shu_result_${anggotaId}`);
     
     // Calculate fresh value
-    const newSHU = calculateSHU(anggotaId);
+    const newSHU = await calculateSHU(anggotaId);
     if (newSHU !== totalSHU) {
       console.log("SHU value updated in drawer:", newSHU);
       setTotalSHU(newSHU);
@@ -65,3 +65,6 @@ export function useSHUData(anggotaId: string, initialSHU: number) {
     updateSHUValue
   };
 }
+
+
+

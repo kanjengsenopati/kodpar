@@ -1,6 +1,6 @@
 
 import { Transaksi } from "@/types";
-import { getAllTransaksi, getTransaksiById } from "@/services/transaksi";
+import { getAllTransaksi, getTransaksiById } from "@/services/transaksiService";
 import { AngsuranDetailItem } from "./types";
 
 /**

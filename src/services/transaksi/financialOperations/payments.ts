@@ -7,8 +7,8 @@ import { calculateMemberTotalAngsuran, getAllMembersFinancialSummary } from "@/s
  * @param anggotaId Member ID to calculate for
  * @returns Total amount of installment payments
  */
-export function calculateTotalAngsuran(anggotaId: string | number): number {
-  return calculateMemberTotalAngsuran(anggotaId.toString());
+export async function calculateTotalAngsuran(anggotaId: string | number): Promise<number> {
+  return await calculateMemberTotalAngsuran(anggotaId.toString());
 }
 
 /**
@@ -16,7 +16,7 @@ export function calculateTotalAngsuran(anggotaId: string | number): number {
  * 
  * @returns Total amount of all member installment payments
  */
-export function getTotalAllAngsuran(): number {
-  const summary = getAllMembersFinancialSummary();
+export async function getTotalAllAngsuran(): Promise<number> {
+  const summary = await getAllMembersFinancialSummary();
   return summary.totalAngsuran;
 }

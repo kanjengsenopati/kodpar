@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatCurrency } from "@/utils/formatters";
 import { getPengaturan } from "@/services/pengaturanService";
-import { calculateSHUDistribution } from "@/services/transaksi/financialOperations";
+import { calculateSHUDistribution } from "@/services/transaksiService";
 import { 
   Tooltip, 
   TooltipContent, 
@@ -121,3 +121,4 @@ export function SHUDistribution({ totalSHU }: SHUDistributionProps) {
     </Card>
   );
 }
+

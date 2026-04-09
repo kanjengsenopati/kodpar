@@ -66,6 +66,22 @@ export async function calculateMemberTotalSimpanan(anggotaId: string): Promise<n
 }
 
 /**
+ * Calculate total installments (Total Angsuran) for a member
+ */
+export async function calculateMemberTotalAngsuran(anggotaId: string): Promise<number> {
+  const summary = await calculateDetailedMemberFinancialSummary(anggotaId);
+  return summary.totalAngsuran;
+}
+
+/**
+ * Calculate total withdrawals (Total Penarikan) for a member
+ */
+export async function calculateMemberTotalPenarikan(anggotaId: string): Promise<number> {
+  const summary = await calculateDetailedMemberFinancialSummary(anggotaId);
+  return summary.totalPenarikan;
+}
+
+/**
  * Calculate detailed financial summary for a member
  */
 export async function calculateDetailedMemberFinancialSummary(anggotaId: string) {
@@ -131,6 +147,14 @@ export async function getAllMembersFinancialSummary() {
   const totalAngsuran = transaksiList
     .filter(t => t.jenis === "Angsuran" && t.status === "Sukses")
     .reduce((total, t) => total + (t.jumlah || 0), 0);
+
+  const totalSimpanan = transaksiList
+    .filter(t => t.jenis === "Simpan" && t.status === "Sukses")
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
+
+  const totalPenarikan = transaksiList
+    .filter(t => t.jenis === "Penarikan" && t.status === "Sukses")
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
   
   // Aggregate sisa pinjaman using precise member-level logic
   const uniqueAnggotaIds = [...new Set(transaksiList
@@ -144,6 +168,7 @@ export async function getAllMembersFinancialSummary() {
   return {
     totalPinjaman,
     totalAngsuran,
+    totalSimpanan: totalSimpanan - totalPenarikan,
     totalSisaPinjaman,
     totalMembers: uniqueAnggotaIds.length
   };

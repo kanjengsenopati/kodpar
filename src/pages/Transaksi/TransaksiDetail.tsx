@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft, FileText, Printer } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { getTransaksiById, getRemainingLoanAmount } from "@/services/transaksi";
+import { getTransaksiById, getRemainingLoanAmount } from "@/services/transaksiService";
 import { getAnggotaById } from "@/services/anggotaService";
 import { Anggota, Transaksi } from "@/types";
 import { Separator } from "@/components/ui/separator";

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
-import { SHUManager } from "@/services/transaksi/financialOperations/SHUManager";
+import { SHUManager } from "@/services/transaksiService";
 import { toast } from "sonner";
 
 export function MaintenanceSection() {
@@ -61,3 +61,5 @@ export function MaintenanceSection() {
     </Card>
   );
 }
+
+

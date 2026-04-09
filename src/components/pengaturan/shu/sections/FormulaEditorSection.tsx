@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Calculator, Save, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { SHUManager } from "@/services/transaksi/financialOperations/SHUManager";
+import { SHUManager } from "@/services/transaksiService";
 import { FormulaBar } from "../formula/FormulaBar";
 import { FormulaPreview } from "../formula/FormulaPreview";
 import { FormulaOperators } from "../formula-components/FormulaOperators";
@@ -257,3 +257,5 @@ export function FormulaEditorSection({
     </Card>
   );
 }
+
+

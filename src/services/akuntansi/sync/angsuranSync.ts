@@ -1,6 +1,6 @@
 import { Transaksi } from "@/types";
 import { JurnalEntry } from "@/types/akuntansi";
-import { getAllTransaksi } from "../../transaksiService";
+import { getAllTransaksi } from "../../transaksi/transaksiCore";
 import { createAngsuranJournalEntry } from "../journalCreationService";
 import { calculateAngsuranAllocation } from "../allocationService";
 import { syncAngsuranToKeuangan } from "./keuanganSync";

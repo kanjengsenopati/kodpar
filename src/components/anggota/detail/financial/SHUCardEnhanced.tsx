@@ -5,7 +5,7 @@ import { BadgeDollarSign, RefreshCw, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { SHUManager } from "@/services/transaksi/financialOperations/SHUManager";
+import { SHUManager } from "@/services/transaksiService";
 
 interface SHUCardProps {
   totalSHU: number;
@@ -83,3 +83,5 @@ export function SHUCardEnhanced({ totalSHU, anggotaId, onRefresh }: SHUCardProps
     </Card>
   );
 }
+
+

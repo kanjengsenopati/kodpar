@@ -3,14 +3,14 @@ import { getAllTransaksi } from "@/services/transaksiService";
 import { getAnggotaList } from "@/services/anggotaService";
 import { 
   getTotalAllSimpanan 
-} from "@/services/transaksi/financialOperations/simpananOperations"; 
+} from "@/services/transaksiService"; 
 import { 
   getTotalAllPinjaman,
   getTotalAllSisaPinjaman
-} from "@/services/transaksi/financialOperations/pinjamanOperations";
+} from "@/services/transaksiService";
 import { 
   getTotalAllAngsuran 
-} from "@/services/transaksi/financialOperations/payments";
+} from "@/services/transaksiService";
 import { getAnggotaBaru, getTransaksiCount, getSHUByMonth, getPenjualanByMonth } from "@/utils/dashboardUtils";
 import { calculateSHUForSamples } from "@/utils/shuUtils";
 import { Transaksi, Anggota } from "@/types";
@@ -67,13 +67,15 @@ export function useDashboardData(): DashboardData {
     totalPinjaman: number;
     totalSisaPinjaman: number;
     totalAngsuran: number;
+    shuDistribution: { id: string; name: string; shu: number }[];
   }>({
     allTransaksi: [],
     anggotaList: [],
     totalSimpanan: 0,
     totalPinjaman: 0,
     totalSisaPinjaman: 0,
-    totalAngsuran: 0
+    totalAngsuran: 0,
+    shuDistribution: []
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -87,14 +89,16 @@ export function useDashboardData(): DashboardData {
           totalSimpanan, 
           totalPinjaman, 
           totalSisaPinjaman, 
-          totalAngsuran
+          totalAngsuran,
+          shuDistribution
         ] = await Promise.all([
           getAllTransaksi(),
           getAnggotaList(),
           getTotalAllSimpanan(),
           getTotalAllPinjaman(),
           getTotalAllSisaPinjaman(),
-          getTotalAllAngsuran()
+          getTotalAllAngsuran(),
+          calculateSHUForSamples()
         ]);
 
         setData({
@@ -103,7 +107,8 @@ export function useDashboardData(): DashboardData {
           totalSimpanan,
           totalPinjaman,
           totalSisaPinjaman,
-          totalAngsuran
+          totalAngsuran,
+          shuDistribution
         });
       } catch (error) {
         console.error("Dashboard data load error:", error);
@@ -115,7 +120,15 @@ export function useDashboardData(): DashboardData {
     loadData();
   }, []);
 
-  const { allTransaksi, anggotaList, totalSimpanan, totalPinjaman, totalSisaPinjaman, totalAngsuran } = data;
+  const { 
+    allTransaksi, 
+    anggotaList, 
+    totalSimpanan, 
+    totalPinjaman, 
+    totalSisaPinjaman, 
+    totalAngsuran,
+    shuDistribution
+  } = data;
   
   // Calculate various dashboard metrics using useMemo for performance
   return useMemo(() => {
@@ -126,9 +139,6 @@ export function useDashboardData(): DashboardData {
     const recentTransaksi = [...allTransaksi]
       .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
       .slice(0, 5);
-    
-    // Calculate SHU distribution using sample anggota IDs (now properly awaited)
-    const shuDistribution = await calculateSHUForSamples();
     
     // Prepare productivity data
     const productivityData = {
@@ -169,3 +179,5 @@ export function useDashboardData(): DashboardData {
     };
   }, [data, isLoading]);
 }
+
+

@@ -6,7 +6,7 @@ import {
   getOverdueLoans,
   getUpcomingDueLoans,
   calculatePenalty
-} from "@/services/transaksi";
+} from "@/services/transaksiService";
 
 import { useAnggotaRealTimeSync } from "@/hooks/useAnggotaRealTimeSync";
 

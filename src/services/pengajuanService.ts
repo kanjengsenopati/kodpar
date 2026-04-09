@@ -2,7 +2,7 @@ import { Pengajuan, PersyaratanDokumen } from "@/types";
 import { db } from "@/db/db";
 import { getAnggotaById } from "./anggotaService";
 import { createTransaksi } from "./transaksiService";
-import { calculateTotalSimpanan } from "./transaksi/financialOperations";
+import { calculateTotalSimpanan } from "./transaksiService";
 import { calculateLoanDetails, generateLoanDescription } from "../utils/loanCalculations";
 import { ensureAutoDeductionCategories } from "./keuangan/baseService";
 import { centralizedSync } from "./sync/centralizedSyncService";
@@ -269,3 +269,5 @@ export async function getPengajuanByJenis(jenis: "Simpan" | "Pinjam" | "Penarika
   
   return data;
 }
+
+

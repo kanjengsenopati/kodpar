@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Transaksi } from "@/types";
-import { getRemainingLoanAmount } from "@/services/transaksi";
+import { getRemainingLoanAmount } from "@/services/transaksiService";
 import { TransaksiReceipt } from "./TransaksiReceipt";
 import { ReceiptActions } from "./ReceiptActions";
 import { FileText } from "lucide-react";

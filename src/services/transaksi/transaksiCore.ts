@@ -4,7 +4,6 @@ import { initialTransaksi } from "./initialData";
 import { generateTransaksiId } from "./idGenerator";
 import { getAnggotaById } from "@/services/anggotaService";
 import { getJenisByType } from "@/services/jenisService";
-import { syncTransactionToAccounting } from "@/services/akuntansi/accountingSyncService";
 import { getCurrentUser } from "@/services/auth/sessionManagement";
 
 /**

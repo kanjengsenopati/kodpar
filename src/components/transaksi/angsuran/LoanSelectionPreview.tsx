@@ -11,7 +11,7 @@ import {
   calculateJatuhTempo 
 } from "@/services/transaksiService";
 import { getPengaturan } from "@/services/pengaturanService";
-import { getLoanInterestRate } from "@/services/transaksi/loanOperations";
+import { getLoanInterestRate } from "@/services/transaksiService";
 import { calculateAngsuranAllocation } from "@/services/akuntansi/accountingSyncService";
 
 interface LoanSelectionPreviewProps {
@@ -233,3 +233,4 @@ export function LoanSelectionPreview({
     </Card>
   );
 }
+

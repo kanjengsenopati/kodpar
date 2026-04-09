@@ -1,8 +1,10 @@
+
 import { 
   calculateSHU as calculateSHUFromFinancialOperations,
   calculateSHUDistribution,
-  resetAllSHUValues
-} from "./transaksi/financialOperations";
+  resetAllSHUValues,
+  refreshAllSHUCalculations
+} from "./transaksi/financialOperations/shuOperations";
 
 import { 
   getAllTransaksi, 
@@ -32,44 +34,104 @@ import {
 } from "./transaksi/crudOperations";
 
 import {
-  calculateTotalSimpanan,
-  calculateTotalPinjaman,
-  calculateTotalAngsuran
-} from "./transaksi/calculationWrappers";
+  calculateMemberTotalSimpanan,
+  calculateMemberRemainingLoan,
+  calculateMemberTotalAngsuran,
+  calculateDetailedMemberFinancialSummary,
+  getMemberFinancialOverview,
+  getAllMembersFinancialSummary,
+  calculateSpecificLoanRemainingBalance
+} from "./financialCalculations";
 
-// Re-export all functions to maintain the same API
-export {
-  // Core functions
+import {
+  calculateTotalSimpanan as calcTotalSimpanan,
+  getTotalAllSimpanan
+} from "./transaksi/financialOperations/savingsAndLoans";
+
+import {
+  calculateTotalAngsuran as calcTotalAngsuran,
+  getTotalAllAngsuran
+} from "./transaksi/financialOperations/payments";
+
+import { SHUManager } from "./transaksi/financialOperations/SHUManager";
+
+// Re-export Constants
+export { KATEGORI_SIMPANAN, KATEGORI_PINJAMAN, KATEGORI_LAINNYA } from './transaksi/categories';
+
+/**
+ * Stabilized Transaction Service Entry Point
+ * Bypasses all barrel files to prevent Rollup circular dependency tracing errors.
+ */
+export const transaksiService = {
+  // Core
   getAllTransaksi,
   getTransaksiByAnggotaId,
   getTransaksiById,
   getAvailableKategori,
   isValidKategori,
   getTransaksiByTypeAndCategory,
+  generateId: generateTransaksiId,
   
-  // CRUD operations
+  // CRUD
+  create: createTransaksi,
+  update: updateTransaksi,
+  delete: deleteTransaksi,
+  resetData: resetTransaksiData,
+  
+  // Loans
+  getRemainingLoanAmount,
+  getOverdueLoans,
+  getUpcomingDueLoans,
+  calculatePenalty,
+  calculateJatuhTempo,
+  
+  // Financial Calculations (Aggregate)
+  calculateTotalSimpanan: calculateMemberTotalSimpanan,
+  calculateTotalPinjaman: calculateMemberRemainingLoan,
+  calculateTotalAngsuran: calculateMemberTotalAngsuran,
+  getMemberFinancialOverview,
+  getDetailedSummary: calculateDetailedMemberFinancialSummary,
+  getAllMembersSummary: getAllMembersFinancialSummary,
+  calculateSpecificLoanRemainingBalance,
+  
+  // SHU
+  calculateSHU: calculateSHUFromFinancialOperations,
+  calculateSHUDistribution,
+  resetAllSHUValues,
+  refreshAllSHUCalculations,
+  shuManager: SHUManager
+};
+
+// Also export as individual functions for backward compatibility with components using named imports
+export { 
+  getAllTransaksi, 
+  getTransaksiByAnggotaId, 
+  getTransaksiById, 
+  getAvailableKategori,
+  isValidKategori,
+  getTransaksiByTypeAndCategory,
+  generateTransaksiId,
   createTransaksi,
   updateTransaksi,
   deleteTransaksi,
   resetTransaksiData,
-  
-  // Loan operations
   getRemainingLoanAmount,
-  calculateJatuhTempo,
-  calculatePenalty,
   getOverdueLoans,
   getUpcomingDueLoans,
-  
-  // ID generation
-  generateTransaksiId,
-  
-  // Financial operations
+  calculatePenalty,
+  calculateJatuhTempo,
+  calculateMemberTotalSimpanan as calculateTotalSimpanan,
+  calculateMemberRemainingLoan as calculateTotalPinjaman,
+  calculateMemberTotalAngsuran as calculateTotalAngsuran,
+  getMemberFinancialOverview,
+  calculateDetailedMemberFinancialSummary as getDetailedMemberFinancialSummary,
+  getAllMembersFinancialSummary as getAllMembersSummary,
+  calculateSpecificLoanRemainingBalance,
   calculateSHUFromFinancialOperations as calculateSHU,
   calculateSHUDistribution,
   resetAllSHUValues,
-  
-  // Calculation wrappers
-  calculateTotalSimpanan,
-  calculateTotalPinjaman,
-  calculateTotalAngsuran
+  refreshAllSHUCalculations,
+  SHUManager
 };
+
+

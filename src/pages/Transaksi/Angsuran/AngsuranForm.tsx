@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
 import { getAllAnggota } from "@/services/anggotaService";
-import { getAnggotaWithActiveLoans } from "@/services/transaksi/loanOperations";
+import { getAnggotaWithActiveLoans } from "@/services/transaksiService";
 import { AngsuranForm } from "@/components/transaksi/AngsuranForm";
 
 export default function AngsuranFormPage() {
@@ -60,3 +60,4 @@ export default function AngsuranFormPage() {
     </Layout>
   );
 }
+
