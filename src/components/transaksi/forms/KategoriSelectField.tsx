@@ -1,5 +1,4 @@
-
-import { Label } from "@/components/ui/label";
+import { Text } from "@/components/ui/text";
 import {
   Select,
   SelectContent,
@@ -8,18 +7,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface KategoriOption {
-  id: string;
-  nama: string;
-  keterangan?: string;
-}
-
 interface KategoriSelectFieldProps {
-  kategoriList: KategoriOption[];
+  kategoriList: any[];
   value: string;
   onChange: (value: string) => void;
-  label?: string;
-  placeholder?: string;
   required?: boolean;
 }
 
@@ -27,26 +18,23 @@ export function KategoriSelectField({
   kategoriList, 
   value, 
   onChange, 
-  label = "Kategori Simpanan", 
-  placeholder = "Pilih kategori simpanan",
   required = true 
 }: KategoriSelectFieldProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="kategori">{label} {required && "*"}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+      <Text.Label id="label-kategori">Kategori Simpanan {required && "*"}</Text.Label>
+      <Select
+        value={value}
+        onValueChange={onChange}
+        required={required}
+      >
+        <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50">
+          <SelectValue placeholder="-- Pilih Kategori --" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="rounded-xl">
           {kategoriList.map((kategori) => (
-            <SelectItem key={kategori.id} value={kategori.nama}>
+            <SelectItem key={kategori.id} value={kategori.id}>
               {kategori.nama}
-              {kategori.keterangan && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  - {kategori.keterangan}
-                </span>
-              )}
             </SelectItem>
           ))}
         </SelectContent>

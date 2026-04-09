@@ -1,8 +1,9 @@
 
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { 
   AlertTriangle, 
   RotateCcw,
@@ -25,12 +26,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { resetAllMonetaryValues } from "@/services/resetDataService";
 import { downloadBackup, restoreFromBackup, completeReset } from "@/services/backupResetService";
 import { ResetDataSettings } from "@/components/pengaturan/ResetDataSettings";
+import { cn } from "@/lib/utils";
 
 export default function ResetData() {
-  const [isResetting, setIsResetting] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isCompleteReset, setIsCompleteReset] = useState(false);
@@ -96,12 +96,17 @@ export default function ResetData() {
   const handleCompleteReset = async () => {
     setIsCompleteReset(true);
     try {
-      await completeReset();
-      toast({
-        title: "Reset Lengkap Berhasil",
-        description: "Semua data, cache, dan cookies telah dihapus. Halaman akan dimuat ulang.",
-      });
-      setTimeout(() => window.location.reload(), 2000);
+      // Direct call to industrial reset in business service
+      const result = await quickResetPresets.factoryReset();
+      if (result.success) {
+        toast({
+          title: "Reset Lengkap Berhasil",
+          description: "Semua data, database, dan cache telah dihapus secara permanen.",
+        });
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error) {
       console.error("Error during complete reset:", error);
       toast({
@@ -114,127 +119,116 @@ export default function ResetData() {
     }
   };
 
+  const cardBaseStyle = "rounded-[24px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden";
+
   return (
     <Layout pageTitle="Reset Data">
-      <div className="container mx-auto py-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-koperasi-dark">Reset Data & Backup</h1>
-            <p className="text-muted-foreground">
-              Kelola data koperasi dengan fitur reset, backup, dan restore
-            </p>
-          </div>
+      <div className="px-5 py-6 space-y-6 max-w-lg mx-auto pb-24">
+        {/* Header Section */}
+        <div className="mb-2">
+          <Text.H1>Reset & Backup</Text.H1>
+          <Text.Body className="text-slate-500 mt-1">
+            Kelola integritas data aplikasi Anda secara mandiri.
+          </Text.Body>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
+        <div className="grid gap-4 md:grid-cols-2">
           {/* Backup Data */}
-          <Card className="border-blue-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-600">
-                <Download className="h-5 w-5" />
-                Backup Data
-              </CardTitle>
+          <Card className={cardBaseStyle}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Download size={18} className="text-blue-600" />
+                <Text.H2>Backup</Text.H2>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Buat cadangan semua data untuk keamanan sebelum melakukan reset.
-              </p>
+            <CardContent className="pt-2">
+              <Text.Caption className="block mb-4 not-italic">
+                Amankan data ke file JSON lokal.
+              </Text.Caption>
               <Button 
                 onClick={handleDownloadBackup}
                 disabled={isBackingUp}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 rounded-full h-10 shadow-md"
               >
-                <Download className="h-4 w-4 mr-2" />
-                {isBackingUp ? "Membuat Backup..." : "Download Backup"}
+                <Download size={16} className="mr-2" />
+                {isBackingUp ? "Backup..." : "Download"}
               </Button>
             </CardContent>
           </Card>
 
           {/* Restore Data */}
-          <Card className="border-green-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-600">
-                <Upload className="h-5 w-5" />
-                Restore Data
-              </CardTitle>
+          <Card className={cardBaseStyle}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Upload size={18} className="text-emerald-600" />
+                <Text.H2>Restore</Text.H2>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Kembalikan data dari file backup yang telah disimpan sebelumnya.
-              </p>
+            <CardContent className="pt-2">
+              <Text.Caption className="block mb-4 not-italic">
+                Kembalikan data dari backup.
+              </Text.Caption>
               <Button 
                 onClick={handleRestoreFromFile}
                 disabled={isRestoring}
                 variant="outline"
-                className="w-full border-green-600 text-green-600 hover:bg-green-50"
+                className="w-full border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-full h-10"
               >
-                <Upload className="h-4 w-4 mr-2" />
-                {isRestoring ? "Mengembalikan..." : "Pilih File Backup"}
+                <Upload size={16} className="mr-2" />
+                {isRestoring ? "Restore..." : "Pilih File"}
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Reset Data Component */}
-        <ResetDataSettings />
+        {/* Main Reset Data Settings Module */}
+        <div className="space-y-2">
+          <Text.Label className="px-1">Konfigurasi Reset Selektif</Text.Label>
+          <ResetDataSettings />
+        </div>
 
         {/* Complete System Reset */}
-        <Card className="border-red-200 mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
-              <HardDrive className="h-5 w-5" />
-              Reset Sistem Lengkap
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-red-700">
-                <strong>PERINGATAN KERAS:</strong> Reset sistem lengkap akan menghapus 
-                SEMUA data aplikasi, cache browser, cookies, dan pengaturan. 
-                Aplikasi akan kembali ke kondisi awal seperti baru diinstall.
-              </div>
+        <Card className={cn(cardBaseStyle, "bg-red-50 border-red-100")}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <HardDrive size={18} className="text-red-600" />
+              <Text.H2 className="text-red-700">Zona Bahaya</Text.H2>
             </div>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-2">
+            <Text.Body className="text-red-600 text-xs leading-relaxed font-semibold">
+              Reset sistem lengkap akan menghapus database IndexedDB secara total. Aplikasi akan kembali ke kondisi awal (kosong).
+            </Text.Body>
             
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button 
                   variant="destructive" 
-                  className="w-full"
+                  className="w-full rounded-full h-12 bg-red-600 hover:bg-red-700 shadow-lg"
                   disabled={isCompleteReset}
                 >
-                  <HardDrive className="h-4 w-4 mr-2" />
-                  {isCompleteReset ? "Mereset Sistem..." : "Reset Sistem Lengkap"}
+                  <Trash2 size={18} className="mr-2" />
+                  {isCompleteReset ? "Mereset..." : "Reset Sistem Lengkap"}
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="rounded-[24px]">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-                    <AlertTriangle className="h-5 w-5" />
-                    Konfirmasi Reset Sistem Lengkap
+                    <AlertTriangle size={20} />
+                    <Text.H2 className="text-red-600">Konfirmasi Hapus Total</Text.H2>
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    <strong>PERINGATAN: Tindakan ini SANGAT BERBAHAYA dan TIDAK DAPAT DIBATALKAN!</strong>
-                    <br /><br />
-                    Reset sistem lengkap akan:
-                    <ul className="list-disc list-inside mt-2 space-y-1">
-                      <li>Menghapus SEMUA data aplikasi</li>
-                      <li>Membersihkan cache browser</li>
-                      <li>Menghapus semua cookies</li>
-                      <li>Mereset aplikasi ke kondisi awal</li>
-                      <li>Menghapus semua pengaturan pengguna</li>
-                    </ul>
-                    <br />
-                    <strong>Pastikan Anda telah membuat backup sebelum melanjutkan!</strong>
+                    Tindakan ini akan menghapus <strong>IndexedDB (Dexie)</strong> dan LocalStorage. 
+                    Anda akan kehilangan SEMUA data anggota dan transaksi selamanya.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogCancel className="rounded-full">Batal</AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={handleCompleteReset}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 rounded-full"
                   >
-                    Ya, Reset Sistem Lengkap
+                    Ya, Hapus Semua Data
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -242,35 +236,13 @@ export default function ResetData() {
           </CardContent>
         </Card>
 
-        {/* Information */}
-        <Card className="border-gray-200 mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-600">
-              <Database className="h-5 w-5" />
-              Informasi Penting
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <RefreshCw className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <p><strong>Reset Data Transaksi:</strong> Menghapus data transaksi Simpan/Pinjam/Angsuran dan mereset nilai nominal ke null</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Download className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <p><strong>Backup:</strong> Selalu buat backup sebelum melakukan operasi reset untuk keamanan data</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Upload className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <p><strong>Restore:</strong> Gunakan file backup JSON untuk mengembalikan data yang telah dihapus</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <HardDrive className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <p><strong>Reset Lengkap:</strong> Hanya gunakan jika Anda benar-benar ingin menghapus semua data dan memulai dari awal</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Informational Guidance */}
+        <div className="flex items-center gap-2 px-2">
+          <RefreshCw size={14} className="text-slate-400 animate-spin-slow" />
+          <Text.Caption className="text-[11px] font-semibold text-slate-400 not-italic uppercase tracking-wider">
+            Sistem Data Terenkripsi Lokal
+          </Text.Caption>
+        </div>
       </div>
     </Layout>
   );

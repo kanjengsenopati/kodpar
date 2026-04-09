@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calculator } from "lucide-react";
+import { Calculator, Zap } from "lucide-react";
+import { Text } from "@/components/ui/text";
 import { formatCurrency } from "@/utils/formatters";
 import { updateTransaksi, createTransaksi } from "@/services/transaksiService";
 import { Transaksi } from "@/types";
@@ -42,6 +43,9 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
     nominalJasa: number;
     nominalPokok: number;
   } | null>(null);
+
+  // Constants for Koperasi Style
+  const cardStyle = "rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none bg-white";
 
   // Calculate allocation preview when amount or loan changes
   useEffect(() => {
@@ -174,7 +178,6 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
 
   const handleAmountSuggestion = (amount: number) => {
     setSuggestedAmount(amount);
-    // Don't automatically set the amount, just store the suggestion
   };
 
   const applySuggestedAmount = () => {
@@ -184,37 +187,46 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
-          {initialData ? "Edit Angsuran" : "Form Angsuran"}
-        </CardTitle>
+    <Card className={cardStyle}>
+      <CardHeader className="pb-2 pt-6 px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calculator className="h-5 w-5 text-blue-600" />
+            <Text.H2>
+              {initialData ? "Edit Angsuran" : "Form Angsuran"}
+            </Text.H2>
+          </div>
+          <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">
+            <Zap size={12} />
+            Auto-Sync Akuntansi
+          </div>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="tanggal">Tanggal *</Label>
+              <Text.Label>Tanggal Transaksi</Text.Label>
               <Input
                 id="tanggal"
                 type="date"
                 value={formData.tanggal}
                 onChange={(e) => handleInputChange("tanggal", e.target.value)}
                 required
+                className="rounded-2xl border-slate-100 bg-slate-50 focus:bg-white transition-all"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="anggota">Anggota *</Label>
+              <Text.Label>Pilih Anggota</Text.Label>
               <Select
                 value={formData.anggotaId}
                 onValueChange={(value) => handleInputChange("anggotaId", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="rounded-2xl border-slate-100 bg-slate-50">
                   <SelectValue placeholder="Pilih anggota" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl">
                   {Array.isArray(anggotaList) && anggotaList.map((anggota: any) => (
                     <SelectItem key={anggota.id} value={anggota.id}>
                       {anggota.nama} - {anggota.id}
@@ -226,17 +238,19 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           </div>
 
           {formData.anggotaId && (
-            <LoanSelectionPreview
-              anggotaId={formData.anggotaId}
-              onLoanSelect={setSelectedLoanId}
-              onAmountChange={handleAmountSuggestion}
-              selectedLoanId={selectedLoanId}
-            />
+            <div className="bg-slate-50/50 p-4 rounded-[24px] border border-slate-100/50">
+              <LoanSelectionPreview
+                anggotaId={formData.anggotaId}
+                onLoanSelect={setSelectedLoanId}
+                onAmountChange={handleAmountSuggestion}
+                selectedLoanId={selectedLoanId}
+              />
+            </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="jumlah">Jumlah Angsuran *</Label>
+              <Text.Label>Jumlah Angsuran</Text.Label>
               <div className="space-y-2">
                 <Input
                   id="jumlah"
@@ -246,49 +260,53 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
                   value={formData.jumlah}
                   onChange={(e) => handleInputChange("jumlah", e.target.value)}
                   required
+                  className="rounded-xl border-slate-100 bg-slate-50 focus:bg-white transition-all text-lg font-semibold"
                 />
-                {suggestedAmount > 0 && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">
-                      Saran: {formatCurrency(suggestedAmount)}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={applySuggestedAmount}
-                    >
-                      Gunakan
-                    </Button>
-                  </div>
-                )}
-                {formData.jumlah && (
-                  <p className="text-sm text-muted-foreground">
-                    {formatCurrency(parseInt(formData.jumlah || "0"))}
-                  </p>
-                )}
+                
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {suggestedAmount > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <Text.Caption className="not-italic text-slate-500">
+                        Saran: {formatCurrency(suggestedAmount)}
+                      </Text.Caption>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={applySuggestedAmount}
+                        className="h-7 text-[10px] font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full"
+                      >
+                        Gunakan
+                      </Button>
+                    </div>
+                  ) : <div></div>}
+                  
+                  {formData.jumlah && (
+                    <Text.Amount className="text-sm">
+                      {formatCurrency(parseInt(formData.jumlah || "0"))}
+                    </Text.Amount>
+                  )}
+                </div>
                 
                 {/* Enhanced Allocation Preview */}
                 {allocationPreview && (
-                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-sm font-medium text-blue-800 mb-2">Alokasi Pembayaran Bulanan:</p>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Jasa Bulanan (Prioritas):</span>
-                        <span className="font-medium text-green-600">{formatCurrency(allocationPreview.nominalJasa)}</span>
+                  <div className="mt-4 p-4 bg-white border border-slate-100 rounded-[18px] shadow-sm">
+                    <Text.Label className="block mb-3 text-slate-500">Alokasi Pembayaran Bulanan</Text.Label>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Text.Body className="text-slate-500">Jasa Bulanan (Prioritas)</Text.Body>
+                        <Text.Body className="font-bold text-emerald-600">{formatCurrency(allocationPreview.nominalJasa)}</Text.Body>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Pokok (Sisa):</span>
-                        <span className="font-medium text-blue-600">{formatCurrency(allocationPreview.nominalPokok)}</span>
+                      <div className="flex justify-between items-center">
+                        <Text.Body className="text-slate-500">Pokok (Sisa)</Text.Body>
+                        <Text.Body className="font-bold text-blue-600">{formatCurrency(allocationPreview.nominalPokok)}</Text.Body>
                       </div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-blue-200">
-                      <p className="text-xs text-blue-600">
-                        <strong>Prioritas:</strong> Jasa bulanan dipenuhi terlebih dahulu → Pendapatan Jasa (Akuntansi)
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        <strong>Sisa:</strong> Dialokasikan ke pokok → Mengurangi Piutang Pinjaman (Akuntansi)
-                      </p>
+                    <div className="mt-3 pt-3 border-t border-slate-50 flex gap-2">
+                      <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5" />
+                      <Text.Caption className="leading-tight">
+                        Sistem secara otomatis memecah pendapatan jasa dan pengurangan piutang pada laporan keuangan.
+                      </Text.Caption>
                     </div>
                   </div>
                 )}
@@ -296,24 +314,27 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="keterangan">Keterangan</Label>
-              <Textarea
-                id="keterangan"
-                placeholder="Keterangan angsuran (opsional)"
-                value={formData.keterangan}
-                onChange={(e) => handleInputChange("keterangan", e.target.value)}
-                rows={3}
-              />
+              <Text.Label>Keterangan Tambahan</Text.Label>
+              <div className="h-full">
+                <Textarea
+                  id="keterangan"
+                  placeholder="Contoh: Pembayaran angsuran ke-5 via transfer"
+                  value={formData.keterangan}
+                  onChange={(e) => handleInputChange("keterangan", e.target.value)}
+                  rows={4}
+                  className="rounded-xl border-slate-100 bg-slate-50 focus:bg-white transition-all resize-none"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="pt-4">
             <Button 
               type="submit" 
-              className="flex-1" 
+              className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100" 
               disabled={isSubmitting || !selectedLoanId || !formData.jumlah || parseInt(formData.jumlah || "0") <= 0}
             >
-              {isSubmitting ? "Menyimpan..." : initialData ? "Update Angsuran" : "Simpan Angsuran"}
+              {isSubmitting ? "Menyimpan Transaksi..." : initialData ? "Update Angsuran" : "Konfirmasi & Simpan Angsuran"}
             </Button>
           </div>
         </form>

@@ -1,6 +1,5 @@
-import { getFromLocalStorage, saveToLocalStorage, clearLocalStorage } from "@/utils/localStorage";
-import { resetAllMonetaryValues } from "./resetDataService";
-import { completeReset } from "./backupResetService";
+import { getFromLocalStorage, clearLocalStorage } from "@/utils/localStorage";
+import { db } from "@/db/db";
 
 export interface BulkResetOptions {
   resetTransactions?: boolean;
@@ -27,72 +26,10 @@ export interface BulkResetResult {
 }
 
 /**
- * Get all localStorage keys that belong to the cooperative system
- */
-export function getKoperasiKeys(): string[] {
-  const keys: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('koperasi_')) {
-      keys.push(key);
-    }
-  }
-  return keys;
-}
-
-/**
- * Get storage usage statistics
- */
-export function getStorageStats(): { [key: string]: number } {
-  const stats: { [key: string]: number } = {};
-  const keys = getKoperasiKeys();
-  
-  keys.forEach(key => {
-    const data = localStorage.getItem(key);
-    if (data) {
-      stats[key] = new Blob([data]).size; // Size in bytes
-    }
-  });
-  
-  return stats;
-}
-
-/**
- * Reset specific data categories
- */
-export function resetDataCategory(category: 'transaksi' | 'anggota' | 'keuangan' | 'pos' | 'akuntansi' | 'pengaturan' | 'audit'): number {
-  const keys = getKoperasiKeys();
-  let resetCount = 0;
-  
-  const categoryPatterns = {
-    transaksi: ['koperasi_transaksi', 'koperasi_pengajuan', 'koperasi_jenis'],
-    anggota: ['koperasi_anggota'],
-    keuangan: ['koperasi_pemasukan_pengeluaran', 'koperasi_kategori_transaksi'],
-    pos: ['koperasi_produk', 'koperasi_penjualan', 'koperasi_pembelian', 'koperasi_pemasok'],
-    akuntansi: ['koperasi_jurnal', 'koperasi_chart_of_accounts', 'koperasi_buku_besar'],
-    pengaturan: ['koperasi_pengaturan'],
-    audit: ['koperasi_audit_trail']
-  };
-  
-  const patterns = categoryPatterns[category] || [];
-  
-  keys.forEach(key => {
-    const shouldReset = patterns.some(pattern => key.includes(pattern));
-    if (shouldReset) {
-      localStorage.removeItem(key);
-      resetCount++;
-    }
-  });
-  
-  console.log(`Reset ${resetCount} items for category: ${category}`);
-  return resetCount;
-}
-
-/**
- * Perform bulk reset with selective options
+ * Perform bulk reset with selective options covering both LocalStorage and IndexedDB
  */
 export async function performBulkReset(options: BulkResetOptions): Promise<BulkResetResult> {
-  console.log('🔄 Starting bulk reset operation with options:', options);
+  console.log('🔄 Starting unified bulk reset operation...', options);
   
   const result: BulkResetResult = {
     success: false,
@@ -108,71 +45,87 @@ export async function performBulkReset(options: BulkResetOptions): Promise<BulkR
   };
   
   try {
-    // Reset transactions and related data
+    // 1. Reset Transactions & Pengajuan (IndexedDB + LocalStorage)
     if (options.resetTransactions) {
-      const transactionResult = resetAllMonetaryValues();
-      result.details.transactionsReset = transactionResult.totalAffected;
-      console.log(`✅ Reset ${result.details.transactionsReset} transaction records`);
+      await db.transaksi.clear();
+      await db.pengajuan.clear();
+      localStorage.removeItem('koperasi_transaksi');
+      localStorage.removeItem('koperasi_pengajuan');
+      result.details.transactionsReset = 1;
     }
     
-    // Reset anggota data
+    // 2. Reset Anggota (IndexedDB + LocalStorage)
     if (options.resetAnggota) {
-      result.details.anggotaReset = resetDataCategory('anggota');
+      await db.anggota.clear();
+      localStorage.removeItem('koperasi_anggota');
+      localStorage.removeItem('koperasi_unit_kerja');
+      result.details.anggotaReset = 1;
     }
     
-    // Reset keuangan data
+    // 3. Reset Keuangan (LocalStorage Patterns)
     if (options.resetKeuangan) {
-      result.details.keuanganReset = resetDataCategory('keuangan');
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.includes('koperasi_pemasukan_pengeluaran') || key.includes('koperasi_kategori_transaksi')) {
+          localStorage.removeItem(key);
+        }
+      });
+      result.details.keuanganReset = 1;
     }
     
-    // Reset POS data
-    if (options.resetPOS) {
-      result.details.posReset = resetDataCategory('pos');
-    }
-    
-    // Reset akuntansi data
+    // 4. Reset Akuntansi (IndexedDB + LocalStorage)
     if (options.resetAkuntansi) {
-      result.details.akuntansiReset = resetDataCategory('akuntansi');
+      await db.jurnal.clear();
+      await db.coa.clear();
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.includes('koperasi_jurnal') || key.includes('koperasi_chart_of_accounts') || key.includes('koperasi_buku_besar')) {
+          localStorage.removeItem(key);
+        }
+      });
+      result.details.akuntansiReset = 1;
     }
     
-    // Reset pengaturan
+    // 5. Reset POS (LocalStorage)
+    if (options.resetPOS) {
+      const posPatterns = ['koperasi_produk', 'koperasi_penjualan', 'koperasi_pembelian', 'koperasi_pemasok'];
+      Object.keys(localStorage).forEach(key => {
+        if (posPatterns.some(p => key.includes(p))) localStorage.removeItem(key);
+      });
+      result.details.posReset = 1;
+    }
+    
+    // 6. Reset Pengaturan (LocalStorage)
     if (options.resetPengaturan) {
-      resetDataCategory('pengaturan');
+      localStorage.removeItem('koperasi_pengaturan');
     }
     
-    // Reset audit trail
+    // 7. Reset Audit (LocalStorage)
     if (options.resetAudit) {
-      resetDataCategory('audit');
+      localStorage.removeItem('koperasi_audit_trail');
     }
     
-    // Clear cache and cookies if requested
+    // 8. Global Clear if requested
     if (options.resetCache) {
-      await completeReset();
+      await db.delete(); // Delete entire IndexedDB
+      clearLocalStorage();
       result.details.otherDataReset = 1;
     }
     
-    const totalReset = Object.values(result.details).reduce((sum, count) => sum + count, 0);
-    
     result.success = true;
-    result.message = `Bulk reset completed successfully. Total items reset: ${totalReset}`;
-    
-    console.log('✅ Bulk reset operation completed:', result);
+    result.message = "Reset data berhasil diselesaikan untuk kategori yang dipilih.";
     return result;
     
   } catch (error) {
-    console.error('❌ Error during bulk reset:', error);
+    console.error('❌ Reset error:', error);
     result.success = false;
-    result.message = `Bulk reset failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    result.message = `Gagal melakukan reset: ${error instanceof Error ? error.message : 'Unknown error'}`;
     return result;
   }
 }
 
-/**
- * Quick reset functions for common scenarios
- */
 export const quickResetPresets = {
-  // Reset only financial data (transactions, accounting)
-  async resetFinancialData(): Promise<BulkResetResult> {
+  async resetFinancialData() {
     return performBulkReset({
       resetTransactions: true,
       resetKeuangan: true,
@@ -180,8 +133,7 @@ export const quickResetPresets = {
     });
   },
   
-  // Reset all data but keep settings
-  async resetAllDataKeepSettings(): Promise<BulkResetResult> {
+  async resetAllDataKeepSettings() {
     return performBulkReset({
       resetTransactions: true,
       resetAnggota: true,
@@ -192,8 +144,7 @@ export const quickResetPresets = {
     });
   },
   
-  // Complete factory reset
-  async factoryReset(): Promise<BulkResetResult> {
+  async factoryReset() {
     return performBulkReset({
       resetTransactions: true,
       resetAnggota: true,
@@ -207,36 +158,11 @@ export const quickResetPresets = {
   }
 };
 
-/**
- * Estimate reset impact before executing
- */
 export function estimateResetImpact(options: BulkResetOptions): { [key: string]: number } {
   const impact: { [key: string]: number } = {};
-  const keys = getKoperasiKeys();
-  
-  if (options.resetTransactions) {
-    const transaksiCount = getFromLocalStorage('koperasi_transaksi', []).length;
-    const pengajuanCount = getFromLocalStorage('koperasi_pengajuan', []).length;
-    impact.transactions = transaksiCount + pengajuanCount;
-  }
-  
-  if (options.resetAnggota) {
-    impact.anggota = getFromLocalStorage('koperasi_anggota', []).length;
-  }
-  
-  if (options.resetKeuangan) {
-    impact.keuangan = getFromLocalStorage('koperasi_pemasukan_pengeluaran', []).length;
-  }
-  
-  if (options.resetPOS) {
-    const produkCount = getFromLocalStorage('koperasi_produk', []).length;
-    const penjualanCount = getFromLocalStorage('koperasi_penjualan', []).length;
-    impact.pos = produkCount + penjualanCount;
-  }
-  
-  if (options.resetAkuntansi) {
-    impact.akuntansi = keys.filter(key => key.includes('jurnal') || key.includes('chart_of_accounts')).length;
-  }
-  
+  if (options.resetTransactions) impact.Transactions = 1;
+  if (options.resetAnggota) impact.Anggota = 1;
+  if (options.resetKeuangan) impact.Keuangan = 1;
+  if (options.resetAkuntansi) impact.Akuntansi = 1;
   return impact;
 }

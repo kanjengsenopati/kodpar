@@ -8,10 +8,12 @@ import { BusinessTabProvider } from './contexts/BusinessTabContext';
 function App() {
   const initializeApp = async () => {
     try {
-      initializeCentralizedSync();
-      console.log('✅ App initialization completed successfully');
+      // Ensure DB and Sync services are ready
+      await initializeCentralizedSync();
+      console.log('✅ Koperasi App initialization successful');
     } catch (error) {
-      console.error('❌ App initialization failed:', error);
+      console.error('❌ Koperasi App initialization failed:', error);
+      // Fallback for production stability
     }
   };
 

@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { PiggyBank, Zap } from "lucide-react";
 import { getJenisByType } from "@/services/jenisService";
 import { Transaksi } from "@/types";
 import { JenisSimpanan } from "@/types/jenis";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useSimpananFormValidation } from "@/hooks/useSimpananFormValidation";
 import { submitSimpananForm } from "@/services/simpananSubmissionService";
 
@@ -37,6 +38,9 @@ export function SimpananForm({ anggotaList, initialData, onSuccess }: SimpananFo
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Constants for Koperasi Style
+  const cardStyle = "rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none bg-white overflow-hidden";
+
   // Get available simpanan categories from Jenis Simpanan
   const jenisSimpanan = getJenisByType("Simpanan") as JenisSimpanan[];
   const availableKategori = jenisSimpanan
@@ -57,15 +61,15 @@ export function SimpananForm({ anggotaList, initialData, onSuccess }: SimpananFo
     setIsSubmitting(true);
 
     try {
-      const result = submitSimpananForm(formData, initialData);
+      const result = await submitSimpananForm(formData, initialData);
 
       if (result.success) {
         const isUpdate = !!initialData;
         const kategori = formData.kategori;
         
         toast({
-          title: `✅ Simpanan berhasil ${isUpdate ? 'diperbarui' : 'disimpan'} & Auto-Sync ke Akuntansi`,
-          description: `${isUpdate ? 'Data' : ''} Simpanan ${kategori} berhasil ${isUpdate ? 'diperbarui' : 'disimpan'} dan otomatis tersinkronisasi ke Jurnal Umum`,
+          title: `✅ Simpanan berhasil ${isUpdate ? 'diperbarui' : 'disimpan'}`,
+          description: `Data simpanan ${kategori} telah disinkronkan ke Jurnal Umum secara real-time.`,
         });
         
         onSuccess();
@@ -96,18 +100,22 @@ export function SimpananForm({ anggotaList, initialData, onSuccess }: SimpananFo
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <PiggyBank className="h-5 w-5" />
-          {initialData ? "Edit Simpanan" : "Form Simpanan"}
-          <div className="flex items-center gap-1 text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full">
-            <Zap className="h-3 w-3" />
+    <Card className={cardStyle}>
+      <CardHeader className="pb-2 pt-6 px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <PiggyBank className="h-5 w-5 text-emerald-600" />
+            <Text.H2>
+              {initialData ? "Edit Simpanan" : "Form Simpanan"}
+            </Text.H2>
+          </div>
+          <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
+            <Zap size={12} />
             Auto-Sync Akuntansi
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <DateField
@@ -138,9 +146,13 @@ export function SimpananForm({ anggotaList, initialData, onSuccess }: SimpananFo
             />
           </div>
 
-          <div className="flex gap-4 pt-4">
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
-              {isSubmitting ? "Menyimpan..." : initialData ? "Update Simpanan" : "Simpan Simpanan"}
+          <div className="pt-4">
+            <Button 
+              type="submit" 
+              className="w-full h-12 rounded-full bg-slate-900 hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200 disabled:opacity-50" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Memproses Transaksi..." : initialData ? "Kirim Perubahan" : "Konfirmasi & Simpan Simpanan"}
             </Button>
           </div>
         </form>
