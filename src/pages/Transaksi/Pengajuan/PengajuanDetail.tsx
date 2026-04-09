@@ -50,9 +50,9 @@ export default function PengajuanDetail() {
     loadData();
   }, [id, navigate, toast]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (id) {
-      const success = deletePengajuan(id);
+      const success = await deletePengajuan(id);
       if (success) {
         toast({
           title: "Pengajuan berhasil dihapus",
@@ -107,9 +107,13 @@ export default function PengajuanDetail() {
           setPengajuan(updatedPengajuan);
         }
       } else {
+        const errorDesc = pengajuan.jenis === "Penarikan" 
+          ? "Gagal memperbarui status. Pastikan persyaratan penarikan (saldo & batas limit) terpenuhi."
+          : "Terjadi kesalahan saat memperbarui status pengajuan. Silakan cek validitas data.";
+
         toast({
           title: "Gagal memperbarui status",
-          description: "Terjadi kesalahan saat memperbarui status pengajuan. Pastikan saldo mencukupi (untuk penarikan) atau data valid.",
+          description: errorDesc,
           variant: "destructive",
         });
       }

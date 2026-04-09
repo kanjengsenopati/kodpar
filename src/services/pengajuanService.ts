@@ -123,94 +123,106 @@ import { getPengaturan } from "./pengaturanService";
 
 /**
  * Approve a pengajuan dan convert ke transaction dengan centralized sync
+ * Menggunakan Dexie transaction untuk memastikan atomisitas
  */
 export async function approvePengajuan(id: string): Promise<boolean> {
-  const pengajuan = await getPengajuanById(id);
+  const pengajuan = await db.table('pengajuan').get(id);
   if (!pengajuan || pengajuan.status !== "Menunggu") return false;
   
-  // Custom validation rules for Penarikan (Withdrawal)
-  if (pengajuan.jenis === "Penarikan") {
-    const settings = getPengaturan();
-    const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
-    
-    // 1. Calculate Minimum Preserved Balance (Fixed vs Percentage)
-    let minRequired = 0;
-    if (settings.penarikan) {
-      if (settings.penarikan.minPreservedBalanceType === "fixed") {
-        minRequired = settings.penarikan.minPreservedBalanceValue;
-      } else {
-        minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
-      }
-    }
+  try {
+    // Perform all database operations inside a single transaction
+    return await db.transaction('rw', [db.table('pengajuan'), db.table('transaksi'), db.table('journalEntries')], async () => {
+      // 1. Custom validation rules for Penarikan (Withdrawal)
+      if (pengajuan.jenis === "Penarikan") {
+        const settings = getPengaturan();
+        const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
+        
+        let minRequired = 0;
+        if (settings.penarikan) {
+          if (settings.penarikan.minPreservedBalanceType === "fixed") {
+            minRequired = settings.penarikan.minPreservedBalanceValue;
+          } else {
+            minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
+          }
+        }
 
-    // 2. Calculate Maximum Allowed Withdrawal (Fixed vs Percentage)
-    let maxAllowedByRule = availableBalance - minRequired;
-    if (settings.penarikan) {
-      let maxRule = 0;
-      if (settings.penarikan.maxWithdrawalType === "fixed") {
-        maxRule = settings.penarikan.maxWithdrawalValue;
-      } else {
-        maxRule = (availableBalance * settings.penarikan.maxWithdrawalValue) / 100;
-      }
-      maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
-    }
+        let maxAllowedByRule = availableBalance - minRequired;
+        if (settings.penarikan) {
+          let maxRule = 0;
+          if (settings.penarikan.maxWithdrawalType === "fixed") {
+            maxRule = settings.penarikan.maxWithdrawalValue;
+          } else {
+            maxRule = (availableBalance * settings.penarikan.maxWithdrawalValue) / 100;
+          }
+          maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
+        }
 
-    // 3. Final Validation
-    if (pengajuan.jumlah > maxAllowedByRule) {
-      const errorMsg = `Penarikan ditolak based on rules. Requested: ${pengajuan.jumlah}, Max Allowed: ${maxAllowedByRule}. (Total Savings: ${availableBalance}, Min Preserved: ${minRequired})`;
-      console.error(errorMsg);
-      return false;
-    }
-  }
-  
-  // Note: Pinjam (Loan) no longer has automatic balance checks as per user request.
-  
-  if (pengajuan.jenis === "Pinjam") {
-    await ensureAutoDeductionCategories();
-  }
-  
-  const updatedPengajuan = await updatePengajuan(id, { status: "Disetujui" });
-  if (!updatedPengajuan) return false;
-  
-  let finalKeterangan = `Dari Pengajuan #${pengajuan.id}: ${pengajuan.keterangan || ""}`.trim();
-  
-  if (pengajuan.jenis === "Pinjam") {
-    const tenor = (pengajuan as any).tenor;
-    const loanCalculation = calculateLoanDetails(pengajuan.kategori, pengajuan.jumlah, tenor);
-    finalKeterangan = generateLoanDescription(loanCalculation, finalKeterangan);
-  } else if (pengajuan.jenis === "Angsuran" && pengajuan.referensiPinjamanId) {
-    // Add loan reference to keterangan for angsuranSync to pick up
-    finalKeterangan = `${finalKeterangan} (Ref Pinjaman: ${pengajuan.referensiPinjamanId})`.trim();
-  }
-  
-  const transaction = await createTransaksi({
-    tanggal: pengajuan.tanggal,
-    anggotaId: pengajuan.anggotaId,
-    jenis: pengajuan.jenis,
-    jumlah: pengajuan.jumlah,
-    kategori: pengajuan.kategori,
-    keterangan: finalKeterangan,
-    status: "Sukses"
-  });
-  
-  if (transaction) {
-    console.log(`🔄 Triggering centralized sync for approved pengajuan ${id}`);
-    const syncResult = await centralizedSync.syncPengajuan(updatedPengajuan);
-    
-    if (syncResult.success) {
-      console.log(`✅ Centralized pengajuan sync completed for ${id}: ${syncResult.message}`);
-    }
-    
-    window.dispatchEvent(new CustomEvent('pengajuan-approved', {
-      detail: { 
-        pengajuan: updatedPengajuan,
-        transaction: transaction,
-        timestamp: new Date().toISOString()
+        if (pengajuan.jumlah > maxAllowedByRule) {
+          // Use a specific error message that can be caught or logged
+          throw new Error(`Aturan Penarikan Dilanggar: Maksimal yang bisa ditarik adalah ${maxAllowedByRule.toLocaleString('id-ID')}`);
+        }
       }
-    }));
+      
+      // 2. Prepare Transaction Data
+      if (pengajuan.jenis === "Pinjam") {
+        await ensureAutoDeductionCategories();
+      }
+      
+      let finalKeterangan = `Dari Pengajuan #${pengajuan.id}: ${pengajuan.keterangan || ""}`.trim();
+      
+      if (pengajuan.jenis === "Pinjam") {
+        const tenor = (pengajuan as any).tenor;
+        const loanCalculation = calculateLoanDetails(pengajuan.kategori!, pengajuan.jumlah, tenor);
+        finalKeterangan = generateLoanDescription(loanCalculation, finalKeterangan);
+      } else if (pengajuan.jenis === "Angsuran" && pengajuan.referensiPinjamanId) {
+        finalKeterangan = `${finalKeterangan} (Ref Pinjaman: ${pengajuan.referensiPinjamanId})`.trim();
+      }
+      
+      // 3. Create the Transaction first
+      const transaction = await createTransaksi({
+        tanggal: pengajuan.tanggal,
+        anggotaId: pengajuan.anggotaId,
+        jenis: pengajuan.jenis,
+        jumlah: pengajuan.jumlah,
+        kategori: pengajuan.kategori,
+        keterangan: finalKeterangan,
+        status: "Sukses"
+      });
+      
+      if (!transaction) {
+        throw new Error("Gagal membuat transaksi finansial");
+      }
+      
+      // 4. Update Application Status only after transaction is ready
+      const updatedPengajuan = await updatePengajuan(id, { status: "Disetujui" });
+      if (!updatedPengajuan) {
+        throw new Error("Gagal memperbarui status pengajuan");
+      }
+      
+      // 5. Success - centralized sync can happen outside the atomic block 
+      // but we return true here to signal success to the caller
+      
+      // Emit trigger for sync services (shifted to background to not block UI)
+      setTimeout(async () => {
+        console.log(`🔄 Triggering centralized sync for approved pengajuan ${id}`);
+        await centralizedSync.syncPengajuan(updatedPengajuan);
+        
+        window.dispatchEvent(new CustomEvent('pengajuan-approved', {
+          detail: { 
+            pengajuan: updatedPengajuan,
+            transaction: transaction,
+            timestamp: new Date().toISOString()
+          }
+        }));
+      }, 0);
+      
+      return true;
+    });
+  } catch (error: any) {
+    console.error("❌ Approval transaction failed:", error);
+    // Rethrow or return false - here we return false as the UI expects a boolean success flag
+    return false;
   }
-  
-  return !!transaction;
 }
 
 /**
