@@ -32,9 +32,18 @@ export async function syncTransactionToAccounting(transaksi: Transaksi): Promise
     
     try {
       // Check if journal entry already exists for this transaction
-      const existingEntry = await getJurnalEntryByReference(referensi);
+      let existingEntry = await getJurnalEntryByReference(referensi);
+      
+      // If not found, check if it exists via PG- reference (Application-based)
+      if (!existingEntry && transaksi.keterangan && transaksi.keterangan.includes('Pengajuan #')) {
+        const pgMatch = transaksi.keterangan.match(/Pengajuan #([A-Z0-9]+)/);
+        if (pgMatch) {
+          existingEntry = await getJurnalEntryByReference(`PG-${pgMatch[1]}`);
+        }
+      }
+
       if (existingEntry) {
-        console.log(`✅ Journal entry already exists for transaction ${transaksi.id} (Journal: ${existingEntry.nomorJurnal})`);
+        console.log(`✅ Journal entry already exists for transaction ${transaksi.id} (Reference Check: ${existingEntry.nomorJurnal})`);
         return existingEntry;
       }
       

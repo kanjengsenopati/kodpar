@@ -137,11 +137,14 @@ class CentralizedSyncService {
     
     const itemKey = `transaction-${transaksi.id}`;
     
-    // Prevent concurrent processing
+    // Prevent concurrent processing - ATOMIC LOCKING
     if (this.activeSyncs.has(transaksi.id)) {
       console.log(`🔄 Transaction ${transaksi.id} sync already in progress, skipping`);
       return { success: true, message: 'Sync in progress, skipping duplicate' };
     }
+    
+    // Set lock immediately to prevent race conditions during async checks
+    this.activeSyncs.add(transaksi.id);
 
     // Check persistent sync status
     if (this.isAlreadySynced(itemKey)) {
@@ -185,7 +188,7 @@ class CentralizedSyncService {
       return { success: true, journalId: existingJournal.id, message: 'Journal already exists' };
     }
 
-    this.activeSyncs.add(transaksi.id);
+    // Lock already set at top of function
 
     try {
       if (transaksi.status !== "Sukses") {
@@ -392,12 +395,9 @@ export function initializeCentralizedSync(): void {
         }
       });
 
-      window.addEventListener('pengajuan-approved', (event: any) => {
-        const pengajuan = event.detail.pengajuan;
-        if (pengajuan) {
-          setTimeout(() => centralizedSync.syncPengajuan(pengajuan), 100);
-        }
-      });
+      // Note: pengajuan-approved listener removed to prevent double-sync.
+      // Accounting sync is now handled solely via 'transaction-created' 
+      // which is dispatched after the transaction is actually created.
     };
 
     if (document.readyState === 'loading') {

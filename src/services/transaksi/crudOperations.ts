@@ -33,15 +33,8 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Transak
     const newTransaksi = await createTransactionWithSync(data);
     
     if (newTransaksi && newTransaksi.status === "Sukses") {
-      // Single point of accounting sync menggunakan centralized service
-      console.log(`🔄 Triggering centralized sync for transaction ${newTransaksi.id}`);
-      const syncResult = await centralizedSync.syncTransaction(newTransaksi);
-      
-      if (syncResult.success) {
-        console.log(`✅ Centralized sync completed for transaction ${newTransaksi.id}: ${syncResult.message}`);
-      } else {
-        console.warn(`⚠️ Centralized sync warning for transaction ${newTransaksi.id}: ${syncResult.message}`);
-      }
+      // Accounting sync is now handled solely via 'transaction-created' event listener
+      // to prevent double-processing. No explicit call needed here.
       
       handleTransactionCreateSuccess(newTransaksi);
       
