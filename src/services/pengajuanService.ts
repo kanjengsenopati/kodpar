@@ -131,7 +131,8 @@ export async function approvePengajuan(id: string): Promise<boolean> {
   
   try {
     // Perform all database operations inside a single transaction
-    return await db.transaction('rw', [db.table('pengajuan'), db.table('transaksi'), db.table('journalEntries')], async () => {
+    // Using correct table names from db.ts schema: 'pengajuan', 'transaksi', 'jurnal'
+    return await db.transaction('rw', [db.pengajuan, db.transaksi, db.jurnal], async () => {
       // 1. Custom validation rules for Penarikan (Withdrawal)
       if (pengajuan.jenis === "Penarikan") {
         const settings = getPengaturan();
