@@ -34,10 +34,14 @@ export default function SimpanList() {
     filterData();
   }, [transaksiList, searchTerm]);
 
-  const loadSimpananData = () => {
-    const allTransaksi = getAllTransaksi();
-    const simpananTransaksi = allTransaksi.filter(t => t.jenis === "Simpan");
-    setTransaksiList(simpananTransaksi);
+  const loadSimpananData = async () => {
+    try {
+      const allTransaksi = await getAllTransaksi();
+      const simpananTransaksi = (Array.isArray(allTransaksi) ? allTransaksi : []).filter(t => t.jenis === "Simpan");
+      setTransaksiList(simpananTransaksi);
+    } catch (error) {
+      console.error("Error loading simpanan data:", error);
+    }
   };
 
   const filterData = () => {
@@ -45,22 +49,27 @@ export default function SimpanList() {
     if (searchTerm) {
       filtered = filtered.filter(
         (t) =>
-          t.anggotaNama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (t.anggotaNama || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (t.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
           (t.kategori && t.kategori.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     setFilteredList(filtered);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
-      const success = deleteTransaksi(id);
-      if (success) {
-        toast({ title: "Transaksi berhasil dihapus", description: "Data simpanan telah dihapus dari sistem" });
-        loadSimpananData();
-      } else {
-        toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan saat menghapus data", variant: "destructive" });
+      try {
+        const success = await deleteTransaksi(id);
+        if (success) {
+          toast({ title: "Transaksi berhasil dihapus", description: "Data simpanan telah dihapus dari sistem" });
+          await loadSimpananData();
+        } else {
+          toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan saat menghapus data", variant: "destructive" });
+        }
+      } catch (error) {
+        console.error("Error deleting transaction:", error);
+        toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan sistem", variant: "destructive" });
       }
     }
   };

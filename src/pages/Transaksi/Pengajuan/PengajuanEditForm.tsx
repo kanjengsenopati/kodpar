@@ -20,24 +20,41 @@ export default function PengajuanEditForm() {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const loadedAnggota = getAllAnggota();
-    setAnggotaList(loadedAnggota);
-    
-    if (id) {
-      const loadedPengajuan = getPengajuanById(id);
-      if (loadedPengajuan) {
-        setPengajuan(loadedPengajuan);
-      } else {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const [loadedAnggota, loadedPengajuan] = await Promise.all([
+          getAllAnggota(),
+          id ? getPengajuanById(id) : Promise.resolve(null)
+        ]);
+        
+        setAnggotaList(loadedAnggota || []);
+        
+        if (id) {
+          if (loadedPengajuan) {
+            setPengajuan(loadedPengajuan);
+          } else {
+            toast({
+              title: "Pengajuan tidak ditemukan",
+              description: "Data pengajuan tidak ditemukan atau telah dihapus",
+              variant: "destructive",
+            });
+            navigate("/transaksi/pengajuan");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading edit data:", error);
         toast({
-          title: "Pengajuan tidak ditemukan",
-          description: "Data pengajuan tidak ditemukan atau telah dihapus",
+          title: "Gagal memuat data",
+          description: "Terjadi kesalahan saat mengambil data",
           variant: "destructive",
         });
-        navigate("/transaksi/pengajuan");
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
     
-    setIsLoading(false);
+    loadData();
   }, [id, navigate, toast]);
 
   const handleSubmit = async (formData: any) => {
@@ -47,7 +64,7 @@ export default function PengajuanEditForm() {
     try {
       console.log("Updating pengajuan data:", formData);
       
-      const updatedPengajuan = updatePengajuan(id, {
+      const updatedPengajuan = await updatePengajuan(id, {
         tanggal: formData.tanggal,
         anggotaId: formData.anggotaId,
         jenis: formData.jenis,

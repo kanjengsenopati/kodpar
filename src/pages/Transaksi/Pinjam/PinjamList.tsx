@@ -51,14 +51,19 @@ export default function PinjamList() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteId) {
-      const success = deleteTransaksi(deleteId);
-      if (success) {
-        toast({ title: "Transaksi pinjaman berhasil dihapus", description: `Transaksi dengan ID ${deleteId} telah dihapus` });
-        loadData();
-      } else {
-        toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan", variant: "destructive" });
+      try {
+        const success = await deleteTransaksi(deleteId);
+        if (success) {
+          toast({ title: "Transaksi pinjaman berhasil dihapus", description: `Transaksi dengan ID ${deleteId} telah dihapus` });
+          await loadData();
+        } else {
+          toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan", variant: "destructive" });
+        }
+      } catch (error) {
+        console.error("Error deleting pinjaman:", error);
+        toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan sistem", variant: "destructive" });
       }
     }
     setIsDeleteDialogOpen(false);

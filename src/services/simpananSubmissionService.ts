@@ -16,14 +16,14 @@ export interface SimpananSubmissionResult {
   error?: string;
 }
 
-export function submitSimpananForm(
+export async function submitSimpananForm(
   formData: SimpananFormData,
   initialData?: Transaksi
-): SimpananSubmissionResult {
+): Promise<SimpananSubmissionResult> {
   try {
     if (initialData) {
       // Update existing transaction
-      const updatedTransaksi = updateTransaksi(initialData.id, {
+      const updatedTransaksi = await updateTransaksi(initialData.id, {
         tanggal: formData.tanggal,
         anggotaId: formData.anggotaId,
         jenis: "Simpan",
@@ -40,7 +40,7 @@ export function submitSimpananForm(
       }
     } else {
       // Create new transaction
-      const newTransaksi = createTransaksi({
+      const newTransaksi = await createTransaksi({
         tanggal: formData.tanggal,
         anggotaId: formData.anggotaId,
         jenis: "Simpan",

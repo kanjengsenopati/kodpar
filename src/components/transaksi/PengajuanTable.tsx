@@ -15,7 +15,7 @@ interface PengajuanTableProps {
 }
 
 export function PengajuanTable({ pengajuan, onDelete }: PengajuanTableProps) {
-  if (pengajuan.length === 0) {
+  if (!Array.isArray(pengajuan) || pengajuan.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         Tidak ada data pengajuan

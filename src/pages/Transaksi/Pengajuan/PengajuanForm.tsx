@@ -27,8 +27,15 @@ export default function PengajuanForm() {
   };
   
   useEffect(() => {
-    const loadedAnggota = getAllAnggota();
-    setAnggotaList(loadedAnggota);
+    const loadData = async () => {
+      try {
+        const loadedAnggota = await getAllAnggota();
+        setAnggotaList(loadedAnggota || []);
+      } catch (error) {
+        console.error("Error loading anggota:", error);
+      }
+    };
+    loadData();
   }, []);
 
   const handleSubmit = async (formData: any) => {
@@ -37,7 +44,7 @@ export default function PengajuanForm() {
       console.log("Submitting pengajuan data:", formData);
       
       // Create the pengajuan using the service
-      const newPengajuan = createPengajuan({
+      const newPengajuan = await createPengajuan({
         tanggal: formData.tanggal,
         anggotaId: formData.anggotaId,
         jenis: formData.jenis,

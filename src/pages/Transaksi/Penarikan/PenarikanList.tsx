@@ -45,10 +45,14 @@ export default function PenarikanList() {
     loadPenarikanData();
   }, []);
   
-  const loadPenarikanData = () => {
-    const allTransaksi = getAllTransaksi();
-    const penarikanData = allTransaksi.filter(t => t.jenis === "Penarikan");
-    setPenarikanList(penarikanData);
+  const loadPenarikanData = async () => {
+    try {
+      const allTransaksi = await getAllTransaksi();
+      const penarikanData = (Array.isArray(allTransaksi) ? allTransaksi : []).filter(t => t.jenis === "Penarikan");
+      setPenarikanList(penarikanData);
+    } catch (error) {
+      console.error("Error loading penarikan data:", error);
+    }
   };
   
   const handleToggleColumn = (columnId: string) => {
@@ -66,19 +70,28 @@ export default function PenarikanList() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteId) {
-      const success = deleteTransaksi(deleteId);
-      if (success) {
-        toast({
-          title: "Penarikan berhasil dihapus",
-          description: `Penarikan dengan ID ${deleteId} telah dihapus`,
-        });
-        loadPenarikanData();
-      } else {
+      try {
+        const success = await deleteTransaksi(deleteId);
+        if (success) {
+          toast({
+            title: "Penarikan berhasil dihapus",
+            description: `Penarikan dengan ID ${deleteId} telah dihapus`,
+          });
+          await loadPenarikanData();
+        } else {
+          toast({
+            title: "Gagal menghapus penarikan",
+            description: "Terjadi kesalahan saat menghapus data penarikan",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting penarikan:", error);
         toast({
           title: "Gagal menghapus penarikan",
-          description: "Terjadi kesalahan saat menghapus data penarikan",
+          description: "Terjadi kesalahan sistem",
           variant: "destructive",
         });
       }
@@ -87,17 +100,17 @@ export default function PenarikanList() {
     setDeleteId(null);
   };
   
-  // Filter penarikan based on search query and filter status
+  // Filter penarikan based on search query and filter status with defensive checks
   const filteredPenarikan = penarikanList.filter(penarikan => {
     const matchesSearch = 
-      penarikan.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      penarikan.anggotaNama.toLowerCase().includes(searchQuery.toLowerCase());
+      (penarikan.id || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (penarikan.anggotaNama || "").toLowerCase().includes(searchQuery.toLowerCase());
     
     if (filterStatus === "semua") {
       return matchesSearch;
     }
     
-    return matchesSearch && penarikan.status.toLowerCase() === filterStatus.toLowerCase();
+    return matchesSearch && (penarikan.status || "").toLowerCase() === filterStatus.toLowerCase();
   });
   
   return (

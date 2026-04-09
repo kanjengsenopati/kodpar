@@ -15,9 +15,17 @@ export default function SimpanForm() {
   const [anggotaList, setAnggotaList] = useState([]);
   
   useEffect(() => {
-    // Load anggota from local storage
-    const loadedAnggota = getAllAnggota();
-    setAnggotaList(loadedAnggota);
+    // Load anggota from indexedDB
+    const loadAnggota = async () => {
+      try {
+        const loadedAnggota = await getAllAnggota();
+        setAnggotaList(loadedAnggota || []);
+      } catch (error) {
+        console.error("Error loading anggota:", error);
+      }
+    };
+    
+    loadAnggota();
   }, []);
 
   const handleSuccess = () => {

@@ -29,18 +29,22 @@ export function JenisPinjamanTab() {
   };
 
   // Calculate how many transactions use each jenis
-  const calculateJenisUsage = () => {
-    const transaksiList = getAllTransaksi();
-    const pinjamanTransaksi = transaksiList.filter(t => t.jenis === "Pinjam");
-    
-    const usage: Record<string, number> = {};
-    pinjamanTransaksi.forEach(transaksi => {
-      if (transaksi.kategori) {
-        usage[transaksi.kategori] = (usage[transaksi.kategori] || 0) + 1;
-      }
-    });
-    
-    setJenisUsage(usage);
+  const calculateJenisUsage = async () => {
+    try {
+      const transaksiList = await getAllTransaksi();
+      const pinjamanTransaksi = (Array.isArray(transaksiList) ? transaksiList : []).filter(t => t.jenis === "Pinjam");
+      
+      const usage: Record<string, number> = {};
+      pinjamanTransaksi.forEach(transaksi => {
+        if (transaksi.kategori) {
+          usage[transaksi.kategori] = (usage[transaksi.kategori] || 0) + 1;
+        }
+      });
+      
+      setJenisUsage(usage);
+    } catch (error) {
+      console.error("Error calculating jenis usage:", error);
+    }
   };
 
   const handleRefreshData = () => {

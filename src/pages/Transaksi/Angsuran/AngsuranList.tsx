@@ -51,14 +51,19 @@ export default function AngsuranList() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteId) {
-      const success = deleteTransaksi(deleteId);
-      if (success) {
-        toast({ title: "Transaksi angsuran berhasil dihapus", description: `Transaksi dengan ID ${deleteId} telah dihapus` });
-        loadData();
-      } else {
-        toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan", variant: "destructive" });
+      try {
+        const success = await deleteTransaksi(deleteId);
+        if (success) {
+          toast({ title: "Transaksi angsuran berhasil dihapus", description: `Transaksi dengan ID ${deleteId} telah dihapus` });
+          await loadData();
+        } else {
+          toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan", variant: "destructive" });
+        }
+      } catch (error) {
+        console.error("Error deleting angsuran:", error);
+        toast({ title: "Gagal menghapus transaksi", description: "Terjadi kesalahan sistem", variant: "destructive" });
       }
     }
     setIsDeleteDialogOpen(false);
