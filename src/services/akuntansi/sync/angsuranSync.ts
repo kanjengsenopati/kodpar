@@ -7,45 +7,46 @@ import { syncAngsuranToKeuangan } from "./keuanganSync";
 import { db } from "@/db/db";
 
 /**
- * Sync Angsuran transaction with proper allocation and SAK EP persistence
+ * Sync Angsuran transaction with PURE DATABASE-DRIVEN allocation (SAK EP)
+ * ENSURES: No hybrid string parsing in the active synchronization path.
  */
 export async function syncAngsuranTransaction(transaksi: Transaksi): Promise<JurnalEntry | null> {
   try {
-    // Find the original loan transaction
     const allTransaksi = await getAllTransaksi();
-    const loanMatch = transaksi.keterangan?.match(/Pinjaman: (TR\d+)/);
     
-    if (!loanMatch) {
-      console.warn(`Cannot find loan reference in angsuran ${transaksi.id}`);
+    // 1. PURE DB: Use the structured reference field exclusively
+    const loanId = transaksi.referensiPinjamanId;
+    
+    if (!loanId) {
+      console.warn(`❌ Consistency Error: No structured loan reference for angsuran ${transaksi.id}. Please perform a 'Full Rebuild' to recover legacy data.`);
       return null;
     }
 
-    const loanId = loanMatch[1];
     const originalLoan = allTransaksi.find(t => t.id === loanId && t.jenis === "Pinjam");
     
     if (!originalLoan) {
-      console.warn(`Original loan ${loanId} not found for angsuran ${transaksi.id}`);
+      console.warn(`❌ Integrity Error: Loan ${loanId} not found in Koperasi DB`);
       return null;
     }
 
-    // Calculate proper allocation (Pokok vs Jasa)
+    // 2. Database-Driven Allocation (Pokok vs Jasa)
     const allocation = calculateAngsuranAllocation(originalLoan, transaksi.jumlah || 0);
     
-    // SAK EP Persistence: Store structured components back to the transaction record
+    // 3. Persistence: Ensure structured components are updated
     await db.transaksi.update(transaksi.id, {
       nominalPokok: allocation.nominalPokok,
       nominalJasa: allocation.nominalJasa,
       updatedAt: new Date().toISOString()
     });
 
-    console.log(`📑 SAK EP Data Captured for ${transaksi.id}: Pokok=${allocation.nominalPokok}, Jasa=${allocation.nominalJasa}`);
+    console.log(`📑 SAK EP Captured: ${transaksi.id} (Pokok:${allocation.nominalPokok}, Jasa:${allocation.nominalJasa})`);
 
-    // Sync interest portion to Keuangan
+    // 4. Sync interest (Jasa) portion to Koperasi Revenue
     syncAngsuranToKeuangan(transaksi);
     
     return createAngsuranJournalEntry(transaksi, originalLoan, allocation);
   } catch (error) {
-    console.error(`Error syncing angsuran transaction ${transaksi.id}:`, error);
+    console.error(`❌ SAK EP Sync failure for transaction ${transaksi.id}:`, error);
     return null;
   }
 }

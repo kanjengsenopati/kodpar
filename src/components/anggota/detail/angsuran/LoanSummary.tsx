@@ -1,9 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Transaksi } from "@/types";
 import { formatCurrency } from "@/utils/formatters";
-import { getLoanDetails } from "@/services/loanDataService";
+import { CreditCard, Calendar, Percent, Wallet, UserCircle } from "lucide-react";
+import { Text } from "@/components/ui/text";
 
 interface LoanSummaryProps {
   selectedLoan: Transaksi;
@@ -22,72 +22,82 @@ export function LoanSummary({
   selectedPinjaman,
   disableSelfPayment = false,
 }: LoanSummaryProps) {
-  // Get accurate loan details from centralized service
-  const loanDetails = getLoanDetails(selectedLoan.id);
   
-  if (!loanDetails) {
-    return (
-      <div className="mt-4 mb-6 bg-red-50 p-4 rounded-lg">
-        <p className="text-red-600">Data pinjaman tidak valid atau tidak ditemukan</p>
-      </div>
-    );
-  }
-
-  // Get officer name from keterangan if available (format: "Petugas: [NAME]")
-  const petugasMatch = selectedLoan.keterangan?.match(/Petugas: ([^.]+)/);
-  const petugas = petugasMatch ? petugasMatch[1].trim() : "Tidak tercatat";
+  // Pure DB Driven Metadata
+  const tenor = selectedLoan.tenor || 12;
+  const rate = selectedLoan.sukuBunga || 0;
+  const status = remainingAmount > 0 ? "Aktif" : "Lunas";
+  const petugas = selectedLoan.petugas || "Sistem";
+  const angsuranPerBulan = Math.floor(selectedLoan.jumlah / (selectedLoan.tenor || 12));
 
   return (
-    <div className="mt-4 mb-6 bg-blue-50 p-4 rounded-lg">
-      <h3 className="font-semibold mb-2">Detail Pinjaman</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Total Pinjaman</p>
-          <p className="font-medium">{formatCurrency(loanDetails.jumlahPinjaman)}</p>
+    <div className="mt-4 mb-6 p-5 rounded-[24px] bg-slate-50 border border-slate-100 flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <Text.H2 className="flex items-center gap-2">
+          💰 Detail Keuangan SAK EP
+        </Text.H2>
+        <Badge 
+          className={`rounded-full px-3 py-1 ${status === 'Aktif' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}
+          variant="secondary"
+        >
+          {status}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+        {/* Total Pinjaman */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-slate-400">
+            <CreditCard size={14} />
+            <Text.Label className="text-[10px]">Total Plafon</Text.Label>
+          </div>
+          <Text.H2 className="text-[15px]">{formatCurrency(selectedLoan.jumlah)}</Text.H2>
         </div>
         
-        <div>
-          <p className="text-sm text-muted-foreground">Tenor</p>
-          <p className="font-medium">{loanDetails.tenor} bulan</p>
+        {/* Tenor */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-slate-400">
+            <Calendar size={14} />
+            <Text.Label className="text-[10px]">Tenor</Text.Label>
+          </div>
+          <Text.Body className="font-semibold text-slate-700">{tenor} Bulan</Text.Body>
         </div>
         
-        <div>
-          <p className="text-sm text-muted-foreground">Bunga</p>
-          <p className="font-medium">{loanDetails.sukuBunga}% per bulan</p>
+        {/* Bunga */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-slate-400">
+            <Percent size={14} />
+            <Text.Label className="text-[10px]">Suku Bunga</Text.Label>
+          </div>
+          <Text.Body className="font-semibold text-slate-700">{rate}% p.m</Text.Body>
         </div>
         
-        <div>
-          <p className="text-sm text-muted-foreground">Angsuran per Bulan</p>
-          <p className="font-medium">{formatCurrency(loanDetails.angsuranPerBulan)}</p>
+        {/* Sisa Pinjaman */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-slate-400">
+            <Wallet size={14} />
+            <Text.Label className="text-[10px]">Sisa Pokok</Text.Label>
+          </div>
+          <Text.Amount className="text-[16px]">{formatCurrency(remainingAmount)}</Text.Amount>
         </div>
-        
-        <div>
-          <p className="text-sm text-muted-foreground">Sisa Pinjaman</p>
-          <p className="font-medium">{formatCurrency(loanDetails.sisaPinjaman)}</p>
-        </div>
-        
-        <div>
-          <p className="text-sm text-muted-foreground">Status</p>
-          <Badge variant={loanDetails.status === "Aktif" ? "outline" : "success"}>
-            {loanDetails.status}
-          </Badge>
-        </div>
-        
-        <div>
-          <p className="text-sm text-muted-foreground">Total Simpanan</p>
-          <p className="font-medium">{formatCurrency(simpananBalance)}</p>
-        </div>
-        
-        <div>
-          <p className="text-sm text-muted-foreground">Petugas</p>
-          <p className="font-medium">{petugas}</p>
+
+        {/* Petugas */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1 text-slate-400">
+            <UserCircle size={14} />
+            <Text.Label className="text-[10px]">Petugas</Text.Label>
+          </div>
+          <Text.Caption className="not-italic text-slate-600">{petugas}</Text.Caption>
         </div>
       </div>
       
-      {!disableSelfPayment && loanDetails.sisaPinjaman > 0 && (
-        <div className="flex justify-end mt-4">
-          <Button onClick={() => onBayarAngsuran(selectedPinjaman)} size="sm">
-            Bayar Angsuran
+      {!disableSelfPayment && remainingAmount > 0 && (
+        <div className="flex justify-end pt-2 border-t border-slate-200">
+          <Button 
+            onClick={() => onBayarAngsuran(selectedPinjaman)} 
+            className="rounded-[16px] bg-blue-600 hover:bg-blue-700 text-white px-6 shadow-md transition-all active:scale-95"
+          >
+            Bayar Angsuran Baru
           </Button>
         </div>
       )}

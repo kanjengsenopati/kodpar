@@ -20,13 +20,13 @@ export class KoperasiDB extends Dexie {
       coa: '++id, kode, nama, jenis, kategori',
       jurnal: '++id, nomorJurnal, tanggal, status, referensi'
     });
-    // v2: formally add the pengajuan table so it participates in transactions
-    this.version(2).stores({
+    // v3: Pure DB Driven Schema with structured financial fields
+    this.version(3).stores({
       anggota: '++id, nama, nip, noHp, status, unitKerja',
-      transaksi: '++id, anggotaId, jenis, tanggal, status, kategori',
+      transaksi: '++id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
       coa: '++id, kode, nama, jenis, kategori',
       jurnal: '++id, nomorJurnal, tanggal, status, referensi',
-      pengajuan: '++id, anggotaId, jenis, status, tanggal'
+      pengajuan: '++id, anggotaId, jenis, status, tanggal, loanId'
     });
   }
 }

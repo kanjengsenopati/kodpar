@@ -5,17 +5,26 @@ export interface Transaksi {
   anggotaId: string;
   anggotaNama: string;
   jenis: "Simpan" | "Pinjam" | "Angsuran" | "Penarikan";
-  jumlah: number | null;
+  jumlah: number;
   tanggal: string;
   kategori?: string;
-  keterangan?: string;
+  keterangan: string;
   status: "Sukses" | "Pending" | "Gagal";
-  accountingSyncStatus?: "PENDING" | "SUCCESS" | "FAILED";
-  lastSyncError?: string;
-  nominalPokok?: number;
-  nominalJasa?: number;
   createdAt: string;
   updatedAt: string;
+  
+  // Structured Financial Fields (SAK EP & Pure DB Driven)
+  tenor?: number;             // Masa pinjaman (bulan)
+  sukuBunga?: number;        // Rate bunga (%)
+  nominalPokok?: number;     // Porsi pokok
+  nominalJasa?: number;      // Porsi jasa/bunga
+  referensiPinjamanId?: string; // ID Pinjaman asal (untuk Angsuran)
+  sisaSaldoAwal?: number;    // Saldo piutang sebelum transaksi
+  petugas?: string;
+
+  // Sync Metadata
+  accountingSyncStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+  lastSyncError?: string;
 }
 
 export interface Pengajuan {

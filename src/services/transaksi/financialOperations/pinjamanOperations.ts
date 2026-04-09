@@ -1,54 +1,66 @@
-
-import { getAllTransaksi } from "../transaksiCore";
-import { calculateMemberRemainingLoan, getAllMembersFinancialSummary } from "@/services/financialCalculations";
-import { getLoanDetails } from "@/services/loanDataService";
-
-/**
- * Calculate total outstanding pinjaman for an anggota (remaining balance) - CONSISTENT VERSION
- */
-export function calculateTotalPinjaman(anggotaId: string): number {
-  return calculateMemberRemainingLoan(anggotaId);
-}
+import { db } from "@/db/db";
+import { 
+  getRemainingLoanAmount 
+} from "../loanOperations";
 
 /**
- * Get total pinjaman for all members (original amounts)
+ * Calculate total outstanding pinjaman for an anggota (remaining balance)
+ * PURE DB DRIVEN
  */
-export function getTotalAllPinjaman(): number {
-  const summary = getAllMembersFinancialSummary();
-  return summary.totalPinjaman;
-}
+export async function calculateTotalPinjaman(anggotaId: string): Promise<number> {
+  const transaksi = await db.transaksi
+    .where("anggotaId")
+    .equals(anggotaId)
+    .and(t => t.status === "Sukses")
+    .toArray();
 
-/**
- * Get total remaining loan balance for all members - CONSISTENT VERSION
- */
-export function getTotalAllSisaPinjaman(): number {
-  const transaksiList = getAllTransaksi();
-  const uniqueAnggotaIds = [...new Set(transaksiList
-    .filter(t => t.jenis === "Pinjam" && t.status === "Sukses")
-    .map(t => t.anggotaId))];
+  const loans = transaksi.filter(t => t.jenis === "Pinjam");
+  let totalSisa = 0;
   
-  return uniqueAnggotaIds.reduce((total, anggotaId) => {
-    return total + calculateMemberRemainingLoan(anggotaId);
-  }, 0);
+  for (const loan of loans) {
+    totalSisa += await getRemainingLoanAmount(loan.id, transaksi);
+  }
+
+  return totalSisa;
 }
 
 /**
- * Get detailed loan summary for all members with consistent calculations
+ * Get total remaining loan balance for all members
  */
-export function getAllLoansDetailedSummary() {
-  const transaksiList = getAllTransaksi();
-  const pinjamanList = transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses");
+export async function getTotalAllSisaPinjaman(): Promise<number> {
+  const allTransaksi = await db.transaksi.where("status").equals("Sukses").toArray();
+  const loans = allTransaksi.filter(t => t.jenis === "Pinjam");
   
-  return pinjamanList.map(pinjaman => {
-    const loanDetails = getLoanDetails(pinjaman.id);
-    return {
+  let totalSisa = 0;
+  for (const loan of loans) {
+    totalSisa += await getRemainingLoanAmount(loan.id, allTransaksi);
+  }
+  
+  return totalSisa;
+}
+
+/**
+ * Get detailed loan summary for all members with pure DB driven logic
+ */
+export async function getAllLoansDetailedSummary() {
+  const allTransaksi = await db.transaksi.where("status").equals("Sukses").toArray();
+  const loans = allTransaksi.filter(t => t.jenis === "Pinjam");
+  
+  const summary = [];
+  for (const pinjaman of loans) {
+    const sisa = await getRemainingLoanAmount(pinjaman.id, allTransaksi);
+    summary.push({
       id: pinjaman.id,
       anggotaId: pinjaman.anggotaId,
       anggotaNama: pinjaman.anggotaNama,
       jumlahPinjaman: pinjaman.jumlah,
-      sisaPinjaman: loanDetails ? loanDetails.sisaPinjaman : calculateMemberRemainingLoan(pinjaman.anggotaId),
-      status: loanDetails ? loanDetails.status : "Aktif",
-      tanggalPinjam: pinjaman.tanggal
-    };
-  });
+      sisaPinjaman: sisa,
+      status: sisa > 0 ? "Aktif" : "Lunas",
+      tanggalPinjam: pinjaman.tanggal,
+      tenor: pinjaman.tenor || 12,
+      rate: pinjaman.sukuBunga || 0
+    });
+  }
+  
+  return summary;
 }

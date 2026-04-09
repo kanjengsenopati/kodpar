@@ -3,93 +3,68 @@ import { Transaksi } from "@/types";
 import { getPengaturan } from "@/services/pengaturanService";
 
 /**
- * Get remaining loan amount for a specific loan with accurate calculation
+ * Get remaining loan amount for a specific loan with PURE DATABASE-DRIVEN logic
+ * SAK EP Compliant - Amortized Cost
  */
 export async function getRemainingLoanAmount(loanId: string, cachedTransactions?: Transaksi[]): Promise<number> {
   const transaksiList = cachedTransactions || await getAllTransaksi();
   
-  // Find the loan
-  const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam");
+  // Find the original loan (The Principal Debt)
+  const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam" && t.status === "Sukses");
   if (!loan) return 0;
   
-  // Get all angsuran for this loan with improved robustness
-  const angsuran = transaksiList.filter(t => {
-    if (t.jenis !== "Angsuran" || t.status !== "Sukses" || t.anggotaId !== loan.anggotaId) {
-      return false;
-    }
-    
-    // 1. Primary check: Use the dedicated reference field
-    if (t.referensiPinjamanId === loanId) return true;
-    
-    // 2. Secondary check: Backward compatibility search in keterangan
-    return t.keterangan?.includes(loanId);
-  });
+  // Get all installments associated with this specific loan
+  const angsuran = transaksiList.filter(t => 
+    t.jenis === "Angsuran" && 
+    t.status === "Sukses" && 
+    t.referensiPinjamanId === loanId
+  );
   
-  // Calculate total principal paid (only pokok, not jasa)
-  let totalPrincipalPaid = 0;
-  angsuran.forEach(payment => {
-    // Extract pokok amount from keterangan if available (fintech standard)
-    const pokokMatch = payment.keterangan?.match(/Pokok:\s*[\w\s]*?(\d+(?:[\.,]\d+)*)/);
-    if (pokokMatch && pokokMatch[1]) {
-      const pokokAmount = parseFloat(pokokMatch[1].replace(/[,\.]/g, ''));
-      totalPrincipalPaid += pokokAmount;
-    } else {
-      // If no allocation info in keterangan, assume full payment to principal (fallback for old data)
-      totalPrincipalPaid += payment.jumlah;
-    }
-  });
+  // Calculate total principal paid using strictly structured nominalPokok fields
+  const totalPrincipalPaid = angsuran.reduce((total, payment) => {
+    // Priority: Structured nominalPokok preserved in DB
+    return total + (payment.nominalPokok || 0);
+  }, 0);
   
   // Return remaining principal amount
-  return Math.max(0, loan.jumlah - totalPrincipalPaid);
+  return Math.max(0, (loan.jumlah || 0) - totalPrincipalPaid);
 }
 
 /**
- * Calculate jatuh tempo date for a loan
+ * Calculate jatuh tempo date based on structured tenor field
  */
-export function calculateJatuhTempo(createdDate: string, tenorBulan: number = 12): string {
+export function calculateJatuhTempo(createdDate: string, tenorBulan: number): string {
   const date = new Date(createdDate);
-  date.setMonth(date.getMonth() + tenorBulan);
+  date.setMonth(date.getMonth() + (tenorBulan || 12));
   return date.toISOString();
 }
 
 /**
- * Calculate penalty for overdue loans
- */
-export function calculatePenalty(loanAmount: number, daysOverdue: number): number {
-  // Get penalty rate from settings or use default
-  const pengaturan = getPengaturan();
-  const penaltyRate = pengaturan.denda.persentase || 0.001; // Default 0.1% per day
-  
-  return loanAmount * penaltyRate * daysOverdue;
-}
-
-/**
- * Calculate interest (bunga) portion of an angsuran (installment)
- * @param pokokSisa sisa pokok pinjaman sebelum angsuran ini
- * @param bungaPersen rate per bulan (0.015 = 1.5% per bulan)
- */
-export function calculateAngsuranBunga(pokokSisa: number, bungaPersen: number): number {
-  return Math.round(pokokSisa * bungaPersen);
-}
-
-/**
- * Get loan interest rate with proper conversion
+ * Get loan interest rate from database settings
+ * (ELIMINATES HARDCODED DEFAULTS)
  */
 export function getLoanInterestRate(kategori: string): number {
   const pengaturan = getPengaturan();
+  let sukuBunga = pengaturan?.sukuBunga?.pinjaman || 0; // Default to 0 to prevent unauthorized interest
   
-  // Get interest rate for the loan category (stored as percentage)
-  let sukuBunga = pengaturan?.sukuBunga?.pinjaman || 1.5;
   if (pengaturan?.sukuBunga?.pinjamanByCategory && kategori) {
     sukuBunga = pengaturan.sukuBunga.pinjamanByCategory[kategori] || sukuBunga;
   }
 
-  // Convert percentage to decimal (1.5% = 0.015)
-  return sukuBunga / 100;
+  return sukuBunga / 100; // Convert 1.5 to 0.015
 }
 
 /**
- * Get overdue loans
+ * Calculate penalty based on dynamic database settings
+ */
+export function calculatePenalty(loanAmount: number, daysOverdue: number): number {
+  const pengaturan = getPengaturan();
+  const penaltyRate = pengaturan.denda.persentase || 0; // Standardized to 0 default
+  return loanAmount * (penaltyRate / 100) * daysOverdue;
+}
+
+/**
+ * Get overdue loans using structured tenor data
  */
 export async function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): Promise<{ 
   transaksi: Transaksi; 
@@ -101,20 +76,15 @@ export async function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): Promis
   const currentDate = new Date();
   const results = [];
   
-  // Filter for pinjaman transactions
-  const pinjamanList = anggotaId === "ALL"
-    ? transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses")
-    : transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses" && t.anggotaId === anggotaId);
+  const pinjamanList = transaksiList.filter(t => 
+    t.jenis === "Pinjam" && 
+    t.status === "Sukses" && 
+    (anggotaId === "ALL" || t.anggotaId === anggotaId)
+  );
   
   for (const pinjaman of pinjamanList) {
-    // Extract tenor from keterangan
-    let tenor = 12; // Default tenor
-    if (pinjaman.keterangan) {
-      const tenorMatch = pinjaman.keterangan.match(/Tenor: (\d+) bulan/);
-      if (tenorMatch && tenorMatch[1]) {
-        tenor = parseInt(tenorMatch[1]);
-      }
-    }
+    // Pure DB Driven Tenor
+    const tenor = pinjaman.tenor || 12;
     
     // Calculate due date
     const createdDate = new Date(pinjaman.tanggal);
@@ -125,16 +95,11 @@ export async function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): Promis
     const timeDiff = currentDate.getTime() - dueDate.getTime();
     const daysOverdue = Math.ceil(timeDiff / (1000 * 3600 * 24));
     
-    // Check if overdue
     if (daysOverdue > 0) {
-      // Get remaining amount
-      const remainingAmount = await getRemainingLoanAmount(pinjaman.id);
+      const remainingAmount = await getRemainingLoanAmount(pinjaman.id, transaksiList);
       
-      // Only include if there's still an outstanding balance
       if (remainingAmount > 0) {
-        // Calculate penalty
         const penalty = calculatePenalty(remainingAmount, daysOverdue);
-        
         results.push({
           transaksi: pinjaman,
           jatuhTempo: dueDate.toISOString(),
@@ -149,7 +114,7 @@ export async function getOverdueLoans(anggotaId: string | "ALL" = "ALL"): Promis
 }
 
 /**
- * Get upcoming due loans (not yet overdue)
+ * Get upcoming due loans using structured tenor data
  */
 export async function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", daysThreshold: number = 30): Promise<{ 
   transaksi: Transaksi; 
@@ -160,36 +125,23 @@ export async function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", day
   const currentDate = new Date();
   const results = [];
   
-  // Filter for pinjaman transactions
-  const pinjamanList = anggotaId === "ALL"
-    ? transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses")
-    : transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses" && t.anggotaId === anggotaId);
+  const pinjamanList = transaksiList.filter(t => 
+    t.jenis === "Pinjam" && 
+    t.status === "Sukses" && 
+    (anggotaId === "ALL" || t.anggotaId === anggotaId)
+  );
   
   for (const pinjaman of pinjamanList) {
-    // Extract tenor from keterangan
-    let tenor = 12; // Default tenor
-    if (pinjaman.keterangan) {
-      const tenorMatch = pinjaman.keterangan.match(/Tenor: (\d+) bulan/);
-      if (tenorMatch && tenorMatch[1]) {
-        tenor = parseInt(tenorMatch[1]);
-      }
-    }
-    
-    // Calculate due date
+    const tenor = pinjaman.tenor || 12;
     const createdDate = new Date(pinjaman.tanggal);
     const dueDate = new Date(createdDate);
     dueDate.setMonth(dueDate.getMonth() + tenor);
     
-    // Calculate days until due
     const timeDiff = dueDate.getTime() - currentDate.getTime();
     const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24));
     
-    // Check if within threshold and not overdue
     if (daysUntilDue > 0 && daysUntilDue <= daysThreshold) {
-      // Get remaining amount
-      const remainingAmount = await getRemainingLoanAmount(pinjaman.id);
-      
-      // Only include if there's still an outstanding balance
+      const remainingAmount = await getRemainingLoanAmount(pinjaman.id, transaksiList);
       if (remainingAmount > 0) {
         results.push({
           transaksi: pinjaman,
@@ -204,42 +156,65 @@ export async function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", day
 }
 
 /**
- * Get all members who have at least one active loan (remaining balance > 0)
+ * Get all members with active principal debt
  */
 export async function getAnggotaWithActiveLoans(): Promise<string[]> {
   const transaksiList = await getAllTransaksi();
   const pinjamList = transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses");
-  
   const anggotaWithLoans = new Set<string>();
   
-  // To avoid circular dependency or multiple await in loop, we'll do it efficiently
   for (const loan of pinjamList) {
     if (anggotaWithLoans.has(loan.anggotaId)) continue;
-    
-    // Check if this specific loan is active using the cached list to avoid repeated DB calls
     const remaining = await getRemainingLoanAmount(loan.id, transaksiList);
     if (remaining > 0) {
       anggotaWithLoans.add(loan.anggotaId);
     }
   }
-  
   return Array.from(anggotaWithLoans);
 }
 
 /**
- * Get all active loans (remaining balance > 0) for a specific member
+ * Generate installment schedule for a loan - PURE DATABASE DRIVEN
  */
-export async function getActiveLoansByAnggotaId(anggotaId: string): Promise<Transaksi[]> {
-  const transaksiList = await getAllTransaksi();
-  const loans = transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses" && t.anggotaId === anggotaId);
-  
-  const activeLoans = [];
-  for (const loan of loans) {
-    const remaining = await getRemainingLoanAmount(loan.id);
-    if (remaining > 0) {
-      activeLoans.push(loan);
-    }
+export async function generateInstallmentSchedule(loanId: string): Promise<any[]> {
+  const allTransaksi = await getAllTransaksi();
+  const loan = allTransaksi.find(t => t.id === loanId && t.jenis === "Pinjam" && t.status === "Sukses");
+  if (!loan) return [];
+
+  const payments = allTransaksi.filter(
+    t => t.jenis === "Angsuran" && 
+        t.status === "Sukses" && 
+        t.referensiPinjamanId === loanId
+  );
+
+  const schedule = [];
+  const startDate = new Date(loan.tanggal);
+  const tenor = loan.tenor || 12;
+  const angsuranPerBulan = Math.floor(loan.jumlah / tenor); // Estimation for UI only if matching doesn't exist
+
+  for (let i = 1; i <= tenor; i++) {
+    const dueDate = new Date(startDate);
+    dueDate.setMonth(dueDate.getMonth() + i);
+
+    // Find payment for this installment
+    const payment = payments.find(p => {
+      // In a real system, we'd have a specific installment index link
+      const paymentDate = new Date(p.tanggal);
+      const dueDateEnd = new Date(dueDate);
+      dueDateEnd.setDate(dueDateEnd.getDate() + 30);
+      return paymentDate <= dueDateEnd;
+    });
+
+    schedule.push({
+      angsuranKe: i,
+      jatuhTempo: dueDate.toISOString().split('T')[0],
+      jumlah: payment ? payment.jumlah : angsuranPerBulan,
+      status: payment ? "lunas" : (new Date() > dueDate ? "terlambat" : "belum-bayar"),
+      tanggalBayar: payment?.tanggal,
+      nominalPokok: payment?.nominalPokok,
+      nominalJasa: payment?.nominalJasa
+    });
   }
-  
-  return activeLoans;
+
+  return schedule;
 }

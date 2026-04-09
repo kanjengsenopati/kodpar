@@ -1,11 +1,12 @@
+import { getPengaturan } from "../pengaturanService";
 
 /**
- * Allocation service for angsuran calculations
+ * Allocation service for angsuran calculations - Pure DB Driven
  */
 
 export interface AngsuranAllocation {
   pokok: number;
-  bunga: number;
+  jasa: number; // Changed 'bunga' to 'jasa' for SAK EP consistency
   total: number;
   nominalJasa: number;
   nominalPokok: number;
@@ -14,22 +15,24 @@ export interface AngsuranAllocation {
 
 export function calculateAngsuranAllocation(
   pinjaman: any, 
-  totalAngsuran: number, 
-  anggotaId?: string
+  totalAngsuran: number
 ): AngsuranAllocation {
-  // Get remaining loan amount and interest rate from the loan
-  const remainingAmount = pinjaman.jumlah || totalAngsuran;
-  const sukuBungaPersen = 10; // Default 10% monthly interest
+  const settings = getPengaturan();
   
-  // Calculate monthly interest (jasa) based on remaining principal
-  const nominalJasa = Math.round(remainingAmount * (sukuBungaPersen / 100));
+  // 1. Get structured rate from loan or fall back to authorized settings
+  const sukuBungaPersen = pinjaman.sukuBunga || settings.sukuBunga.pinjaman || 0;
   
-  // Principal payment is the remainder after interest
+  // 2. Calculate monthly interest (jasa) using the amortized principal or total amount
+  // SAK EP Rule: Nominal Jasa = Principal * Rate
+  const remainingPrincipal = pinjaman.jumlah || totalAngsuran;
+  const nominalJasa = Math.round(remainingPrincipal * (sukuBungaPersen / 100));
+  
+  // 3. Principal payment is the remainder of the installment
   const nominalPokok = Math.max(0, totalAngsuran - nominalJasa);
   
   return {
     pokok: nominalPokok,
-    bunga: nominalJasa,
+    jasa: nominalJasa,
     total: totalAngsuran,
     nominalJasa: nominalJasa,
     nominalPokok: nominalPokok,

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,9 +8,9 @@ import {
 } from "@/services/transaksi";
 
 import { 
-  getLoanDetails, 
+  getRemainingLoanAmount, 
   generateInstallmentSchedule 
-} from "@/services/loanDataService";
+} from "@/services/transaksi/loanOperations";
 
 import { AngsuranListProps } from "./angsuran/types";
 import { LoanSelector } from "./angsuran/LoanSelector";
@@ -31,6 +30,29 @@ export function AngsuranList({ pinjamanTransaksi, disableSelfPayment = false }: 
   );
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [currentAngsuran, setCurrentAngsuran] = useState<any>(null);
+  
+  // Structured Data State
+  const [loanDetails, setLoanDetails] = useState<{ sisaPinjaman: number } | null>(null);
+  const [angsuranDetails, setAngsuranDetails] = useState<any[]>([]);
+  const [simpananBalance, setSimpananBalance] = useState(0);
+
+  useEffect(() => {
+    async function loadLoanData() {
+      if (!selectedPinjaman) return;
+      
+      const [remaining, schedule, balance] = await Promise.all([
+        getRemainingLoanAmount(selectedPinjaman),
+        generateInstallmentSchedule(selectedPinjaman),
+        calculateTotalSimpanan(pinjamanTransaksi[0].anggotaId)
+      ]);
+      
+      setLoanDetails({ sisaPinjaman: remaining });
+      setAngsuranDetails(schedule);
+      setSimpananBalance(balance);
+    }
+    
+    loadLoanData();
+  }, [selectedPinjaman]);
 
   const handleBayarAngsuran = (pinjamanId: string) => {
     navigate("/transaksi/angsuran/tambah", { state: { pinjamanId } });
@@ -42,13 +64,13 @@ export function AngsuranList({ pinjamanTransaksi, disableSelfPayment = false }: 
   };
 
   const handlePaymentComplete = () => {
-    // Re-render component with the latest data
-    setSelectedPinjaman(selectedPinjaman); // This will force a re-render
+    // Force reload
+    setSelectedPinjaman(selectedPinjaman);
   };
 
   if (pinjamanTransaksi.length === 0) {
     return (
-      <Card className="mt-6">
+      <Card className="mt-6 rounded-[24px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         <CardHeader>
           <CardTitle>Riwayat Angsuran</CardTitle>
         </CardHeader>
@@ -59,22 +81,14 @@ export function AngsuranList({ pinjamanTransaksi, disableSelfPayment = false }: 
     );
   }
 
-  // Use centralized loan service for accurate data
-  const loanDetails = selectedPinjaman ? getLoanDetails(selectedPinjaman) : null;
-  const angsuranDetails = selectedPinjaman ? generateInstallmentSchedule(selectedPinjaman) : [];
-  
   const selectedLoan = getTransaksiById(selectedPinjaman);
-  const remainingAmount = loanDetails ? loanDetails.sisaPinjaman : 0;
-  
-  // Calculate simpanan balance for payment option
-  const simpananBalance = selectedLoan ? calculateTotalSimpanan(selectedLoan.anggotaId) : 0;
 
   return (
-    <Card className="mt-6">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl">Riwayat Angsuran</CardTitle>
+    <Card className="mt-6 rounded-[24px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white">
+      <CardHeader className="pb-2 pt-6 px-6">
+        <CardTitle className="text-xl font-bold text-slate-900">Riwayat Angsuran</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6 pt-2">
         <LoanSelector 
           pinjamanTransaksi={pinjamanTransaksi}
           selectedPinjaman={selectedPinjaman}
@@ -84,7 +98,7 @@ export function AngsuranList({ pinjamanTransaksi, disableSelfPayment = false }: 
         {selectedLoan && loanDetails && (
           <LoanSummary 
             selectedLoan={selectedLoan}
-            remainingAmount={remainingAmount}
+            remainingAmount={loanDetails.sisaPinjaman}
             simpananBalance={simpananBalance}
             onBayarAngsuran={handleBayarAngsuran}
             selectedPinjaman={selectedPinjaman}
