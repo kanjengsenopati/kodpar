@@ -2,6 +2,7 @@
 import { JurnalEntry, JurnalDetail } from "@/types/akuntansi";
 import { Transaksi } from "@/types";
 import { createJurnalEntry } from "../jurnalService";
+import { getCoaIdByCode } from "../coaService";
 import { formatCurrency } from "./journalUtils";
 
 /**
@@ -20,7 +21,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
         {
           id: "1",
           jurnalId: "",
-          coaId: "2", // Kas
+          coaId: getCoaIdByCode("1000"), // Kas
           debit: transaksi.jumlah || 0,
           kredit: 0,
           keterangan: `Penerimaan simpanan pokok dari ${transaksi.anggotaNama}`
@@ -28,7 +29,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
         {
           id: "2", 
           jurnalId: "",
-          coaId: "8", // Simpanan Pokok (Ekuitas)
+          coaId: getCoaIdByCode("3100"), // Simpanan Pokok (Ekuitas)
           debit: 0,
           kredit: transaksi.jumlah || 0,
           keterangan: `Simpanan pokok anggota - ${transaksi.anggotaNama} (SAK EP)`
@@ -40,7 +41,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
         {
           id: "1",
           jurnalId: "",
-          coaId: "2", // Kas
+          coaId: getCoaIdByCode("1000"), // Kas
           debit: transaksi.jumlah || 0,
           kredit: 0,
           keterangan: `Penerimaan simpanan wajib dari ${transaksi.anggotaNama}`
@@ -48,7 +49,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
         {
           id: "2", 
           jurnalId: "",
-          coaId: "9", // Simpanan Wajib (Ekuitas)
+          coaId: getCoaIdByCode("3200"), // Simpanan Wajib (Ekuitas)
           debit: 0,
           kredit: transaksi.jumlah || 0,
           keterangan: `Simpanan wajib anggota - ${transaksi.anggotaNama} (SAK EP)`
@@ -60,7 +61,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
         {
           id: "1",
           jurnalId: "",
-          coaId: "2", // Kas
+          coaId: getCoaIdByCode("1000"), // Kas
           debit: transaksi.jumlah || 0,
           kredit: 0,
           keterangan: `Penerimaan simpanan sukarela dari ${transaksi.anggotaNama}`
@@ -68,7 +69,7 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
         {
           id: "2", 
           jurnalId: "",
-          coaId: "6", // Utang Simpanan Sukarela
+          coaId: getCoaIdByCode("2100"), // Simpanan Sukarela
           debit: 0,
           kredit: transaksi.jumlah || 0,
           keterangan: `Simpanan sukarela anggota - ${transaksi.anggotaNama} (SAK EP)`

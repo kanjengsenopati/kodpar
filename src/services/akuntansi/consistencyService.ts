@@ -94,5 +94,48 @@ export const consistencyService = {
     
     console.log(`✅ Reconciliation completed: ${success} fixed, ${failed} still failing`);
     return { success, failed };
+  },
+
+  /**
+   * Deep Rebuild: Clears all system-generated journals and recreates them from scratch
+   * to ensure 100% mapping consistency with the new standardized COA.
+   */
+  async fullRebuildLedger(): Promise<{ total: number; success: number; failed: number }> {
+    console.log("🧨 STARTING FULL LEDGER REBUILD...");
+    
+    try {
+      // 1. Find all system-generated journals
+      const journals = await db.jurnal.toArray();
+      const systemJournals = journals.filter(j => j.createdBy === "system_auto_sync");
+      
+      console.log(`🗑️ Clearing ${systemJournals.length} existing system journals...`);
+      
+      // 2. Clear them from DB (atomically if possible, but one by one for safety)
+      for (const j of systemJournals) {
+        await db.jurnal.delete(j.id);
+      }
+      
+      // 3. Reset sync status on all transactions to force a full re-sync
+      console.log("🔄 Resetting transaction sync markers...");
+      await db.transaksi.toCollection().modify({
+        accountingSyncStatus: "PENDING",
+        lastSyncError: undefined
+      });
+      
+      // 4. Run reconciliation to rebuild everything
+      console.log("🏗️ Rebuilding journals from transaction data...");
+      const result = await this.reconcileInconsistencies();
+      
+      const allSuccessfulTx = await db.transaksi.filter(t => t.status === "Sukses").toArray();
+      
+      return {
+        total: allSuccessfulTx.length,
+        success: result.success,
+        failed: result.failed
+      };
+    } catch (error) {
+      console.error("❌ Full rebuild failed:", error);
+      throw error;
+    }
   }
 };

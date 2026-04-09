@@ -41,6 +41,21 @@ export function SyncConsistencyWidget() {
     }
   };
 
+  const handleFullRebuild = async () => {
+    if (!confirm("⚠️ PERINGATAN: Ini akan menghapus semua jurnal otomatis dan membangun ulang dari awal. Lanjutkan?")) return;
+    
+    setIsReconciling(true);
+    try {
+      const result = await consistencyService.fullRebuildLedger();
+      toast.success(`Ledger berhasil dibangun ulang: ${result.success} sukses, ${result.failed} gagal.`);
+      await fetchStatus();
+    } catch (error) {
+      toast.error("Gagal membangun ulang ledger");
+    } finally {
+      setIsReconciling(false);
+    }
+  };
+
   if (!status && isVerifying) {
     return (
       <Card className="rounded-[24px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-pulse">
@@ -78,28 +93,50 @@ export function SyncConsistencyWidget() {
           
           <div className="flex items-center gap-2">
             {hasInconsistency ? (
-              <Button 
-                onClick={handleReconcile} 
-                disabled={isReconciling}
-                className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-4"
-              >
-                {isReconciling ? (
-                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Perbaiki
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleReconcile} 
+                  disabled={isReconciling}
+                  className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-4"
+                >
+                  {isReconciling ? (
+                    <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Sinkronisasi
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleFullRebuild} 
+                  disabled={isReconciling}
+                  className="border-amber-200 text-amber-700 hover:bg-amber-100 rounded-xl"
+                >
+                  Reset Ledger
+                </Button>
+              </div>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={fetchStatus} 
-                disabled={isVerifying}
-                className="text-emerald-600"
-              >
-                <RefreshCw className={`h-4 w-4 ${isVerifying ? 'animate-spin' : ''}`} />
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleFullRebuild} 
+                  disabled={isReconciling}
+                  className="text-slate-400 hover:text-amber-600"
+                >
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  Full Rebuild
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={fetchStatus} 
+                  disabled={isVerifying}
+                  className="text-emerald-600"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isVerifying ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             )}
           </div>
         </div>

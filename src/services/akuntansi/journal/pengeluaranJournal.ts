@@ -1,6 +1,7 @@
 
 import { JurnalEntry, JurnalDetail } from "@/types/akuntansi";
 import { createJurnalEntry } from "../jurnalService";
+import { getCoaIdByCode } from "../coaService";
 import { formatCurrency } from "./journalUtils";
 
 /**
@@ -15,7 +16,7 @@ export function createPengeluaranJournalEntry(
       {
         id: "1",
         jurnalId: "",
-        coaId: "14", // Biaya Operasional
+        coaId: getCoaIdByCode("5000"), // Beban Operasional
         debit: pengeluaran.jumlah,
         kredit: 0,
         keterangan: `Biaya operasional - ${pengeluaran.kategori}: ${pengeluaran.keterangan} (Auto-sync dari Keuangan)`
@@ -23,7 +24,7 @@ export function createPengeluaranJournalEntry(
       {
         id: "2",
         jurnalId: "",
-        coaId: "2", // Kas
+        coaId: getCoaIdByCode("1000"), // Kas
         debit: 0,
         kredit: pengeluaran.jumlah,
         keterangan: `Pembayaran ${pengeluaran.kategori} - ${pengeluaran.keterangan}`

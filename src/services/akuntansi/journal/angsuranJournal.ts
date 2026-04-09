@@ -2,6 +2,7 @@
 import { JurnalEntry, JurnalDetail } from "@/types/akuntansi";
 import { Transaksi } from "@/types";
 import { createJurnalEntry } from "../jurnalService";
+import { getCoaIdByCode } from "../coaService";
 import { AngsuranAllocation } from "../allocationService";
 import { formatCurrency } from "./journalUtils";
 
@@ -19,7 +20,7 @@ export async function createAngsuranJournalEntry(
       {
         id: "1",
         jurnalId: "",
-        coaId: "2", // Kas
+        coaId: getCoaIdByCode("1000"), // Kas
         debit: transaksi.jumlah,
         kredit: 0,
         keterangan: `Penerimaan angsuran dari ${transaksi.anggotaNama} - SAK ETAP: Pokok ${formatCurrency(allocation.nominalPokok)}, Jasa ${formatCurrency(allocation.nominalJasa)}`
@@ -31,7 +32,7 @@ export async function createAngsuranJournalEntry(
       details.push({
         id: "2",
         jurnalId: "",
-        coaId: "4", // Piutang Anggota
+        coaId: getCoaIdByCode("1100"), // Piutang Anggota
         debit: 0,
         kredit: allocation.nominalPokok,
         keterangan: `Pengurangan piutang anggota - Pembayaran pokok ${formatCurrency(allocation.nominalPokok)} (SAK ETAP)`
@@ -43,7 +44,7 @@ export async function createAngsuranJournalEntry(
       details.push({
         id: "3",
         jurnalId: "",
-        coaId: "13", // Pendapatan Jasa Pinjaman
+        coaId: getCoaIdByCode("4000"), // Pendapatan Jasa Pinjaman
         debit: 0,
         kredit: allocation.nominalJasa,
         keterangan: `Pendapatan jasa pinjaman ${formatCurrency(allocation.nominalJasa)} - Bunga ${allocation.sukuBungaPersen.toFixed(2)}% (SAK ETAP + Keuangan Sync)`

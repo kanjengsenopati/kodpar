@@ -2,6 +2,7 @@
 import { JurnalEntry, JurnalDetail } from "@/types/akuntansi";
 import { Transaksi } from "@/types";
 import { createJurnalEntry } from "../jurnalService";
+import { getCoaIdByCode } from "../coaService";
 import { formatCurrency } from "./journalUtils";
 
 /**
@@ -15,7 +16,7 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
       {
         id: "1",
         jurnalId: "",
-        coaId: "6", // Utang Simpanan Sukarela (assuming sukarela withdrawal)
+        coaId: getCoaIdByCode("2100"), // Simpanan Sukarela (assuming sukarela withdrawal)
         debit: Math.abs(transaksi.jumlah),
         kredit: 0,
         keterangan: `Penarikan simpanan oleh ${transaksi.anggotaNama} (SAK ETAP)`
@@ -23,7 +24,7 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
       {
         id: "2",
         jurnalId: "",
-        coaId: "2", // Kas
+        coaId: getCoaIdByCode("1000"), // Kas
         debit: 0,
         kredit: Math.abs(transaksi.jumlah),
         keterangan: `Pembayaran penarikan kepada ${transaksi.anggotaNama}`

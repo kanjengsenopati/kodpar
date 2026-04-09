@@ -2,12 +2,14 @@
 import { ChartOfAccount } from "@/types/akuntansi";
 
 const COA_STORAGE_KEY = "chart_of_accounts";
+const COA_VERSION_KEY = "coa_data_version";
+const CURRENT_COA_VERSION = "2.0"; // Increment this to force reset for all users
 
-// Initial Chart of Accounts data
+// Standardized initial Chart of Accounts data
 const initialChartOfAccounts: ChartOfAccount[] = [
-  // ASET
+  // ASET (1000s)
   {
-    id: "coa-1",
+    id: "coa-kas",
     kode: "1000",
     nama: "KAS",
     jenis: "ASET",
@@ -21,7 +23,7 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: "coa-2",
+    id: "coa-piutang-anggota",
     kode: "1100",
     nama: "PIUTANG ANGGOTA",
     jenis: "ASET",
@@ -30,12 +32,12 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     isGroup: false,
     isActive: true,
     saldoNormal: "DEBIT",
-    deskripsi: "Piutang dari anggota koperasi",
+    deskripsi: "Piutang pokok pinjaman dari anggota",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
   {
-    id: "coa-3",
+    id: "coa-investasi",
     kode: "1200",
     nama: "INVESTASI JANGKA PANJANG",
     jenis: "ASET",
@@ -48,23 +50,9 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
-  // KEWAJIBAN
+  // KEWAJIBAN (2000s)
   {
-    id: "coa-4",
-    kode: "2000",
-    nama: "SIMPANAN ANGGOTA",
-    jenis: "KEWAJIBAN",
-    kategori: "Kewajiban Lancar",
-    level: 1,
-    isGroup: false,
-    isActive: true,
-    saldoNormal: "KREDIT",
-    deskripsi: "Simpanan pokok dan wajib anggota",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "coa-5",
+    id: "coa-simpanan-sukarela",
     kode: "2100",
     nama: "SIMPANAN SUKARELA",
     jenis: "KEWAJIBAN",
@@ -73,13 +61,55 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     isGroup: false,
     isActive: true,
     saldoNormal: "KREDIT",
-    deskripsi: "Simpanan sukarela anggota",
+    deskripsi: "Simpanan sukarela anggota (Liabilitas)",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
-  // MODAL
   {
-    id: "coa-6",
+    id: "coa-utang-usaha",
+    kode: "2200",
+    nama: "UTANG USAHA",
+    jenis: "KEWAJIBAN",
+    kategori: "Kewajiban Lancar",
+    level: 1,
+    isGroup: false,
+    isActive: true,
+    saldoNormal: "KREDIT",
+    deskripsi: "Utang kepada pihak ketiga",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  // EKUITAS / MODAL (3000s)
+  {
+    id: "coa-simpanan-pokok",
+    kode: "3100",
+    nama: "SIMPANAN POKOK",
+    jenis: "MODAL",
+    kategori: "Modal",
+    level: 1,
+    isGroup: false,
+    isActive: true,
+    saldoNormal: "KREDIT",
+    deskripsi: "Simpanan pokok anggota (Ekuitas)",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "coa-simpanan-wajib",
+    kode: "3200",
+    nama: "SIMPANAN WAJIB",
+    jenis: "MODAL",
+    kategori: "Modal",
+    level: 1,
+    isGroup: false,
+    isActive: true,
+    saldoNormal: "KREDIT",
+    deskripsi: "Simpanan wajib anggota (Ekuitas)",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "coa-modal-dasar",
     kode: "3000",
     nama: "MODAL DASAR",
     jenis: "MODAL",
@@ -93,8 +123,8 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     updatedAt: new Date().toISOString()
   },
   {
-    id: "coa-7",
-    kode: "3100",
+    id: "coa-cadangan-umum",
+    kode: "3300",
     nama: "CADANGAN UMUM",
     jenis: "MODAL",
     kategori: "Modal",
@@ -106,23 +136,23 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
-  // PENDAPATAN
+  // PENDAPATAN (4000s)
   {
-    id: "coa-8",
+    id: "coa-pendapatan-jasa-pinjaman",
     kode: "4000",
-    nama: "PENDAPATAN JASA",
+    nama: "PENDAPATAN JASA PINJAMAN",
     jenis: "PENDAPATAN",
     kategori: "Pendapatan Operasional",
     level: 1,
     isGroup: false,
     isActive: true,
     saldoNormal: "KREDIT",
-    deskripsi: "Pendapatan dari jasa pinjaman",
+    deskripsi: "Pendapatan dari bunga/jasa pinjaman",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
   {
-    id: "coa-9",
+    id: "coa-pendapatan-lain",
     kode: "4100",
     nama: "PENDAPATAN LAIN-LAIN",
     jenis: "PENDAPATAN",
@@ -131,13 +161,13 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     isGroup: false,
     isActive: true,
     saldoNormal: "KREDIT",
-    deskripsi: "Pendapatan lain-lain",
+    deskripsi: "Pendapatan dari sumber lain non-koperasi",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
-  // BEBAN
+  // BEBAN (5000s)
   {
-    id: "coa-10",
+    id: "coa-beban-operasional",
     kode: "5000",
     nama: "BEBAN OPERASIONAL",
     jenis: "BEBAN",
@@ -146,12 +176,12 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     isGroup: false,
     isActive: true,
     saldoNormal: "DEBIT",
-    deskripsi: "Beban operasional koperasi",
+    deskripsi: "Beban operasional harian",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
   {
-    id: "coa-11",
+    id: "coa-beban-administrasi",
     kode: "5100",
     nama: "BEBAN ADMINISTRASI",
     jenis: "BEBAN",
@@ -160,27 +190,50 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     isGroup: false,
     isActive: true,
     saldoNormal: "DEBIT",
-    deskripsi: "Beban administrasi dan umum",
+    deskripsi: "Beban administrasi kantor",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
 ];
 
 /**
- * Get all Chart of Accounts
+ * Get all Chart of Accounts with version check and automatic reset
  */
 export function getAllChartOfAccounts(): ChartOfAccount[] {
   try {
     const data = localStorage.getItem(COA_STORAGE_KEY);
-    if (!data) {
+    const version = localStorage.getItem(COA_VERSION_KEY);
+    
+    // Force reset if no data, no version, or version mismatch
+    if (!data || !version || version !== CURRENT_COA_VERSION) {
+      console.log(`🔄 Standardizing Chart of Accounts to version ${CURRENT_COA_VERSION}...`);
       localStorage.setItem(COA_STORAGE_KEY, JSON.stringify(initialChartOfAccounts));
+      localStorage.setItem(COA_VERSION_KEY, CURRENT_COA_VERSION);
       return initialChartOfAccounts;
     }
+    
     return JSON.parse(data);
   } catch (error) {
     console.error("Error loading chart of accounts:", error);
     return initialChartOfAccounts;
   }
+}
+
+/**
+ * Get COA ID by account code
+ */
+export function getCoaIdByCode(code: string): string {
+  const accounts = getAllChartOfAccounts();
+  const account = accounts.find(acc => acc.kode === code);
+  return account ? account.id : "";
+}
+
+/**
+ * Get COA by account code
+ */
+export function getCoaByCode(code: string): ChartOfAccount | undefined {
+  const accounts = getAllChartOfAccounts();
+  return accounts.find(acc => acc.kode === code);
 }
 
 /**

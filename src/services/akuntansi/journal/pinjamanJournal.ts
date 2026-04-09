@@ -2,6 +2,7 @@
 import { JurnalEntry, JurnalDetail } from "@/types/akuntansi";
 import { Transaksi } from "@/types";
 import { createJurnalEntry, getJurnalEntryByReference } from "../jurnalService";
+import { getCoaIdByCode } from "../coaService";
 import { formatCurrency } from "./journalUtils";
 
 /**
@@ -28,7 +29,7 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
       {
         id: "1",
         jurnalId: "",
-        coaId: "4", // Piutang Anggota
+        coaId: getCoaIdByCode("1100"), // Piutang Anggota
         debit: transaksi.jumlah,
         kredit: 0,
         keterangan: `Piutang pinjaman kepada ${transaksi.anggotaNama} (SAK EP)`
@@ -36,7 +37,7 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
       {
         id: "2",
         jurnalId: "",
-        coaId: "2", // Kas
+        coaId: getCoaIdByCode("1000"), // Kas
         debit: 0,
         kredit: transaksi.jumlah,
         keterangan: `Pencairan pinjaman untuk ${transaksi.anggotaNama}`
