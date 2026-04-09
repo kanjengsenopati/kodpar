@@ -15,7 +15,7 @@ import {
   getPemasukanPengeluaranByJenis,
   getPemasukanPengeluaranByPeriod,
   getAllKategoriTransaksi,
-  generateNeracaKeuangan
+  generatePosisiKeuangan
 } from '@/services/keuanganService';
 
 import LaporanHeader from '@/components/keuangan/laporan/LaporanHeader';
@@ -23,7 +23,7 @@ import LaporanFilters from '@/components/keuangan/laporan/LaporanFilters';
 import TransaksiChart from '@/components/keuangan/laporan/TransaksiChart';
 import KategoriPieChart from '@/components/keuangan/laporan/KategoriPieChart';
 import TransaksiTable from '@/components/keuangan/TransaksiTable';
-import NeracaTable from '@/components/keuangan/laporan/NeracaTable';
+import PosisiKeuanganTable from '@/components/keuangan/laporan/PosisiKeuanganTable';
 import { useNavigate } from 'react-router-dom';
 
 export default function LaporanKeuangan() {
@@ -48,8 +48,8 @@ export default function LaporanKeuangan() {
   const [pemasukanByCategory, setPemasukanByCategory] = useState<any[]>([]);
   const [pengeluaranByCategory, setPengeluaranByCategory] = useState<any[]>([]);
   
-  // Neraca data
-  const [neracaData, setNeracaData] = useState<any>({
+  // Posisi Keuangan data
+  const [posisiKeuanganData, setPosisiKeuanganData] = useState<any>({
     assets: [],
     liabilities: [],
     totalAssets: 0,
@@ -176,25 +176,25 @@ export default function LaporanKeuangan() {
       setPemasukanByCategory(pemasukanCategoryArray);
       setPengeluaranByCategory(pengeluaranCategoryArray);
       
-      // Process neraca data
+      // Process posisi keuangan data
       const monthStart = new Date(startDate).getMonth() + 1;
       const yearStart = new Date(startDate).getFullYear();
       
-      const neraca = generateNeracaKeuangan(monthStart, yearStart);
+      const posisiKeuangan = generatePosisiKeuangan(monthStart, yearStart);
       
-      setNeracaData({
+      setPosisiKeuanganData({
         assets: [
-          { label: 'Kas', amount: neraca.saldoAwal + totalPemasukan, indented: true },
-          { label: 'Total Aktiva', amount: neraca.saldoAwal + totalPemasukan, isTotal: true }
+          { label: 'Kas', amount: posisiKeuangan.saldoAwal + totalPemasukan, indented: true },
+          { label: 'Total Aset', amount: posisiKeuangan.saldoAwal + totalPemasukan, isTotal: true }
         ],
         liabilities: [
           { label: 'Pengeluaran', amount: totalPengeluaran, indented: true },
-          { label: 'Total Pasiva', amount: totalPengeluaran, isTotal: true }
+          { label: 'Total Kewajiban & Ekuitas', amount: totalPengeluaran, isTotal: true }
         ],
-        totalAssets: neraca.saldoAwal + totalPemasukan,
+        totalAssets: posisiKeuangan.saldoAwal + totalPemasukan,
         totalLiabilities: totalPengeluaran,
-        saldoAwal: neraca.saldoAwal,
-        saldoAkhir: neraca.saldoAkhir
+        saldoAwal: posisiKeuangan.saldoAwal,
+        saldoAkhir: posisiKeuangan.saldoAkhir
       });
       
     } catch (error) {
@@ -317,15 +317,15 @@ export default function LaporanKeuangan() {
                   </Card>
                 </TabsContent>
                 
-                {/* Neraca Tab */}
+                {/* Posisi Keuangan Tab */}
                 <TabsContent value="neraca" className="space-y-6">
-                  <NeracaTable 
-                    title="Neraca Keuangan"
-                    items={neracaData}
-                    totalAssets={neracaData.totalAssets}
-                    totalLiabilities={neracaData.totalLiabilities}
-                    saldoAwal={neracaData.saldoAwal}
-                    saldoAkhir={neracaData.saldoAkhir}
+                  <PosisiKeuanganTable 
+                    title="Laporan Posisi Keuangan"
+                    items={posisiKeuanganData}
+                    totalAssets={posisiKeuanganData.totalAssets}
+                    totalLiabilities={posisiKeuanganData.totalLiabilities}
+                    saldoAwal={posisiKeuanganData.saldoAwal}
+                    saldoAkhir={posisiKeuanganData.saldoAkhir}
                   />
                 </TabsContent>
               </Tabs>

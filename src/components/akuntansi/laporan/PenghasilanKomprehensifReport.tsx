@@ -1,19 +1,19 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { type LabaRugiReport } from "@/services/akuntansi/laporanService";
+import { type PenghasilanKomprehensifReport } from "@/services/akuntansi/laporanService";
 import { formatCurrency } from "@/utils/formatters";
 
-interface LabaRugiReportProps {
-  data: LabaRugiReport;
+interface PenghasilanKomprehensifReportProps {
+  data: PenghasilanKomprehensifReport;
 }
 
-export function LabaRugiReport({ data }: LabaRugiReportProps) {
+export function PenghasilanKomprehensifReport({ data }: PenghasilanKomprehensifReportProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-center text-xl font-bold">
-          LAPORAN LABA RUGI
+          LAPORAN PENGHASILAN KOMPREHENSIF
         </CardTitle>
         <p className="text-center text-muted-foreground">
           Periode: {data.periode}
@@ -63,7 +63,7 @@ export function LabaRugiReport({ data }: LabaRugiReportProps) {
               
               {/* Laba Bersih */}
               <TableRow className={`font-bold text-lg border-t-2 ${data.labaBersih >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                <TableCell>LABA BERSIH</TableCell>
+                <TableCell>LABA/RUGI BERSIH (SHU)</TableCell>
                 <TableCell className="text-right">{formatCurrency(data.labaBersih)}</TableCell>
               </TableRow>
             </TableBody>

@@ -35,10 +35,7 @@ import Laporan from '@/pages/Laporan/Laporan';
 import Akuntansi from '@/pages/Akuntansi/Akuntansi';
 import JurnalUmum from '@/pages/Akuntansi/JurnalUmum';
 import BukuBesar from '@/pages/Akuntansi/BukuBesar';
-import NeracaSaldo from '@/pages/Akuntansi/NeracaSaldo';
-import LabaRugi from '@/pages/Akuntansi/LabaRugi';
-import Neraca from '@/pages/Akuntansi/Neraca';
-import ArusKas from '@/pages/Akuntansi/ArusKas';
+import LaporanKeuanganAkuntansi from '@/pages/Akuntansi/LaporanKeuangan';
 import ChartOfAccounts from '@/pages/Akuntansi/ChartOfAccounts';
 import Pengaturan from '@/pages/Pengaturan/Pengaturan';
 import ResetData from '@/pages/Pengaturan/ResetData';
@@ -98,10 +95,7 @@ export const AppRoutes = () => {
       <Route path="/akuntansi" element={<Akuntansi />} />
       <Route path="/akuntansi/jurnal" element={<JurnalUmum />} />
       <Route path="/akuntansi/buku-besar" element={<BukuBesar />} />
-      <Route path="/akuntansi/neraca-saldo" element={<NeracaSaldo />} />
-      <Route path="/akuntansi/laba-rugi" element={<LabaRugi />} />
-      <Route path="/akuntansi/neraca" element={<Neraca />} />
-      <Route path="/akuntansi/arus-kas" element={<ArusKas />} />
+      <Route path="/akuntansi/laporan" element={<LaporanKeuanganAkuntansi />} />
       <Route path="/akuntansi/chart-of-accounts" element={<ChartOfAccounts />} />
       
       {/* Pengaturan Routes */}

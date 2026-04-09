@@ -1,11 +1,11 @@
 
 import { 
-  Neraca, 
-  LabaRugi, 
+  PosisiKeuangan, 
+  PenghasilanKomprehensif, 
   ArusKas, 
   PerubahanModal,
-  NeracaItem, 
-  LabaRugiItem, 
+  PosisiKeuanganItem, 
+  PenghasilanKomprehensifItem, 
   ArusKasItem,
   PerubahanModalItem
 } from "@/types/akuntansi";
@@ -14,17 +14,17 @@ import { getBukuBesarSummaryByType, getAllBukuBesar } from "./bukuBesarService";
 
 // Export report types for components
 export type { 
-  Neraca as NeracaReport, 
-  LabaRugi as LabaRugiReport, 
+  PosisiKeuangan as PosisiKeuanganReport, 
+  PenghasilanKomprehensif as PenghasilanKomprehensifReport, 
   ArusKas as ArusKasReport, 
   PerubahanModal as PerubahanModalReport 
 };
 
 /**
- * Generate Neraca (Balance Sheet) using Buku Besar data
+ * Generate Laporan Posisi Keuangan (Statement of Financial Position) using Buku Besar data
  */
-export function generateNeraca(periode: string): Neraca {
-  console.log(`📊 Generating Neraca for period ${periode}`);
+export function generatePosisiKeuangan(periode: string): PosisiKeuangan {
+  console.log(`📊 Generating Laporan Posisi Keuangan for period ${periode}`);
   
   const accounts = getAllChartOfAccounts();
   const bukuBesarData = getAllBukuBesar(periode);
@@ -39,7 +39,7 @@ export function generateNeraca(periode: string): Neraca {
   });
   
   // Generate Aset items
-  const aset: NeracaItem[] = accounts
+  const aset: PosisiKeuanganItem[] = accounts
     .filter(acc => acc.jenis === 'ASET' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -53,7 +53,7 @@ export function generateNeraca(periode: string): Neraca {
     .sort((a, b) => a.kodeAkun.localeCompare(b.kodeAkun));
   
   // Generate Kewajiban items
-  const kewajiban: NeracaItem[] = accounts
+  const kewajiban: PosisiKeuanganItem[] = accounts
     .filter(acc => acc.jenis === 'KEWAJIBAN' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -67,7 +67,7 @@ export function generateNeraca(periode: string): Neraca {
     .sort((a, b) => a.kodeAkun.localeCompare(b.kodeAkun));
   
   // Generate Modal items
-  const modal: NeracaItem[] = accounts
+  const modal: PosisiKeuanganItem[] = accounts
     .filter(acc => acc.jenis === 'MODAL' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -84,7 +84,7 @@ export function generateNeraca(periode: string): Neraca {
   const totalKewajiban = summary.KEWAJIBAN?.saldoAkhir || 0;
   const totalModal = summary.MODAL?.saldoAkhir || 0;
   
-  console.log(`💰 Neraca totals - Aset: ${totalAset}, Kewajiban: ${totalKewajiban}, Modal: ${totalModal}`);
+  console.log(`💰 Posisi Keuangan totals - Aset: ${totalAset}, Kewajiban: ${totalKewajiban}, Modal: ${totalModal}`);
   
   return {
     periode,
@@ -98,10 +98,10 @@ export function generateNeraca(periode: string): Neraca {
 }
 
 /**
- * Generate Laba Rugi (Income Statement) using Buku Besar data
+ * Generate Laporan Penghasilan Komprehensif (Statement of Comprehensive Income) using Buku Besar data
  */
-export function generateLabaRugi(periode: string): LabaRugi {
-  console.log(`📊 Generating Laba Rugi for period ${periode}`);
+export function generatePenghasilanKomprehensif(periode: string): PenghasilanKomprehensif {
+  console.log(`📊 Generating Laporan Penghasilan Komprehensif for period ${periode}`);
   
   const accounts = getAllChartOfAccounts();
   const bukuBesarData = getAllBukuBesar(periode);
@@ -114,7 +114,7 @@ export function generateLabaRugi(periode: string): LabaRugi {
   });
   
   // Generate Pendapatan items
-  const pendapatan: LabaRugiItem[] = accounts
+  const pendapatan: PenghasilanKomprehensifItem[] = accounts
     .filter(acc => acc.jenis === 'PENDAPATAN' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -128,7 +128,7 @@ export function generateLabaRugi(periode: string): LabaRugi {
     .sort((a, b) => a.kodeAkun.localeCompare(b.kodeAkun));
   
   // Generate Beban items
-  const beban: LabaRugiItem[] = accounts
+  const beban: PenghasilanKomprehensifItem[] = accounts
     .filter(acc => acc.jenis === 'BEBAN' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -146,7 +146,7 @@ export function generateLabaRugi(periode: string): LabaRugi {
   const labaKotor = totalPendapatan - totalBeban;
   const labaBersih = labaKotor;
   
-  console.log(`💹 Laba Rugi totals - Pendapatan: ${totalPendapatan}, Beban: ${totalBeban}, Laba Bersih: ${labaBersih}`);
+  console.log(`💹 Penghasilan Komprehensif totals - Pendapatan: ${totalPendapatan}, Beban: ${totalBeban}, Laba Bersih: ${labaBersih}`);
   
   return {
     periode,
@@ -215,12 +215,12 @@ export function generateArusKas(periode: string): ArusKas {
  */
 export function generatePerubahanModal(periode: string): PerubahanModal {
   const summary = getBukuBesarSummaryByType(periode);
-  const labaRugi = generateLabaRugi(periode);
+  const penghasilanKomprehensif = generatePenghasilanKomprehensif(periode);
   
   const modalAwal = 0; // Could be enhanced to get from previous period
   
   const penambahan: PerubahanModalItem[] = [
-    { deskripsi: "Laba bersih periode berjalan", jumlah: Math.max(0, labaRugi.labaBersih) }
+    { deskripsi: "Laba bersih periode berjalan", jumlah: Math.max(0, penghasilanKomprehensif.labaBersih) }
   ];
   
   const pengurangan: PerubahanModalItem[] = [

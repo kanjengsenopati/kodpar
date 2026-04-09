@@ -11,18 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface NeracaItem {
+interface PosisiKeuanganItem {
   label: string;
   amount: number;
   indented?: boolean;
   isTotal?: boolean;
 }
 
-interface NeracaTableProps {
+interface PosisiKeuanganTableProps {
   title: string;
   items: {
-    assets: NeracaItem[];
-    liabilities: NeracaItem[];
+    assets: PosisiKeuanganItem[];
+    liabilities: PosisiKeuanganItem[];
   };
   totalAssets: number;
   totalLiabilities: number;
@@ -30,14 +30,14 @@ interface NeracaTableProps {
   saldoAkhir: number;
 }
 
-export default function NeracaTable({ 
+export default function PosisiKeuanganTable({ 
   title, 
   items, 
   totalAssets, 
   totalLiabilities,
   saldoAwal,
   saldoAkhir 
-}: NeracaTableProps) {
+}: PosisiKeuanganTableProps) {
   return (
     <Card>
       <CardHeader>
@@ -56,8 +56,8 @@ export default function NeracaTable({
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell colSpan={2} className="font-bold">AKTIVA</TableCell>
-                <TableCell colSpan={2} className="font-bold">PASIVA</TableCell>
+                <TableCell colSpan={2} className="font-bold">ASET</TableCell>
+                <TableCell colSpan={2} className="font-bold">KEWAJIBAN & EKUITAS</TableCell>
               </TableRow>
               
               {/* Create rows of data, pairing assets and liabilities */}
@@ -107,9 +107,9 @@ export default function NeracaTable({
               
               {/* Totals row */}
               <TableRow className="font-bold bg-gray-50">
-                <TableCell>TOTAL AKTIVA</TableCell>
+                <TableCell>TOTAL ASET</TableCell>
                 <TableCell className="text-right">{formatCurrency(totalAssets)}</TableCell>
-                <TableCell>TOTAL PASIVA</TableCell>
+                <TableCell>TOTAL KEWAJIBAN & EKUITAS</TableCell>
                 <TableCell className="text-right">{formatCurrency(totalLiabilities)}</TableCell>
               </TableRow>
               
@@ -129,3 +129,4 @@ export default function NeracaTable({
     </Card>
   );
 }
+

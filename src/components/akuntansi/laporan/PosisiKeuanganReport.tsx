@@ -1,19 +1,19 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { type NeracaReport } from "@/services/akuntansi/laporanService";
+import { type PosisiKeuanganReport } from "@/services/akuntansi/laporanService";
 import { formatCurrency } from "@/utils/formatters";
 
-interface NeracaReportProps {
-  data: NeracaReport;
+interface PosisiKeuanganReportProps {
+  data: PosisiKeuanganReport;
 }
 
-export function NeracaReport({ data }: NeracaReportProps) {
+export function PosisiKeuanganReport({ data }: PosisiKeuanganReportProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-center text-xl font-bold">
-          NERACA
+          LAPORAN POSISI KEUANGAN
         </CardTitle>
         <p className="text-center text-muted-foreground">
           Periode: {data.periode}
@@ -24,9 +24,9 @@ export function NeracaReport({ data }: NeracaReportProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/2">AKTIVA</TableHead>
+                <TableHead className="w-1/2">ASET</TableHead>
                 <TableHead className="text-right">Jumlah (Rp)</TableHead>
-                <TableHead className="w-1/2">PASIVA</TableHead>
+                <TableHead className="w-1/2">KEWAJIBAN & EKUITAS</TableHead>
                 <TableHead className="text-right">Jumlah (Rp)</TableHead>
               </TableRow>
             </TableHeader>
@@ -62,9 +62,9 @@ export function NeracaReport({ data }: NeracaReportProps) {
               
               {/* Totals row */}
               <TableRow className="font-bold border-t-2">
-                <TableCell>TOTAL AKTIVA</TableCell>
+                <TableCell>TOTAL ASET</TableCell>
                 <TableCell className="text-right">{formatCurrency(data.totalAset)}</TableCell>
-                <TableCell>TOTAL PASIVA</TableCell>
+                <TableCell>TOTAL KEWAJIBAN & EKUITAS</TableCell>
                 <TableCell className="text-right">{formatCurrency(data.totalKewajiban + data.totalModal)}</TableCell>
               </TableRow>
             </TableBody>

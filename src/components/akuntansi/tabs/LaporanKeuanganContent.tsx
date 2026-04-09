@@ -24,10 +24,10 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useToast } from "@/components/ui/use-toast";
-import { Neraca, LabaRugi } from "@/types/akuntansi";
+import { PosisiKeuangan, PenghasilanKomprehensif } from "@/types/akuntansi";
 import { 
-  generateNeraca, 
-  generateLabaRugi 
+  generatePosisiKeuangan, 
+  generatePenghasilanKomprehensif 
 } from "@/services/akuntansi/laporanService";
 
 export default function LaporanKeuanganContent() {
@@ -36,19 +36,19 @@ export default function LaporanKeuanganContent() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [neraca, setNeraca] = useState<Neraca | null>(null);
-  const [labaRugi, setLabaRugi] = useState<LabaRugi | null>(null);
+  const [posisiKeuangan, setPosisiKeuangan] = useState<PosisiKeuangan | null>(null);
+  const [penghasilanKomprehensif, setPenghasilanKomprehensif] = useState<PenghasilanKomprehensif | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Load financial reports
   const loadReports = () => {
     setIsLoading(true);
     try {
-      const neracaData = generateNeraca(periode);
-      const labaRugiData = generateLabaRugi(periode);
+      const posisiKeuanganData = generatePosisiKeuangan(periode);
+      const penghasilanKomprehensifData = generatePenghasilanKomprehensif(periode);
       
-      setNeraca(neracaData);
-      setLabaRugi(labaRugiData);
+      setPosisiKeuangan(posisiKeuanganData);
+      setPenghasilanKomprehensif(penghasilanKomprehensifData);
       
       toast({
         title: "Laporan berhasil dimuat",
@@ -81,7 +81,7 @@ export default function LaporanKeuanganContent() {
             Laporan Keuangan
           </h3>
           <p className="text-muted-foreground">
-            Laporan neraca dan laba rugi koperasi
+            Laporan posisi keuangan dan penghasilan komprehensif koperasi
           </p>
         </div>
         
@@ -106,7 +106,7 @@ export default function LaporanKeuanganContent() {
       </div>
 
       {/* Summary Cards */}
-      {neraca && labaRugi && (
+      {posisiKeuangan && penghasilanKomprehensif && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
@@ -114,7 +114,7 @@ export default function LaporanKeuanganContent() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Aset</p>
                   <p className="text-xl font-bold text-blue-600">
-                    {formatCurrency(neraca.totalAset)}
+                    {formatCurrency(posisiKeuangan.totalAset)}
                   </p>
                 </div>
                 <Building className="h-8 w-8 text-blue-500" />
@@ -128,7 +128,7 @@ export default function LaporanKeuanganContent() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Kewajiban</p>
                   <p className="text-xl font-bold text-red-600">
-                    {formatCurrency(neraca.totalKewajiban)}
+                    {formatCurrency(posisiKeuangan.totalKewajiban)}
                   </p>
                 </div>
                 <TrendingDown className="h-8 w-8 text-red-500" />
@@ -140,9 +140,9 @@ export default function LaporanKeuanganContent() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Modal</p>
+                  <p className="text-sm text-muted-foreground">Total Ekuitas</p>
                   <p className="text-xl font-bold text-green-600">
-                    {formatCurrency(neraca.totalModal)}
+                    {formatCurrency(posisiKeuangan.totalModal)}
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-500" />
@@ -154,12 +154,12 @@ export default function LaporanKeuanganContent() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Laba Bersih</p>
-                  <p className={`text-xl font-bold ${labaRugi.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(labaRugi.labaBersih)}
+                  <p className="text-sm text-muted-foreground">Laba Bersih (SHU)</p>
+                  <p className={`text-xl font-bold ${penghasilanKomprehensif.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(penghasilanKomprehensif.labaBersih)}
                   </p>
                 </div>
-                <TrendingUp className={`h-8 w-8 ${labaRugi.labaBersih >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                <TrendingUp className={`h-8 w-8 ${penghasilanKomprehensif.labaBersih >= 0 ? 'text-green-500' : 'text-red-500'}`} />
               </div>
             </CardContent>
           </Card>
@@ -171,23 +171,23 @@ export default function LaporanKeuanganContent() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="neraca" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
-            Neraca
+            Posisi Keuangan
           </TabsTrigger>
           <TabsTrigger value="laba-rugi" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            Laba Rugi
+            Penghasilan Komprehensif
           </TabsTrigger>
         </TabsList>
 
         {/* Neraca Tab */}
         <TabsContent value="neraca">
-          {neraca ? (
+          {posisiKeuangan ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Building className="h-5 w-5" />
-                    Neraca per {new Date(periode + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
+                    Posisi Keuangan per {new Date(periode + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
                   </div>
                   <Badge variant="outline">
                     <Calendar className="h-3 w-3 mr-1" />
@@ -205,7 +205,7 @@ export default function LaporanKeuanganContent() {
                     </h4>
                     <Table>
                       <TableBody>
-                        {neraca.aset.map((item) => (
+                        {posisiKeuangan.aset.map((item) => (
                           <TableRow key={item.coaId}>
                             <TableCell className={item.isGroup ? "font-semibold" : ""}>
                               {item.namaAkun}
@@ -218,7 +218,7 @@ export default function LaporanKeuanganContent() {
                         <TableRow className="border-t-2 border-gray-300 bg-muted/50">
                           <TableCell className="font-bold">TOTAL ASET</TableCell>
                           <TableCell className="text-right font-bold text-lg">
-                            {formatCurrency(neraca.totalAset)}
+                            {formatCurrency(posisiKeuangan.totalAset)}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -238,7 +238,7 @@ export default function LaporanKeuanganContent() {
                           <TableCell className="font-semibold">KEWAJIBAN</TableCell>
                           <TableCell></TableCell>
                         </TableRow>
-                        {neraca.kewajiban.map((item) => (
+                        {posisiKeuangan.kewajiban.map((item) => (
                           <TableRow key={item.coaId}>
                             <TableCell className={item.isGroup ? "font-semibold" : "pl-4"}>
                               {item.namaAkun}
@@ -251,16 +251,16 @@ export default function LaporanKeuanganContent() {
                         <TableRow className="border-b">
                           <TableCell className="font-semibold">Total Kewajiban</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {formatCurrency(neraca.totalKewajiban)}
+                            {formatCurrency(posisiKeuangan.totalKewajiban)}
                           </TableCell>
                         </TableRow>
 
                         {/* Modal */}
                         <TableRow className="bg-muted/30">
-                          <TableCell className="font-semibold">MODAL</TableCell>
+                          <TableCell className="font-semibold">EKUITAS</TableCell>
                           <TableCell></TableCell>
                         </TableRow>
-                        {neraca.modal.map((item) => (
+                        {posisiKeuangan.modal.map((item) => (
                           <TableRow key={item.coaId}>
                             <TableCell className={item.isGroup ? "font-semibold" : "pl-4"}>
                               {item.namaAkun}
@@ -271,16 +271,16 @@ export default function LaporanKeuanganContent() {
                           </TableRow>
                         ))}
                         <TableRow className="border-b">
-                          <TableCell className="font-semibold">Total Modal</TableCell>
+                          <TableCell className="font-semibold">Total Ekuitas</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {formatCurrency(neraca.totalModal)}
+                            {formatCurrency(posisiKeuangan.totalModal)}
                           </TableCell>
                         </TableRow>
 
                         <TableRow className="border-t-2 border-gray-300 bg-muted/50">
-                          <TableCell className="font-bold">TOTAL KEWAJIBAN & MODAL</TableCell>
+                          <TableCell className="font-bold">TOTAL KEWAJIBAN & EKUITAS</TableCell>
                           <TableCell className="text-right font-bold text-lg">
-                            {formatCurrency(neraca.totalKewajiban + neraca.totalModal)}
+                            {formatCurrency(posisiKeuangan.totalKewajiban + posisiKeuangan.totalModal)}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -294,9 +294,9 @@ export default function LaporanKeuanganContent() {
               <CardContent className="py-16">
                 <div className="text-center">
                   <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Memuat Neraca...</h3>
+                  <h3 className="text-lg font-semibold mb-2">Memuat Laporan Posisi Keuangan...</h3>
                   <p className="text-muted-foreground">
-                    Sedang memproses data neraca keuangan
+                    Sedang memproses data posisi keuangan koperasi
                   </p>
                 </div>
               </CardContent>
@@ -306,13 +306,13 @@ export default function LaporanKeuanganContent() {
 
         {/* Laba Rugi Tab */}
         <TabsContent value="laba-rugi">
-          {labaRugi ? (
+          {penghasilanKomprehensif ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Laporan Laba Rugi untuk {new Date(periode + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
+                    Laporan Penghasilan Komprehensif untuk {new Date(periode + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
                   </div>
                   <Badge variant="outline">
                     <Calendar className="h-3 w-3 mr-1" />
@@ -328,7 +328,7 @@ export default function LaporanKeuanganContent() {
                       <TableCell className="font-bold text-green-800">PENDAPATAN</TableCell>
                       <TableCell></TableCell>
                     </TableRow>
-                    {labaRugi.pendapatan.map((item) => (
+                    {penghasilanKomprehensif.pendapatan.map((item) => (
                       <TableRow key={item.coaId}>
                         <TableCell className={item.isGroup ? "font-semibold" : "pl-4"}>
                           {item.namaAkun}
@@ -341,7 +341,7 @@ export default function LaporanKeuanganContent() {
                     <TableRow className="border-b-2 border-green-200">
                       <TableCell className="font-bold">TOTAL PENDAPATAN</TableCell>
                       <TableCell className="text-right font-bold text-green-600 text-lg">
-                        {formatCurrency(labaRugi.totalPendapatan)}
+                        {formatCurrency(penghasilanKomprehensif.totalPendapatan)}
                       </TableCell>
                     </TableRow>
 
@@ -355,7 +355,7 @@ export default function LaporanKeuanganContent() {
                       <TableCell className="font-bold text-red-800">BEBAN</TableCell>
                       <TableCell></TableCell>
                     </TableRow>
-                    {labaRugi.beban.map((item) => (
+                    {penghasilanKomprehensif.beban.map((item) => (
                       <TableRow key={item.coaId}>
                         <TableCell className={item.isGroup ? "font-semibold" : "pl-4"}>
                           {item.namaAkun}
@@ -368,7 +368,7 @@ export default function LaporanKeuanganContent() {
                     <TableRow className="border-b-2 border-red-200">
                       <TableCell className="font-bold">TOTAL BEBAN</TableCell>
                       <TableCell className="text-right font-bold text-red-600 text-lg">
-                        {formatCurrency(labaRugi.totalBeban)}
+                        {formatCurrency(penghasilanKomprehensif.totalBeban)}
                       </TableCell>
                     </TableRow>
 
@@ -379,9 +379,9 @@ export default function LaporanKeuanganContent() {
 
                     {/* Laba/Rugi */}
                     <TableRow className="border-t-4 border-gray-400 bg-muted/50">
-                      <TableCell className="font-bold text-lg">LABA/RUGI BERSIH</TableCell>
-                      <TableCell className={`text-right font-bold text-xl ${labaRugi.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(labaRugi.labaBersih)}
+                      <TableCell className="font-bold text-lg">LABA/RUGI BERSIH (SHU)</TableCell>
+                      <TableCell className={`text-right font-bold text-xl ${penghasilanKomprehensif.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(penghasilanKomprehensif.labaBersih)}
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -393,9 +393,9 @@ export default function LaporanKeuanganContent() {
               <CardContent className="py-16">
                 <div className="text-center">
                   <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Memuat Laba Rugi...</h3>
+                  <h3 className="text-lg font-semibold mb-2">Memuat Laporan Penghasilan Komprehensif...</h3>
                   <p className="text-muted-foreground">
-                    Sedang memproses data laporan laba rugi
+                    Sedang memproses data laporan penghasilan komprehensif
                   </p>
                 </div>
               </CardContent>

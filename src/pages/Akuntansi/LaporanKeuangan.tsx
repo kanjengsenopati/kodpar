@@ -9,14 +9,14 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { PeriodFilter } from "@/components/akuntansi/laporan/PeriodFilter";
-import { NeracaReport } from "@/components/akuntansi/laporan/NeracaReport";
-import { LabaRugiReport } from "@/components/akuntansi/laporan/LabaRugiReport";
+import { PosisiKeuanganReport } from "@/components/akuntansi/laporan/PosisiKeuanganReport";
+import { PenghasilanKomprehensifReport } from "@/components/akuntansi/laporan/PenghasilanKomprehensifReport";
 import { ArusKasReport } from "@/components/akuntansi/laporan/ArusKasReport";
 import { PerubahanModalReport } from "@/components/akuntansi/laporan/PerubahanModalReport";
 
 import {
-  generateNeraca,
-  generateLabaRugi,
+  generatePosisiKeuangan,
+  generatePenghasilanKomprehensif,
   generateArusKas,
   generatePerubahanModal
 } from "@/services/akuntansi/laporanService";
@@ -30,8 +30,8 @@ export default function LaporanKeuangan() {
     return `${year}-${month}`;
   });
 
-  const [neracaData, setNeracaData] = useState(null);
-  const [labaRugiData, setLabaRugiData] = useState(null);
+  const [posisiKeuanganData, setPosisiKeuanganData] = useState(null);
+  const [penghasilanKomprehensifData, setPenghasilanKomprehensifData] = useState(null);
   const [arusKasData, setArusKasData] = useState(null);
   const [perubahanModalData, setPerubahanModalData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,13 +45,13 @@ export default function LaporanKeuangan() {
     try {
       console.log("Loading reports for period:", selectedPeriod);
       
-      const neraca = generateNeraca(selectedPeriod);
-      const labaRugi = generateLabaRugi(selectedPeriod);
+      const posisiKeuangan = generatePosisiKeuangan(selectedPeriod);
+      const penghasilanKomprehensif = generatePenghasilanKomprehensif(selectedPeriod);
       const arusKas = generateArusKas(selectedPeriod);
       const perubahanModal = generatePerubahanModal(selectedPeriod);
 
-      setNeracaData(neraca);
-      setLabaRugiData(labaRugi);
+      setPosisiKeuanganData(posisiKeuangan);
+      setPenghasilanKomprehensifData(penghasilanKomprehensif);
       setArusKasData(arusKas);
       setPerubahanModalData(perubahanModal);
       
@@ -110,12 +110,12 @@ export default function LaporanKeuangan() {
         />
 
         {/* Summary Cards */}
-        {neracaData && labaRugiData && (
+        {posisiKeuanganData && penghasilanKomprehensifData && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-blue-600">
-                  Rp {neracaData.totalAset.toLocaleString('id-ID')}
+                  Rp {posisiKeuanganData.totalAset.toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Aset</p>
               </CardContent>
@@ -123,7 +123,7 @@ export default function LaporanKeuangan() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-red-600">
-                  Rp {neracaData.totalKewajiban.toLocaleString('id-ID')}
+                  Rp {posisiKeuanganData.totalKewajiban.toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Kewajiban</p>
               </CardContent>
@@ -131,17 +131,17 @@ export default function LaporanKeuangan() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-green-600">
-                  Rp {neracaData.totalModal.toLocaleString('id-ID')}
+                  Rp {posisiKeuanganData.totalModal.toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Modal</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className={`text-2xl font-bold ${labaRugiData.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  Rp {labaRugiData.labaBersih.toLocaleString('id-ID')}
+                <div className={`text-2xl font-bold ${penghasilanKomprehensifData.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  Rp {penghasilanKomprehensifData.labaBersih.toLocaleString('id-ID')}
                 </div>
-                <p className="text-xs text-muted-foreground">Laba Bersih</p>
+                <p className="text-xs text-muted-foreground">Laba Bersih (SHU)</p>
               </CardContent>
             </Card>
           </div>
@@ -152,28 +152,28 @@ export default function LaporanKeuangan() {
           <CardContent className="pt-6">
             <Tabs defaultValue="neraca" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="neraca">Neraca</TabsTrigger>
-                <TabsTrigger value="laba-rugi">Laba Rugi</TabsTrigger>
+                <TabsTrigger value="neraca">Posisi Keuangan</TabsTrigger>
+                <TabsTrigger value="laba-rugi">Penghasilan Komprehensif</TabsTrigger>
                 <TabsTrigger value="arus-kas">Arus Kas</TabsTrigger>
                 <TabsTrigger value="perubahan-modal">Perubahan Modal</TabsTrigger>
               </TabsList>
               
               <TabsContent value="neraca" className="mt-6">
-                {neracaData ? (
-                  <NeracaReport data={neracaData} />
+                {posisiKeuanganData ? (
+                  <PosisiKeuanganReport data={posisiKeuanganData} />
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">Memuat laporan neraca...</p>
+                    <p className="text-muted-foreground">Memuat laporan posisi keuangan...</p>
                   </div>
                 )}
               </TabsContent>
               
               <TabsContent value="laba-rugi" className="mt-6">
-                {labaRugiData ? (
-                  <LabaRugiReport data={labaRugiData} />
+                {penghasilanKomprehensifData ? (
+                  <PenghasilanKomprehensifReport data={penghasilanKomprehensifData} />
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">Memuat laporan laba rugi...</p>
+                    <p className="text-muted-foreground">Memuat laporan penghasilan komprehensif...</p>
                   </div>
                 )}
               </TabsContent>

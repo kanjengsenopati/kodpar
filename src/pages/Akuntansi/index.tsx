@@ -50,7 +50,7 @@ export default function Akuntansi() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Manajemen Akuntansi</h1>
             <p className="text-muted-foreground">
-              Sistem akuntansi terintegrasi dengan sinkronisasi real-time dan SAK ETAP compliance
+              Sistem akuntansi terintegrasi dengan sinkronisasi real-time dan SAK EP compliance
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -84,8 +84,8 @@ export default function Akuntansi() {
                 <Calculator className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-blue-800">SAK ETAP</h3>
-                <p className="text-sm text-blue-600">Standar akuntansi koperasi</p>
+                <h3 className="font-semibold text-blue-800">SAK EP</h3>
+                <p className="text-sm text-blue-600">Standar akuntansi koperasi terbaru</p>
               </div>
             </CardContent>
           </Card>
