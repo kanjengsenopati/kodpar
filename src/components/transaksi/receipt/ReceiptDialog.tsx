@@ -24,16 +24,23 @@ export function ReceiptDialog({ open, onOpenChange, transaksi }: ReceiptDialogPr
   
   if (!transaksi) return null;
   
-  // Calculate remaining amount if it's an angsuran
-  const getRemainingAmount = () => {
-    if (transaksi.jenis === "Angsuran") {
-      const pinjamanIdMatch = transaksi.keterangan?.match(/pinjaman #(TR\d+)/);
-      if (pinjamanIdMatch && pinjamanIdMatch[1]) {
-        return getRemainingLoanAmount(pinjamanIdMatch[1]);
+  const [remainingAmount, setRemainingAmount] = React.useState<number | undefined>(undefined);
+  
+  React.useEffect(() => {
+    const fetchRemaining = async () => {
+      if (transaksi && transaksi.jenis === "Angsuran") {
+        const pinjamanIdMatch = transaksi.keterangan?.match(/pinjaman #(TR\d+)/);
+        if (pinjamanIdMatch && pinjamanIdMatch[1]) {
+          const amount = await getRemainingLoanAmount(pinjamanIdMatch[1]);
+          setRemainingAmount(amount);
+        }
+      } else {
+        setRemainingAmount(undefined);
       }
-    }
-    return undefined;
-  };
+    };
+    
+    fetchRemaining();
+  }, [transaksi]);
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,7 +56,7 @@ export function ReceiptDialog({ open, onOpenChange, transaksi }: ReceiptDialogPr
           <TransaksiReceipt 
             ref={receiptRef} 
             transaksi={transaksi} 
-            remainingAmount={getRemainingAmount()} 
+            remainingAmount={remainingAmount} 
           />
         </div>
         

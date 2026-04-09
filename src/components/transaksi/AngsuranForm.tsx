@@ -45,22 +45,30 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
 
   // Calculate allocation preview when amount or loan changes
   useEffect(() => {
-    if (selectedLoanId && formData.jumlah && parseInt(formData.jumlah) > 0) {
-      const pinjaman = getTransaksiById(selectedLoanId);
-      if (pinjaman) {
-        const allocation = calculateAngsuranAllocation(
-          pinjaman, 
-          parseInt(formData.jumlah), 
-          formData.anggotaId
-        );
-        setAllocationPreview({
-          nominalJasa: allocation.nominalJasa,
-          nominalPokok: allocation.nominalPokok
-        });
+    const updatePreview = async () => {
+      if (selectedLoanId && formData.jumlah && parseInt(formData.jumlah) > 0) {
+        try {
+          const pinjaman = await getTransaksiById(selectedLoanId);
+          if (pinjaman) {
+            const allocation = calculateAngsuranAllocation(
+              pinjaman, 
+              parseInt(formData.jumlah), 
+              formData.anggotaId
+            );
+            setAllocationPreview({
+              nominalJasa: allocation.nominalJasa,
+              nominalPokok: allocation.nominalPokok
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching pinjaman for preview:", error);
+        }
+      } else {
+        setAllocationPreview(null);
       }
-    } else {
-      setAllocationPreview(null);
-    }
+    };
+    
+    updatePreview();
   }, [selectedLoanId, formData.jumlah, formData.anggotaId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,7 +105,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
 
       if (initialData) {
         // Update existing transaction
-        const updatedTransaksi = updateTransaksi(initialData.id, {
+        const updatedTransaksi = await updateTransaksi(initialData.id, {
           tanggal: formData.tanggal,
           anggotaId: formData.anggotaId,
           jenis: "Angsuran",
@@ -117,7 +125,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
         }
       } else {
         // Create new transaction
-        const newTransaksi = createTransaksi({
+        const newTransaksi = await createTransaksi({
           tanggal: formData.tanggal,
           anggotaId: formData.anggotaId,
           jenis: "Angsuran",
@@ -131,7 +139,16 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
             title: "Angsuran berhasil disimpan",
             description: `Transaksi dengan ID ${newTransaksi.id} telah dibuat dan disinkronkan ke akuntansi`,
           });
-          onSuccess();
+          
+          // Auto-reset form for next entry (Stay on page)
+          setFormData(prev => ({
+            ...prev,
+            jumlah: "",
+            keterangan: ""
+          }));
+          setSelectedLoanId("");
+          
+          if (onSuccess) onSuccess();
         } else {
           throw new Error("Gagal membuat transaksi");
         }

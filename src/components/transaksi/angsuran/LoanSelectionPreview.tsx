@@ -161,7 +161,7 @@ export function LoanSelectionPreview({
                     Tanggal: {new Date(loan.tanggal).toLocaleDateString('id-ID')}
                   </p>
                   <p className="text-sm font-medium">
-                    Sisa: {formatCurrency(getRemainingLoanAmount(loan.id))}
+                    Sisa: {formatCurrency(loan.actualRemaining)}
                   </p>
                 </div>
                 <div className="text-right">

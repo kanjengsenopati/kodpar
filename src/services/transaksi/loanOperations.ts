@@ -5,8 +5,8 @@ import { getPengaturan } from "@/services/pengaturanService";
 /**
  * Get remaining loan amount for a specific loan with accurate calculation
  */
-export async function getRemainingLoanAmount(loanId: string): Promise<number> {
-  const transaksiList = await getAllTransaksi();
+export async function getRemainingLoanAmount(loanId: string, cachedTransactions?: Transaksi[]): Promise<number> {
+  const transaksiList = cachedTransactions || await getAllTransaksi();
   
   // Find the loan
   const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam");
@@ -201,6 +201,29 @@ export async function getUpcomingDueLoans(anggotaId: string | "ALL" = "ALL", day
   }
   
   return results;
+}
+
+/**
+ * Get all members who have at least one active loan (remaining balance > 0)
+ */
+export async function getAnggotaWithActiveLoans(): Promise<string[]> {
+  const transaksiList = await getAllTransaksi();
+  const pinjamList = transaksiList.filter(t => t.jenis === "Pinjam" && t.status === "Sukses");
+  
+  const anggotaWithLoans = new Set<string>();
+  
+  // To avoid circular dependency or multiple await in loop, we'll do it efficiently
+  for (const loan of pinjamList) {
+    if (anggotaWithLoans.has(loan.anggotaId)) continue;
+    
+    // Check if this specific loan is active using the cached list to avoid repeated DB calls
+    const remaining = await getRemainingLoanAmount(loan.id, transaksiList);
+    if (remaining > 0) {
+      anggotaWithLoans.add(loan.anggotaId);
+    }
+  }
+  
+  return Array.from(anggotaWithLoans);
 }
 
 /**
