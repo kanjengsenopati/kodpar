@@ -20,7 +20,11 @@ import {
   calculateJatuhTempo,
   calculatePenalty,
   getOverdueLoans,
-  getUpcomingDueLoans
+  getUpcomingDueLoans,
+  getAnggotaWithActiveLoans,
+  getActiveLoansByAnggotaId,
+  getLoanInterestRate,
+  generateInstallmentSchedule
 } from "./transaksi/loanOperations";
 
 import { generateTransaksiId } from "./transaksi/idGenerator";
@@ -82,6 +86,10 @@ export const transaksiService = {
   getRemainingLoanAmount,
   getOverdueLoans,
   getUpcomingDueLoans,
+  getActiveLoansByAnggotaId,
+  getAnggotaWithActiveLoans,
+  getLoanInterestRate,
+  generateInstallmentSchedule,
   calculatePenalty,
   calculateJatuhTempo,
   
@@ -118,6 +126,9 @@ export {
   getRemainingLoanAmount,
   getOverdueLoans,
   getUpcomingDueLoans,
+  getAnggotaWithActiveLoans,
+  getLoanInterestRate,
+  generateInstallmentSchedule,
   calculatePenalty,
   calculateJatuhTempo,
   calculateMemberTotalSimpanan as calculateTotalSimpanan,
@@ -131,7 +142,6 @@ export {
   calculateSHUDistribution,
   resetAllSHUValues,
   refreshAllSHUCalculations,
+  getActiveLoansByAnggotaId,
   SHUManager
 };
-
-

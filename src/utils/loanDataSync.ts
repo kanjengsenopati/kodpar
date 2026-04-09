@@ -119,3 +119,16 @@ export const handleTransactionPrint = (transaksi: Transaksi) => {
   printWindow.document.write(printContent);
   printWindow.document.close();
 };
+
+/**
+ * Format loan info for UI display
+ */
+export function formatLoanDisplay(info: LoanInfo) {
+  return {
+    tenor: `${info.tenor} Bulan`,
+    sukuBunga: `${info.sukuBunga}% p.m`,
+    angsuranPerBulan: formatCurrency(info.angsuranPerBulan),
+    totalJasa: formatCurrency(info.nominalJasa),
+    totalPinjaman: formatCurrency(info.jumlah)
+  };
+}

@@ -218,3 +218,30 @@ export async function generateInstallmentSchedule(loanId: string): Promise<any[]
 
   return schedule;
 }
+
+/**
+ * Get all active loans for a specific member- PURE DATABASE DRIVEN
+ * Returns only loans that have a remaining principal balance > 0
+ */
+export async function getActiveLoansByAnggotaId(anggotaId: string): Promise<Transaksi[]> {
+  const transaksiList = await getAllTransaksi();
+  
+  // 1. Get all successful loan disbursements for this member
+  const allLoans = transaksiList.filter(t => 
+    t.jenis === "Pinjam" && 
+    t.status === "Sukses" && 
+    t.anggotaId === anggotaId
+  );
+  
+  const activeLoans: Transaksi[] = [];
+  
+  // 2. Filter for loans with remaining balance
+  for (const loan of allLoans) {
+    const remaining = await getRemainingLoanAmount(loan.id, transaksiList);
+    if (remaining > 0) {
+      activeLoans.push(loan);
+    }
+  }
+  
+  return activeLoans;
+}
