@@ -127,8 +127,8 @@ export function useDashboardData(): DashboardData {
       .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
       .slice(0, 5);
     
-    // Calculate SHU distribution using sample anggota IDs
-    const shuDistribution = calculateSHUForSamples();
+    // Calculate SHU distribution using sample anggota IDs (now properly awaited)
+    const shuDistribution = await calculateSHUForSamples();
     
     // Prepare productivity data
     const productivityData = {

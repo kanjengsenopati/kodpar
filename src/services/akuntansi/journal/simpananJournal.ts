@@ -79,7 +79,9 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
     const totalDebit = details.reduce((sum, detail) => sum + detail.debit, 0);
     const totalKredit = details.reduce((sum, detail) => sum + detail.kredit, 0);
 
-    return await createJurnalEntry({
+    console.log(`📊 Creating SAK EP journal entry for Simpanan ${transaksi.id} - ${kategori}`);
+
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `SAK EP SIMPANAN - ${transaksi.anggotaNama} | ${transaksi.kategori || 'Umum'}: ${formatCurrency(transaksi.jumlah || 0)}`,
@@ -90,8 +92,17 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
       totalKredit,
       details
     });
+
+    if (result) {
+      console.log(`✅ Simpanan journal entry created successfully: ${result.nomorJurnal}`);
+    } else {
+      console.error(`❌ Failed to create journal entry for Simpanan ${transaksi.id}`);
+    }
+
+    return result;
   } catch (error) {
-    console.error("Error creating SAK EP simpanan journal entry:", error);
+    console.error("Error in createSimpananJournalEntry:", error);
+    // Provide a more descriptive error object instead of just null if possible
     return null;
   }
 }
