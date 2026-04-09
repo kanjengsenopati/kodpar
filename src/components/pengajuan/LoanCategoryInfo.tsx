@@ -139,7 +139,7 @@ export function LoanCategoryInfo({ kategori, jumlah, tenor }: LoanCategoryInfoPr
             <FileText size={16} className="text-blue-600" />
             <div>
               <p className="text-sm text-muted-foreground">Maksimal Pinjaman</p>
-              <p className="font-semibold">Rp {categoryInfo.maxAmount.toLocaleString('id-ID')}</p>
+              <p className="font-semibold">Rp {(categoryInfo.maxAmount || 0).toLocaleString('id-ID')}</p>
             </div>
           </div>
         </div>
@@ -169,15 +169,15 @@ export function LoanCategoryInfo({ kategori, jumlah, tenor }: LoanCategoryInfoPr
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
               <div className="bg-white p-3 rounded-lg border">
                 <p className="text-muted-foreground">Angsuran per Bulan</p>
-                <p className="font-semibold text-lg">Rp {loanPreview.monthlyPayment.toLocaleString('id-ID')}</p>
+                <p className="font-semibold text-lg">Rp {(loanPreview.monthlyPayment || 0).toLocaleString('id-ID')}</p>
               </div>
               <div className="bg-white p-3 rounded-lg border">
                 <p className="text-muted-foreground">Total Bunga</p>
-                <p className="font-semibold text-lg">Rp {loanPreview.totalInterest.toLocaleString('id-ID')}</p>
+                <p className="font-semibold text-lg">Rp {(loanPreview.totalInterest || 0).toLocaleString('id-ID')}</p>
               </div>
               <div className="bg-white p-3 rounded-lg border">
                 <p className="text-muted-foreground">Total Pembayaran</p>
-                <p className="font-semibold text-lg">Rp {loanPreview.totalPayment.toLocaleString('id-ID')}</p>
+                <p className="font-semibold text-lg">Rp {(loanPreview.totalPayment || 0).toLocaleString('id-ID')}</p>
               </div>
             </div>
           </div>

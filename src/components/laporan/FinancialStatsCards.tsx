@@ -37,7 +37,7 @@ export function FinancialStatsCards({ stats }: FinancialStatsCardsProps) {
           <PiggyBank className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">Rp {stats.totalSimpanan.toLocaleString('id-ID')}</div>
+          <div className="text-2xl font-bold">Rp {(stats.totalSimpanan || 0).toLocaleString('id-ID')}</div>
           <p className="text-xs text-muted-foreground">
             Dana simpanan anggota
           </p>
@@ -50,7 +50,7 @@ export function FinancialStatsCards({ stats }: FinancialStatsCardsProps) {
           <CreditCard className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">Rp {stats.totalPinjaman.toLocaleString('id-ID')}</div>
+          <div className="text-2xl font-bold">Rp {(stats.totalPinjaman || 0).toLocaleString('id-ID')}</div>
           <p className="text-xs text-muted-foreground">
             Dana pinjaman tersalur
           </p>
@@ -63,7 +63,7 @@ export function FinancialStatsCards({ stats }: FinancialStatsCardsProps) {
           <Receipt className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">Rp {stats.totalAngsuran.toLocaleString('id-ID')}</div>
+          <div className="text-2xl font-bold">Rp {(stats.totalAngsuran || 0).toLocaleString('id-ID')}</div>
           <p className="text-xs text-muted-foreground">
             Pembayaran angsuran
           </p>
@@ -76,7 +76,7 @@ export function FinancialStatsCards({ stats }: FinancialStatsCardsProps) {
           <ArrowUpFromLine className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">Rp {stats.totalPenarikan.toLocaleString('id-ID')}</div>
+          <div className="text-2xl font-bold">Rp {(stats.totalPenarikan || 0).toLocaleString('id-ID')}</div>
           <p className="text-xs text-muted-foreground">
             Dana penarikan
           </p>

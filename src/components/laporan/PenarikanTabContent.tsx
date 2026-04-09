@@ -58,7 +58,7 @@ export function PenarikanTabContent({
             <ArrowUpFromLine className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rp {totalPenarikan.toLocaleString('id-ID')}</div>
+            <div className="text-2xl font-bold">Rp {(totalPenarikan || 0).toLocaleString('id-ID')}</div>
             <p className="text-xs text-muted-foreground">
               Periode: {filterDateStart.toLocaleDateString('id-ID')} - {filterDateEnd.toLocaleDateString('id-ID')}
             </p>
@@ -84,7 +84,7 @@ export function PenarikanTabContent({
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rp {rataRataPenarikan.toLocaleString('id-ID')}</div>
+            <div className="text-2xl font-bold">Rp {(rataRataPenarikan || 0).toLocaleString('id-ID')}</div>
             <p className="text-xs text-muted-foreground">
               Per transaksi
             </p>

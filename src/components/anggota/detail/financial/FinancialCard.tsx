@@ -17,7 +17,7 @@ export function FinancialCard({ title, value, icon: Icon, iconColor, iconBgColor
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">{title}</p>
-            <p className="text-xl font-bold">Rp {value.toLocaleString("id-ID")}</p>
+            <p className="text-xl font-bold">Rp {(value || 0).toLocaleString("id-ID")}</p>
           </div>
           <div className={`rounded-full ${iconBgColor} p-3`}>
             <Icon className={`h-5 w-5 ${iconColor}`} />

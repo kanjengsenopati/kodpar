@@ -187,7 +187,11 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         jumlah: pengajuan.jumlah,
         kategori: pengajuan.kategori,
         keterangan: finalKeterangan,
-        status: "Sukses"
+        status: "Sukses",
+        // Forward installment-specific metadata for accounting sync
+        referensiPinjamanId: pengajuan.referensiPinjamanId,
+        nominalPokok: pengajuan.nominalPokok,
+        nominalJasa: pengajuan.nominalJasa
       });
       
       if (!result.success || !result.data) {
