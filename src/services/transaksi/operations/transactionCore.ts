@@ -4,14 +4,17 @@ import { createTransaksi as createTransaksiCore } from "../transaksiCore";
 import { syncTransactionToKeuangan } from "../../sync/comprehensiveSyncService";
 import { logAuditEntry } from "../../auditService";
 import { refreshFinancialCalculations } from "../../realTimeCalculationService";
+import { db } from "@/db/db";
 
 /**
  * Enhanced create transaksi with controlled accounting sync to prevent duplicates
  */
 export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<Transaksi | null> {
   try {
-    // Create the transaction using core service (now properly awaited)
-    const newTransaksi = await createTransaksiCore(data);
+    // Create the transaction using core service inside a Dexie transaction for atomicity
+    const newTransaksi = await db.transaction('rw', db.transaksi, async () => {
+      return await createTransaksiCore(data);
+    });
     
     if (newTransaksi && newTransaksi.status === "Sukses") {
       console.log(`✅ Transaction ${newTransaksi.id} created successfully`);

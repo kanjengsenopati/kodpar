@@ -2,6 +2,7 @@ import { Transaksi, Pengajuan } from "@/types";
 import { syncTransactionToAccounting } from "../akuntansi/accountingSyncService";
 import { getJurnalEntryByReference } from "../akuntansi/jurnalService";
 import { refreshFinancialCalculations } from "../realTimeCalculationService";
+import { db } from "@/db/db";
 
 // Global sync tracker dengan persistent storage
 const SYNC_TRACKER_KEY = "centralized_sync_tracker";
@@ -208,6 +209,13 @@ class CentralizedSyncService {
         });
 
         console.log(`✅ Centralized sync completed for ${transaksi.jenis} transaction ${transaksi.id} -> Journal ${journalEntry.nomorJurnal}`);
+        
+        // Update database with sync status for consistency
+        await db.transaksi.update(transaksi.id, { 
+          accountingSyncStatus: 'SUCCESS',
+          updatedAt: new Date().toISOString()
+        });
+        
         return { success: true, journalId: journalEntry.id, message: 'Sync completed successfully' };
       } else {
         console.error(`❌ Failed to create journal entry for transaction ${transaksi.id}`);
@@ -219,8 +227,14 @@ class CentralizedSyncService {
       this.saveSyncRecord({
         transactionId: transaksi.id,
         type: 'transaction',
-        syncedAt: new Date().toISOString(),
         status: 'failed'
+      });
+      
+      // Update database with failed status for consistency
+      await db.transaksi.update(transaksi.id, { 
+        accountingSyncStatus: 'FAILED',
+        lastSyncError: error instanceof Error ? error.message : 'Unknown error',
+        updatedAt: new Date().toISOString()
       });
       
       return { success: false, message: `Sync error: ${error instanceof Error ? error.message : 'Unknown error'}` };

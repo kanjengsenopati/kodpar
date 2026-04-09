@@ -146,6 +146,7 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Transak
       jumlah: data.jumlah || 0,
       keterangan: data.keterangan || "",
       status: data.status || "Sukses",
+      accountingSyncStatus: data.status === "Sukses" ? "PENDING" : undefined,
       createdAt: now,
       updatedAt: now,
     };

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { RealTimeSyncStatus } from "@/components/common/RealTimeSyncStatus";
+import { SyncConsistencyWidget } from "@/components/akuntansi/SyncConsistencyWidget";
 
 export default function Akuntansi() {
   const navigate = useNavigate();
@@ -60,6 +61,9 @@ export default function Akuntansi() {
             </div>
           </div>
         </div>
+
+        {/* Data Consistency Monitor */}
+        <SyncConsistencyWidget />
 
         {/* Real-time Sync Status */}
         <RealTimeSyncStatus />

@@ -10,6 +10,8 @@ export interface Transaksi {
   kategori?: string;
   keterangan?: string;
   status: "Sukses" | "Pending" | "Gagal";
+  accountingSyncStatus?: "PENDING" | "SUCCESS" | "FAILED";
+  lastSyncError?: string;
   createdAt: string;
   updatedAt: string;
 }
