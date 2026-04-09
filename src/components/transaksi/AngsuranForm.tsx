@@ -198,7 +198,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
                   <SelectValue placeholder="Pilih anggota" />
                 </SelectTrigger>
                 <SelectContent>
-                  {anggotaList.map((anggota: any) => (
+                  {Array.isArray(anggotaList) && anggotaList.map((anggota: any) => (
                     <SelectItem key={anggota.id} value={anggota.id}>
                       {anggota.nama} - {anggota.id}
                     </SelectItem>

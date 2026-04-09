@@ -12,9 +12,22 @@ export default function AngsuranFormPage() {
   const [anggotaList, setAnggotaList] = useState([]);
 
   useEffect(() => {
-    const loadedAnggota = getAllAnggota();
-    setAnggotaList(loadedAnggota);
-  }, []);
+    const loadData = async () => {
+      try {
+        const loadedAnggota = await getAllAnggota();
+        setAnggotaList(loadedAnggota || []);
+      } catch (error) {
+        console.error("Failed to load anggota for angsuran form:", error);
+        toast({
+          title: "Gagal memuat data",
+          description: "Tidak dapat mengambil data anggota",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    loadData();
+  }, [toast]);
 
   const handleSuccess = () => {
     navigate("/transaksi/angsuran");
