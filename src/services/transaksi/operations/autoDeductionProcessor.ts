@@ -1,7 +1,7 @@
 
 import { Transaksi } from "@/types";
 import { calculateAutoDeductions, processAutoDeductions } from "../autoDeductionService";
-import { realTimeAccountingSync } from "../../realTimeAccountingSync";
+import { centralizedSync } from "../../sync/centralizedSyncService";
 
 /**
  * Process auto deductions for loan transactions
@@ -35,7 +35,7 @@ export function processLoanAutoDeductions(newTransaksi: Transaksi): void {
           updatedAt: new Date().toISOString()
         };
         
-        realTimeAccountingSync.queueTransactionSync(pseudoTransaksi);
+        centralizedSync.syncTransaction(pseudoTransaksi);
       });
     }
   }

@@ -169,13 +169,10 @@ export const realTimeAccountingSync = RealTimeAccountingSync.getInstance();
  * Initialize real-time sync listeners
  */
 export function initializeRealTimeAccountingSync(): void {
-  console.log('🚀 Initializing real-time accounting sync...');
+  console.log('⚠️ Legacy realTimeAccountingSync is being decommissioned in favor of centralizedSyncService.');
   
-  // Cleanup old cache and force fresh state as requested
-  realTimeAccountingSync.clearProcessedCache();
-  localStorage.removeItem('last_accounting_sync_time');
-
-  // Listen for transaction creation events
+  // Listeners disabled to prevent duplicate syncs with CentralizedSyncService
+  /*
   window.addEventListener('transaction-created', (event: any) => {
     const transaksi = event.detail.transaction;
     if (transaksi && transaksi.status === 'Sukses') {
@@ -183,7 +180,6 @@ export function initializeRealTimeAccountingSync(): void {
     }
   });
 
-  // Listen for transaction updates
   window.addEventListener('transaction-updated', (event: any) => {
     const transaksi = event.detail.transaction;
     if (transaksi && transaksi.status === 'Sukses') {
@@ -191,24 +187,15 @@ export function initializeRealTimeAccountingSync(): void {
     }
   });
 
-  // Listen for pengajuan approvals
   window.addEventListener('pengajuan-approved', (event: any) => {
     const pengajuan = event.detail.pengajuan;
     if (pengajuan && pengajuan.status === 'Disetujui') {
       realTimeAccountingSync.queuePengajuanSync(pengajuan);
     }
   });
+  */
 
-  // Listen for keuangan data changes and sync back to accounting
-  window.addEventListener('keuangan-data-updated', () => {
-    console.log('📊 Keuangan data updated, triggering accounting consistency check...');
-    // This ensures bi-directional sync consistency
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('accounting-consistency-check'));
-    }, 500);
-  });
-
-  console.log('✅ Real-time accounting sync listeners initialized');
+  console.log('✅ Real-time accounting sync (LEGACY) silenced');
 }
 
 export function useRealTimeAccountingSync() {

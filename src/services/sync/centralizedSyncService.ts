@@ -156,8 +156,19 @@ class CentralizedSyncService {
     }
 
     // Check if journal entry already exists by reference
-    const referensi = `TXN-${transaksi.id}`;
-    const existingJournal = await getJurnalEntryByReference(referensi);
+    // We check both standard TXN- and potential PG- references
+    const referensiTXN = `TXN-${transaksi.id}`;
+    let existingJournal = await getJurnalEntryByReference(referensiTXN);
+    
+    // If not found, and it looks like it might have come from a Pengajuan
+    if (!existingJournal && transaksi.keterangan && transaksi.keterangan.includes('Pengajuan #')) {
+      const pgMatch = transaksi.keterangan.match(/Pengajuan #([A-Z0-9]+)/);
+      if (pgMatch) {
+        const pgRef = `PG-${pgMatch[1]}`;
+        existingJournal = await getJurnalEntryByReference(pgRef);
+      }
+    }
+
     if (existingJournal) {
       console.log(`📋 Journal already exists for transaction ${transaksi.id}: ${existingJournal.nomorJurnal}`);
       

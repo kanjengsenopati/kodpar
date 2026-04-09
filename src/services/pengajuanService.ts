@@ -200,22 +200,16 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         throw new Error("Gagal memperbarui status pengajuan");
       }
       
-      // 5. Success - centralized sync can happen outside the atomic block 
-      // but we return true here to signal success to the caller
+      // 5. Success - centralized sync will happen automatically 
+      // via the 'transaction-created' event sparked by createTransaksi
       
-      // Emit trigger for sync services (shifted to background to not block UI)
-      setTimeout(async () => {
-        console.log(`🔄 Triggering centralized sync for approved pengajuan ${id}`);
-        await centralizedSync.syncPengajuan(updatedPengajuan);
-        
-        window.dispatchEvent(new CustomEvent('pengajuan-approved', {
-          detail: { 
-            pengajuan: updatedPengajuan,
-            transaction: transaction,
-            timestamp: new Date().toISOString()
-          }
-        }));
-      }, 0);
+      window.dispatchEvent(new CustomEvent('pengajuan-approved', {
+        detail: { 
+          pengajuan: updatedPengajuan,
+          transaction: transaction,
+          timestamp: new Date().toISOString()
+        }
+      }));
       
       return true;
     });

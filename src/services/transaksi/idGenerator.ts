@@ -13,18 +13,27 @@ import { db } from "@/db/db";
  * Format: TR000001, TR000002, etc.
  */
 export async function generateTransaksiId(): Promise<string> {
-  // Get the last transaction based on primary key (id)
-  const lastTransaksi = await db.transaksi.toCollection().last();
+  // Get all transaksi IDs to find the true numeric maximum
+  // We use a prefix filter approach for performance and robustness
+  const allIds = await db.transaksi.toCollection().primaryKeys();
   
-  let nextNumber = 1;
-  if (lastTransaksi && lastTransaksi.id) {
-    // Extract number from TRxxxxxx format
-    const lastIdNumber = parseInt(lastTransaksi.id.replace("TR", ""));
-    if (!isNaN(lastIdNumber)) {
-      nextNumber = lastIdNumber + 1;
+  let maxNumber = 0;
+  
+  for (const id of allIds) {
+    if (typeof id === 'string' && id.startsWith('TR')) {
+      // Specifically target TR followed by exactly 6 digits (TR000001 format)
+      // and ignore things like TR_SEED_001
+      const match = id.match(/^TR(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1]);
+        if (!isNaN(num) && num > maxNumber) {
+          maxNumber = num;
+        }
+      }
     }
   }
   
+  const nextNumber = maxNumber + 1;
   const newId = `TR${String(nextNumber).padStart(6, "0")}`;
   return newId;
 }
