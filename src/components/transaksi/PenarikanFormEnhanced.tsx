@@ -98,7 +98,7 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.anggotaId || !formData.jumlah || !formData.kategori) {
