@@ -126,13 +126,13 @@ import { getPengaturan } from "./pengaturanService";
  * Menggunakan Dexie transaction untuk memastikan atomisitas
  */
 export async function approvePengajuan(id: string): Promise<boolean> {
-  const pengajuan = await db.table('pengajuan').get(id);
+  const pengajuan = await db.pengajuan.get(id);
   if (!pengajuan || pengajuan.status !== "Menunggu") return false;
   
   try {
     // Perform all database operations inside a single transaction
-    // Using correct table names from db.ts schema: 'pengajuan', 'transaksi', 'jurnal'
-    return await db.transaction('rw', [db.pengajuan, db.transaksi, db.jurnal], async () => {
+    // MUST include all tables accessed: pengajuan, transaksi, jurnal, anggota, coa
+    return await db.transaction('rw', [db.pengajuan, db.transaksi, db.jurnal, db.anggota, db.coa], async () => {
       // 1. Custom validation rules for Penarikan (Withdrawal)
       if (pengajuan.jenis === "Penarikan") {
         const settings = getPengaturan();
