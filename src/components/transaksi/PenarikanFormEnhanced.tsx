@@ -43,8 +43,8 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
   // Get available simpanan categories
   const simpananCategories = getJenisOptions("Simpanan");
 
-  const calculateSimpananByJenis = (anggotaId: string): SimpananByJenis => {
-    const transaksi = getTransaksiByAnggotaId(anggotaId);
+  const calculateSimpananByJenis = async (anggotaId: string): Promise<SimpananByJenis> => {
+    const transaksi = await getTransaksiByAnggotaId(anggotaId);
     const simpananTransaksi = transaksi.filter(t => t.jenis === "Simpan" || t.jenis === "Penarikan");
     
     const result: SimpananByJenis = {};
@@ -76,11 +76,11 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
     return result;
   };
 
-  const handleAnggotaChange = (anggotaId: string) => {
+  const handleAnggotaChange = async (anggotaId: string) => {
     setFormData(prev => ({ ...prev, anggotaId, kategori: "" }));
     
     if (anggotaId) {
-      const simpananData = calculateSimpananByJenis(anggotaId);
+      const simpananData = await calculateSimpananByJenis(anggotaId);
       setSimpananByJenis(simpananData);
     } else {
       setSimpananByJenis({});
