@@ -69,7 +69,7 @@ export async function createAngsuranJournalEntry(
       details
     });
   } catch (error) {
-    console.error("Error creating SAK ETAP angsuran journal entry:", error);
+    console.error("Error creating SAK EP angsuran journal entry:", error);
     return null;
   }
 }

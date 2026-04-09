@@ -1,4 +1,3 @@
-
 import { getAllJurnalEntries } from "./jurnalService";
 import { getAllChartOfAccounts, getCoaIdByCode } from "./coaService";
 import { JurnalEntry, ChartOfAccount } from "@/types/akuntansi";

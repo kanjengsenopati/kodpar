@@ -16,6 +16,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { RealTimeSyncStatus } from "@/components/common/RealTimeSyncStatus";
 import { SyncConsistencyWidget } from "@/components/akuntansi/SyncConsistencyWidget";
+import { AccountingMetricCards } from "@/components/akuntansi/dashboard/AccountingMetricCards";
+import AkuntansiHeader from "@/components/akuntansi/dashboard/AkuntansiHeader";
 
 export default function Akuntansi() {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ export default function Akuntansi() {
   const menuItems = [
     {
       title: "Jurnal Umum",
-      description: "Kelola jurnal entry dan transaksi akuntansi dengan SAK ETAP compliance",
+      description: "Kelola jurnal entry dan transaksi akuntansi dengan SAK EP compliance",
       icon: <FileText className="h-8 w-8" />,
       href: "/akuntansi/jurnal",
       color: "bg-blue-500"
@@ -47,20 +49,12 @@ export default function Akuntansi() {
   return (
     <Layout pageTitle="Manajemen Akuntansi">
       <div className="container mx-auto py-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Manajemen Akuntansi</h1>
-            <p className="text-muted-foreground">
-              Sistem akuntansi terintegrasi dengan sinkronisasi real-time dan SAK EP compliance
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-              <Zap className="h-4 w-4" />
-              Real-time Sync Aktif
-            </div>
-          </div>
-        </div>
+        <AkuntansiHeader />
+
+        {/* Dynamic SAK EP Metrics */}
+        <AccountingMetricCards />
+
+        {/* Data Consistency Monitor */}
 
         {/* Data Consistency Monitor */}
         <SyncConsistencyWidget />

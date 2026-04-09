@@ -8,7 +8,7 @@ export default function AkuntansiHeader() {
         Sistem Akuntansi KPRI
       </h1>
       <p className="text-base text-muted-foreground mb-2">
-        Manajemen berbasis Standar Akuntansi Keuangan Entitas Tanpa Akuntabilitas Publik (SAK ETAP)
+        Manajemen berbasis Standar Akuntansi Keuangan Entitas Privat (SAK EP)
       </p>
       <p className="text-lg text-muted-foreground">
         Kelola seluruh proses akuntansi dan laporan keuangan perusahaan
