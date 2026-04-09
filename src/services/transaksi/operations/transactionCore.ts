@@ -3,7 +3,7 @@ import { Transaksi } from "@/types";
 import { createTransaksi as createTransaksiCore } from "../transaksiCore";
 import { syncTransactionToKeuangan } from "../../sync/comprehensiveSyncService";
 import { logAuditEntry } from "../../auditService";
-import { refreshFinancialCalculations } from "../../realTimeCalculationService";
+// refreshFinancialCalculations removed (Decommissioned Legacy Logic)
 import { db } from "@/db/db";
 
 /**
@@ -43,10 +43,7 @@ export async function createTransactionWithSync(data: Partial<Transaksi>): Promi
         newTransaksi.id
       );
       
-      // Refresh financial calculations for real-time consistency
-      if (newTransaksi.anggotaId) {
-        await refreshFinancialCalculations(newTransaksi.anggotaId);
-      }
+      // Financial data updates are now managed via 'transaction-created' events.
     }
     
     return newTransaksi;

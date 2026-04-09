@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { calculateRealTimeFinancialData } from '@/services/realTimeCalculationService';
+import { calculateDetailedMemberFinancialSummary } from '@/services/financialCalculations';
 
 /**
  * Hook untuk real-time sync financial data anggota
@@ -20,7 +19,7 @@ export function useAnggotaRealTimeSync(anggotaId: string) {
   const refreshFinancialData = async () => {
     try {
       setIsLoading(true);
-      const updatedData = await calculateRealTimeFinancialData(anggotaId);
+      const updatedData = await calculateDetailedMemberFinancialSummary(anggotaId);
       setFinancialData(updatedData);
       setLastUpdate(new Date());
     } catch (error) {

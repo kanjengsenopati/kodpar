@@ -1,6 +1,6 @@
 import { Transaksi } from "@/types";
 import { getAnggotaById } from "../anggotaService";
-import { refreshFinancialCalculations } from "../realTimeCalculationService";
+// refreshFinancialCalculations removed (Decommissioned Legacy Logic)
 import { logAuditEntry } from "../auditService";
 import { syncTransactionToKeuangan } from "../sync/comprehensiveSyncService";
 import { centralizedSync } from "../sync/centralizedSyncService";
@@ -128,9 +128,7 @@ export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>)
   );
   
   // Refresh financial calculations for real-time consistency
-  if (updatedTransaksi.anggotaId) {
-    refreshFinancialCalculations(updatedTransaksi.anggotaId);
-  }
+  // Real-time consistency is now handled via centralized-sync events.
   
   return updatedTransaksi;
 }
@@ -168,9 +166,7 @@ export async function deleteTransaksi(id: string): Promise<boolean> {
     );
     
     // Refresh financial calculations for affected member
-    if (transaksiToDelete.anggotaId) {
-      refreshFinancialCalculations(transaksiToDelete.anggotaId);
-    }
+    // Affect member calculations are updated via events.
   }
   
   return true;

@@ -66,19 +66,55 @@ export async function calculateMemberTotalSimpanan(anggotaId: string): Promise<n
 }
 
 /**
+ * Calculate detailed financial summary for a member
+ */
+export async function calculateDetailedMemberFinancialSummary(anggotaId: string) {
+  const transaksi = await db.transaksi
+    .where("anggotaId")
+    .equals(anggotaId)
+    .and(t => t.status === "Sukses")
+    .toArray();
+
+  const totalSimpanan = transaksi
+    .filter(t => t.jenis === "Simpan")
+    .reduce((sum, t) => sum + (t.jumlah || 0), 0);
+
+  const totalPenarikan = transaksi
+    .filter(t => t.jenis === "Penarikan")
+    .reduce((sum, t) => sum + Math.abs(t.jumlah || 0), 0);
+
+  const totalPinjaman = transaksi
+    .filter(t => t.jenis === "Pinjam")
+    .reduce((sum, t) => sum + (t.jumlah || 0), 0);
+
+  const totalAngsuran = transaksi
+    .filter(t => t.jenis === "Angsuran")
+    .reduce((sum, t) => sum + (t.jumlah || 0), 0);
+
+  const sisaPinjaman = await calculateMemberRemainingLoan(anggotaId);
+
+  return {
+    totalSimpanan: totalSimpanan - totalPenarikan,
+    totalPinjaman,
+    totalAngsuran,
+    sisaPinjaman,
+    totalPenarikan,
+    totalSHU: 0, // SHU calculation is separate, but we provide a placeholder
+    rawSimpanan: totalSimpanan,
+    rawPenarikan: totalPenarikan
+  };
+}
+
+/**
  * Get comprehensive member financial overview
  */
 export async function getMemberFinancialOverview(anggotaId: string) {
-  const [remainingLoan, totalSavings] = await Promise.all([
-    calculateMemberRemainingLoan(anggotaId),
-    calculateMemberTotalSimpanan(anggotaId)
-  ]);
+  const summary = await calculateDetailedMemberFinancialSummary(anggotaId);
 
   return {
-    remainingLoan,
-    totalSavings,
-    formattedLoan: formatCurrency(remainingLoan),
-    formattedSavings: formatCurrency(totalSavings)
+    ...summary,
+    formattedLoan: formatCurrency(summary.sisaPinjaman),
+    formattedSavings: formatCurrency(summary.totalSimpanan)
   };
 }
 

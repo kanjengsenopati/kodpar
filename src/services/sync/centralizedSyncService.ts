@@ -1,7 +1,7 @@
 import { Transaksi, Pengajuan } from "@/types";
 import { syncTransactionToAccounting } from "../akuntansi/accountingSyncService";
 import { getJurnalEntryByReference } from "../akuntansi/jurnalService";
-import { refreshFinancialCalculations } from "../realTimeCalculationService";
+// refreshFinancialCalculations removed (Decommissioned Legacy Logic)
 import { db } from "@/db/db";
 
 // Global sync tracker dengan persistent storage
@@ -321,7 +321,8 @@ class CentralizedSyncService {
 
   private refreshMemberFinancialData(anggotaId: string): void {
     try {
-      refreshFinancialCalculations(anggotaId);
+      // Legacy refreshFinancialCalculations call removed. 
+      // Financial data updates are now handled via event dispatch.
       
       this.safeDispatchEvent('member-financial-data-updated', {
         anggotaId,

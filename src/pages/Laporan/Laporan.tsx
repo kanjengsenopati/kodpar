@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import Layout from "@/components/layout/Layout";
@@ -11,7 +10,7 @@ import {
 } from "@/services/transaksi";
 import { getAnggotaList } from "@/services/anggotaService";
 import { getPengajuanList } from "@/services/pengajuanService";
-import { calculateAggregateFinancialData } from "@/services/realTimeCalculationService";
+import { getAllMembersFinancialSummary } from "@/services/financialCalculations";
 import { Transaksi, Pengajuan, Anggota } from "@/types";
 
 // Import refactored components
@@ -107,7 +106,7 @@ export default function Laporan() {
           getAnggotaList(),
           getAllTransaksi(),
           getPengajuanList(),
-          calculateAggregateFinancialData(),
+          getAllMembersFinancialSummary(),
           getOverdueLoans("ALL"),
           getUpcomingDueLoans("ALL", 30)
         ]);

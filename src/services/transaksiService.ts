@@ -1,4 +1,3 @@
-
 import { 
   calculateSHU as calculateSHUFromFinancialOperations,
   calculateSHUDistribution,
@@ -21,12 +20,6 @@ import {
   getOverdueLoans,
   getUpcomingDueLoans
 } from "./transaksi/loanOperations";
-
-// Import unified real-time calculations
-import {
-  calculateRealTimeFinancialData,
-  refreshFinancialCalculations
-} from "./realTimeCalculationService";
 
 import { generateTransaksiId } from "./transaksi/idGenerator";
 
@@ -74,10 +67,6 @@ export {
   calculateSHUFromFinancialOperations as calculateSHU,
   calculateSHUDistribution,
   resetAllSHUValues,
-  
-  // Real-time calculations
-  calculateRealTimeFinancialData,
-  refreshFinancialCalculations,
   
   // Calculation wrappers
   calculateTotalSimpanan,
