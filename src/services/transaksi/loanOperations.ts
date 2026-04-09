@@ -12,18 +12,23 @@ export async function getRemainingLoanAmount(loanId: string): Promise<number> {
   const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam");
   if (!loan) return 0;
   
-  // Get all angsuran for this loan
-  const angsuran = transaksiList.filter(
-    t => t.jenis === "Angsuran" && 
-         t.status === "Sukses" && 
-         t.anggotaId === loan.anggotaId && 
-         t.keterangan?.includes(loanId)
-  );
+  // Get all angsuran for this loan with improved robustness
+  const angsuran = transaksiList.filter(t => {
+    if (t.jenis !== "Angsuran" || t.status !== "Sukses" || t.anggotaId !== loan.anggotaId) {
+      return false;
+    }
+    
+    // 1. Primary check: Use the dedicated reference field
+    if (t.referensiPinjamanId === loanId) return true;
+    
+    // 2. Secondary check: Backward compatibility search in keterangan
+    return t.keterangan?.includes(loanId);
+  });
   
   // Calculate total principal paid (only pokok, not jasa)
   let totalPrincipalPaid = 0;
   angsuran.forEach(payment => {
-    // Extract pokok amount from keterangan if available
+    // Extract pokok amount from keterangan if available (fintech standard)
     const pokokMatch = payment.keterangan?.match(/Pokok:\s*[\w\s]*?(\d+(?:[\.,]\d+)*)/);
     if (pokokMatch && pokokMatch[1]) {
       const pokokAmount = parseFloat(pokokMatch[1].replace(/[,\.]/g, ''));

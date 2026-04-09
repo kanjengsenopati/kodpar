@@ -29,7 +29,7 @@ import { db } from "@/db/db";
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<Transaksi | null> {
   try {
-    // Create the transaction using core service
+    // Create the transaction using improved async sync wrapper
     const newTransaksi = await createTransactionWithSync(data);
     
     if (newTransaksi && newTransaksi.status === "Sukses") {
@@ -55,7 +55,7 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Transak
     
     return newTransaksi;
   } catch (error) {
-    console.error("Error creating transaksi:", error);
+    console.error("Error creating transaksi in crud wrapper:", error);
     handleTransactionError();
     return null;
   }

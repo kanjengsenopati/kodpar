@@ -63,7 +63,7 @@ const initialJenis: Jenis[] = [
   },
   {
     id: "PJ001",
-    nama: "Pinjaman Reguler",
+    nama: "Reguler",
     jenisTransaksi: "Pinjaman",
     keterangan: "Pinjaman dengan bunga standar",
     bungaPersen: 1.5,
@@ -77,7 +77,7 @@ const initialJenis: Jenis[] = [
   },
   {
     id: "PJ002",
-    nama: "Pinjaman Sertifikasi",
+    nama: "Sertifikasi",
     jenisTransaksi: "Pinjaman",
     keterangan: "Pinjaman khusus untuk biaya sertifikasi",
     bungaPersen: 1.0,
@@ -91,7 +91,7 @@ const initialJenis: Jenis[] = [
   },
   {
     id: "PJ003",
-    nama: "Pinjaman Musiman",
+    nama: "Musiman",
     jenisTransaksi: "Pinjaman",
     keterangan: "Pinjaman jangka pendek untuk musim tertentu",
     bungaPersen: 2.0,

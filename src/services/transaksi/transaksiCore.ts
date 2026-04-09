@@ -87,7 +87,28 @@ export function getAvailableKategori(jenis: "Simpan" | "Pinjam"): string[] {
  */
 export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): boolean {
   const availableKategori = getAvailableKategori(jenis);
-  return availableKategori.includes(kategori);
+  
+  // 1. Exact match check
+  if (availableKategori.includes(kategori)) return true;
+  
+  // 2. Backward compatibility: check with "Pinjaman " prefix if the type is "Pinjam"
+  if (jenis === "Pinjam") {
+    // If input is "Reguler", check for "Pinjaman Reguler"
+    if (availableKategori.includes(`Pinjaman ${kategori}`)) return true;
+    
+    // If input is "Pinjaman Reguler", check for "Reguler"
+    const cleaned = kategori.replace(/^Pinjaman\s+/, "");
+    if (availableKategori.includes(cleaned)) return true;
+  }
+  
+  // 3. Same for Simpan if needed (future proofing)
+  if (jenis === "Simpan") {
+    if (availableKategori.includes(`Simpanan ${kategori}`)) return true;
+    const cleaned = kategori.replace(/^Simpanan\s+/, "");
+    if (availableKategori.includes(cleaned)) return true;
+  }
+  
+  return false;
 }
 
 /**

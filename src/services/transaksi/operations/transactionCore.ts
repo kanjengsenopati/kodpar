@@ -8,19 +8,18 @@ import { refreshFinancialCalculations } from "../../realTimeCalculationService";
 /**
  * Enhanced create transaksi with controlled accounting sync to prevent duplicates
  */
-export function createTransactionWithSync(data: Partial<Transaksi>): Transaksi | null {
+export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<Transaksi | null> {
   try {
-    // Create the transaction using core service
-    const newTransaksi = createTransaksiCore(data);
+    // Create the transaction using core service (now properly awaited)
+    const newTransaksi = await createTransaksiCore(data);
     
     if (newTransaksi && newTransaksi.status === "Sukses") {
       console.log(`✅ Transaction ${newTransaksi.id} created successfully`);
       
       // Note: Accounting sync will be handled by the calling function to prevent duplicates
-      // This eliminates one source of multi-posting
       
       // Additional Keuangan sync for comprehensive coverage (non-accounting)
-      const keuanganSync = syncTransactionToKeuangan(newTransaksi);
+      const keuanganSync = await syncTransactionToKeuangan(newTransaksi);
       if (keuanganSync.success && keuanganSync.syncedItems.length > 0) {
         console.log(`Comprehensive sync completed: ${keuanganSync.syncedItems.length} items synced to Keuangan`);
       }
@@ -34,7 +33,7 @@ export function createTransactionWithSync(data: Partial<Transaksi>): Transaksi |
       }));
       
       // Log audit entry
-      logAuditEntry(
+      await logAuditEntry(
         "CREATE",
         "TRANSAKSI",
         `Membuat transaksi ${newTransaksi.jenis} sebesar Rp ${newTransaksi.jumlah.toLocaleString('id-ID')} untuk anggota ${newTransaksi.anggotaNama} dengan controlled sync`,
@@ -43,13 +42,13 @@ export function createTransactionWithSync(data: Partial<Transaksi>): Transaksi |
       
       // Refresh financial calculations for real-time consistency
       if (newTransaksi.anggotaId) {
-        refreshFinancialCalculations(newTransaksi.anggotaId);
+        await refreshFinancialCalculations(newTransaksi.anggotaId);
       }
     }
     
     return newTransaksi;
   } catch (error) {
-    console.error("Error creating transaksi:", error);
+    console.error("Error creating transaksi in sync wrapper:", error);
     return null;
   }
 }
