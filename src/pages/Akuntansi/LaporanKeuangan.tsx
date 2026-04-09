@@ -115,7 +115,7 @@ export default function LaporanKeuangan() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-blue-600">
-                  Rp {posisiKeuanganData.totalAset.toLocaleString('id-ID')}
+                  Rp {(posisiKeuanganData.totalAset || 0).toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Aset</p>
               </CardContent>
@@ -123,7 +123,7 @@ export default function LaporanKeuangan() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-red-600">
-                  Rp {posisiKeuanganData.totalKewajiban.toLocaleString('id-ID')}
+                  Rp {(posisiKeuanganData.totalKewajiban || 0).toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Kewajiban</p>
               </CardContent>
@@ -131,7 +131,7 @@ export default function LaporanKeuangan() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-green-600">
-                  Rp {posisiKeuanganData.totalModal.toLocaleString('id-ID')}
+                  Rp {(posisiKeuanganData.totalModal || 0).toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Total Modal</p>
               </CardContent>
@@ -139,7 +139,7 @@ export default function LaporanKeuangan() {
             <Card>
               <CardContent className="p-4">
                 <div className={`text-2xl font-bold ${penghasilanKomprehensifData.labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  Rp {penghasilanKomprehensifData.labaBersih.toLocaleString('id-ID')}
+                  Rp {(penghasilanKomprehensifData.labaBersih || 0).toLocaleString('id-ID')}
                 </div>
                 <p className="text-xs text-muted-foreground">Laba Bersih (SHU)</p>
               </CardContent>

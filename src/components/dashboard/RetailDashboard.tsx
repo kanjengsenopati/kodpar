@@ -37,8 +37,8 @@ const posNavigation = [
   { title: "Laporan Rugi Laba", icon: LineChartIcon, description: "Laporan keuangan rugi laba", path: "/pos/laporan-rugi-laba", color: "bg-indigo-100 text-indigo-800" },
 ];
 
-const formatRupiah = (value: number) => {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
+const formatRupiah = (value: number | undefined | null) => {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value || 0);
 };
 
 export function RetailDashboard() {

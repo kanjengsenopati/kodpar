@@ -1,20 +1,22 @@
 /**
  * Format currency in Indonesian Rupiah
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | undefined | null): string {
+  const safeAmount = amount || 0;
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount);
+  }).format(safeAmount);
 }
 
 /**
  * Format number with thousand separators
  */
-export function formatNumber(number: number): string {
-  return new Intl.NumberFormat('id-ID').format(number);
+export function formatNumber(number: number | undefined | null): string {
+  const safeNumber = number || 0;
+  return new Intl.NumberFormat('id-ID').format(safeNumber);
 }
 
 /**

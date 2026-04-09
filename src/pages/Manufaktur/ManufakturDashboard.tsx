@@ -46,7 +46,7 @@ export default function ManufakturDashboard() {
     setMovements(getAllStockMovements());
   }, []);
 
-  const formatCurrency = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+  const formatCurrency = (n: number | undefined | null) => `Rp ${(n || 0).toLocaleString('id-ID')}`;
 
   // WO status data for chart
   const woStatusData = [

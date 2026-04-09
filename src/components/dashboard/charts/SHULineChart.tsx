@@ -19,7 +19,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="font-semibold text-gray-800">{`Anggota: ${label}`}</p>
         <p className="text-green-600">
           SHU: <span className="font-bold">
-            Rp {payload[0].value.toLocaleString('id-ID')}
+            Rp {(payload[0].value || 0).toLocaleString('id-ID')}
           </span>
         </p>
       </div>

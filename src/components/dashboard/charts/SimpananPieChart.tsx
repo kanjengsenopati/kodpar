@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         </p>
         <p className="text-green-600">
           Jumlah: <span className="font-bold">
-            Rp {data.payload.amount.toLocaleString('id-ID')}
+            Rp {(data.payload.amount || 0).toLocaleString('id-ID')}
           </span>
         </p>
       </div>
@@ -126,7 +126,7 @@ export function SimpananPieChart() {
                   {entry.name}
                 </span>
                 <span className="text-sm font-semibold text-slate-800">
-                  {entry.amount.toLocaleString('id-ID')}
+                  {(entry.amount || 0).toLocaleString('id-ID')}
                 </span>
               </div>
             </div>

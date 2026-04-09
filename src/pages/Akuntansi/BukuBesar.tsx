@@ -251,7 +251,7 @@ export default function BukuBesarPage() {
                         <div key={index} className="px-4 py-2 border-b last:border-b-0 hover:bg-gray-50">
                           <div className="grid grid-cols-6 gap-4 text-sm">
                             <div className="col-span-1">
-                              {format(new Date(transaksi.tanggal), "dd/MM", { locale: id })}
+                               {transaksi.tanggal ? format(new Date(transaksi.tanggal), "dd/MM", { locale: id }) : '-'}
                             </div>
                             <div className="col-span-1 font-medium">
                               {transaksi.nomorJurnal}
