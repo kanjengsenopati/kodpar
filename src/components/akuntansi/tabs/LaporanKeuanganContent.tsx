@@ -41,11 +41,13 @@ export default function LaporanKeuanganContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Load financial reports
-  const loadReports = () => {
+  const loadReports = async () => {
     setIsLoading(true);
     try {
-      const posisiKeuanganData = generatePosisiKeuangan(periode);
-      const penghasilanKomprehensifData = generatePenghasilanKomprehensif(periode);
+      const [posisiKeuanganData, penghasilanKomprehensifData] = await Promise.all([
+        generatePosisiKeuangan(periode),
+        generatePenghasilanKomprehensif(periode)
+      ]);
       
       setPosisiKeuangan(posisiKeuanganData);
       setPenghasilanKomprehensif(penghasilanKomprehensifData);

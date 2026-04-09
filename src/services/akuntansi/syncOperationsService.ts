@@ -7,9 +7,10 @@ import { getAllChartOfAccounts } from "./coaService";
 /**
  * Sync single transaction to accounting
  */
-export function syncTransactionToAccounting(transaksi: any): JurnalEntry | null {
+export async function syncTransactionToAccounting(transaksi: any): Promise<JurnalEntry | null> {
   try {
-    const accounts = getAllChartOfAccounts();
+    const allAccounts = await getAllChartOfAccounts();
+    const accounts = Array.isArray(allAccounts) ? allAccounts : [];
     const kasAccount = accounts.find(acc => acc.kode === "1000");
     
     if (!kasAccount) {
@@ -17,7 +18,7 @@ export function syncTransactionToAccounting(transaksi: any): JurnalEntry | null 
       return null;
     }
 
-    const journalEntry = createJurnalEntry({
+    const journalEntry = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `${transaksi.jenis}: ${transaksi.keterangan}`,
@@ -48,14 +49,14 @@ export function syncTransactionToAccounting(transaksi: any): JurnalEntry | null 
 /**
  * Batch sync transactions to accounting
  */
-export function batchSyncTransactionsToAccounting(): { totalProcessed: number, successful: number, failed: number } {
+export async function batchSyncTransactionsToAccounting(): Promise<{ totalProcessed: number, successful: number, failed: number }> {
   const transactions = getAllPemasukanPengeluaran();
   let successful = 0;
   let failed = 0;
 
-  transactions.forEach(transaksi => {
+  for (const transaksi of transactions) {
     try {
-      const result = syncTransactionToAccounting(transaksi);
+      const result = await syncTransactionToAccounting(transaksi);
       if (result) {
         successful++;
       } else {
@@ -64,7 +65,7 @@ export function batchSyncTransactionsToAccounting(): { totalProcessed: number, s
     } catch (error) {
       failed++;
     }
-  });
+  }
 
   return {
     totalProcessed: transactions.length,

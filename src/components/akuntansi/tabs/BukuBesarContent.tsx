@@ -48,12 +48,13 @@ export default function BukuBesarContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Load accounts
-  const loadAccounts = () => {
+  const loadAccounts = async () => {
     try {
-      const allAccounts = getAllChartOfAccounts().filter(
-        account => account.isActive && !account.isGroup
-      );
-      setAccounts(allAccounts);
+      const allAccounts = await getAllChartOfAccounts();
+      const filteredAccounts = Array.isArray(allAccounts) 
+        ? allAccounts.filter(account => account.isActive && !account.isGroup)
+        : [];
+      setAccounts(filteredAccounts);
     } catch (error) {
       console.error("Error loading accounts:", error);
       toast({
@@ -65,12 +66,12 @@ export default function BukuBesarContent() {
   };
 
   // Load buku besar for selected account
-  const loadBukuBesar = () => {
+  const loadBukuBesar = async () => {
     if (!selectedAccountId || !periode) return;
 
     setIsLoading(true);
     try {
-      const data = getBukuBesarByAccount(selectedAccountId, periode);
+      const data = await getBukuBesarByAccount(selectedAccountId, periode);
       setBukuBesar(data);
     } catch (error) {
       console.error("Error loading buku besar:", error);

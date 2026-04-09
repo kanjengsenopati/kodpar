@@ -114,17 +114,24 @@ export function SimpananPieChart() {
         </PieChart>
       </ResponsiveContainer>
       
-      <div className="mt-2 flex justify-center space-x-4 bg-gray-50 p-3 rounded-lg">
-        {chartData.map((entry, index) => (
-          <div key={entry.name} className="flex items-center">
-            <div 
-              className="w-3 h-3 rounded mr-2"
-              style={{ backgroundColor: COLORS[index] }}
-            />
-            <span className="text-sm text-gray-600">{entry.name}</span>
-          </div>
-        ))}
-      </div>
+      <div className="grid grid-cols-2 gap-4 mt-4">
+          {Array.isArray(chartData) && chartData.map((entry, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+              />
+              <div className="flex flex-col">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                  {entry.name}
+                </span>
+                <span className="text-sm font-semibold text-slate-800">
+                  {entry.amount.toLocaleString('id-ID')}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
     </div>
   );
 }

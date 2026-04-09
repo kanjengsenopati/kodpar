@@ -6,9 +6,9 @@ import { getAllChartOfAccounts } from "./coaService";
 /**
  * Get Buku Besar by account ID with proper balance calculation
  */
-export function getBukuBesarByAccount(coaId: string, periode: string): BukuBesar | null {
-  const accounts = getAllChartOfAccounts();
-  const account = accounts.find(acc => acc.id === coaId);
+export async function getBukuBesarByAccount(coaId: string, periode: string): Promise<BukuBesar | null> {
+  const accounts = await getAllChartOfAccounts();
+  const account = Array.isArray(accounts) ? accounts.find(acc => acc.id === coaId) : undefined;
   
   if (!account) {
     return null;
@@ -19,7 +19,13 @@ export function getBukuBesarByAccount(coaId: string, periode: string): BukuBesar
   const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
   const endDate = new Date(parseInt(year), parseInt(month), 0);
   
-  const journals = getAllJurnalEntries()
+  const allJournals = await getAllJurnalEntries();
+  if (!Array.isArray(allJournals)) {
+    console.error("❌ allJournals is not an array:", allJournals);
+    return null;
+  }
+
+  const journals = allJournals
     .filter(journal => {
       const journalDate = new Date(journal.tanggal);
       return journal.status === 'POSTED' && 
@@ -77,16 +83,17 @@ export function getBukuBesarByAccount(coaId: string, periode: string): BukuBesar
 /**
  * Get all Buku Besar entries for a period grouped by account type
  */
-export function getAllBukuBesar(periode: string): BukuBesar[] {
-  const accounts = getAllChartOfAccounts().filter(acc => acc.isActive);
+export async function getAllBukuBesar(periode: string): Promise<BukuBesar[]> {
+  const allAccounts = await getAllChartOfAccounts();
+  const accounts = Array.isArray(allAccounts) ? allAccounts.filter(acc => acc.isActive) : [];
   const bukuBesarEntries: BukuBesar[] = [];
   
-  accounts.forEach(account => {
-    const bukuBesar = getBukuBesarByAccount(account.id, periode);
+  for (const account of accounts) {
+    const bukuBesar = await getBukuBesarByAccount(account.id, periode);
     if (bukuBesar && bukuBesar.transaksi.length > 0) {
       bukuBesarEntries.push(bukuBesar);
     }
-  });
+  }
   
   // Sort by account type and code
   return bukuBesarEntries.sort((a, b) => {
@@ -101,16 +108,17 @@ export function getAllBukuBesar(periode: string): BukuBesar[] {
 /**
  * Get Buku Besar by account type
  */
-export function getBukuBesarByAccountType(jenis: ChartOfAccount['jenis'], periode: string): BukuBesar[] {
-  const accounts = getAllChartOfAccounts().filter(acc => acc.jenis === jenis && acc.isActive);
+export async function getBukuBesarByAccountType(jenis: ChartOfAccount['jenis'], periode: string): Promise<BukuBesar[]> {
+  const allAccounts = await getAllChartOfAccounts();
+  const accounts = Array.isArray(allAccounts) ? allAccounts.filter(acc => acc.jenis === jenis && acc.isActive) : [];
   const bukuBesarEntries: BukuBesar[] = [];
   
-  accounts.forEach(account => {
-    const bukuBesar = getBukuBesarByAccount(account.id, periode);
+  for (const account of accounts) {
+    const bukuBesar = await getBukuBesarByAccount(account.id, periode);
     if (bukuBesar && bukuBesar.transaksi.length > 0) {
       bukuBesarEntries.push(bukuBesar);
     }
-  });
+  }
   
   return bukuBesarEntries.sort((a, b) => a.coa.kode.localeCompare(b.coa.kode));
 }
@@ -118,8 +126,8 @@ export function getBukuBesarByAccountType(jenis: ChartOfAccount['jenis'], period
 /**
  * Generate summary by account type for reports
  */
-export function getBukuBesarSummaryByType(periode: string): { [key: string]: { totalDebit: number; totalKredit: number; saldoAkhir: number } } {
-  const allBukuBesar = getAllBukuBesar(periode);
+export async function getBukuBesarSummaryByType(periode: string): Promise<{ [key: string]: { totalDebit: number; totalKredit: number; saldoAkhir: number } }> {
+  const allBukuBesar = await getAllBukuBesar(periode);
   const summary: { [key: string]: { totalDebit: number; totalKredit: number; saldoAkhir: number } } = {};
   
   ['ASET', 'KEWAJIBAN', 'MODAL', 'PENDAPATAN', 'BEBAN'].forEach(jenis => {
@@ -135,10 +143,10 @@ export function getBukuBesarSummaryByType(periode: string): { [key: string]: { t
 }
 
 // Keep existing functions for backward compatibility
-export function generateBukuBesar(coaId: string, periode: string): BukuBesar | null {
-  return getBukuBesarByAccount(coaId, periode);
+export async function generateBukuBesar(coaId: string, periode: string): Promise<BukuBesar | null> {
+  return await getBukuBesarByAccount(coaId, periode);
 }
 
-export function getBukuBesarByPeriode(periode: string): BukuBesar[] {
-  return getAllBukuBesar(periode);
+export async function getBukuBesarByPeriode(periode: string): Promise<BukuBesar[]> {
+  return await getAllBukuBesar(periode);
 }

@@ -82,14 +82,16 @@ export function AnggotaDonutChart() {
       </ResponsiveContainer>
       
       {/* Legend inside component container */}
-      <div className="mt-2 flex justify-center flex-wrap gap-3 bg-gray-50 p-3 rounded-lg">
-        {data.map((entry, index) => (
-          <div key={entry.name} className="flex items-center">
+      <div className="flex flex-wrap gap-4 mt-4">
+        {Array.isArray(data) && data.map((entry, index) => (
+          <div key={index} className="flex items-center gap-1.5">
             <div 
-              className="w-3 h-3 rounded mr-2"
-              style={{ backgroundColor: COLORS[index] }}
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
-            <span className="text-xs text-gray-600">{entry.name}</span>
+            <span className="text-xs text-slate-600 font-medium whitespace-nowrap">
+              {entry.name}
+            </span>
           </div>
         ))}
       </div>

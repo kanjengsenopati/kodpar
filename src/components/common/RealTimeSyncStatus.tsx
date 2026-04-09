@@ -31,11 +31,14 @@ export function RealTimeSyncStatus() {
   const { queueStatus, forceSyncAll } = useRealTimeAccountingSync();
 
   useEffect(() => {
-    loadSyncStatus();
+    const initSyncStatus = async () => {
+      await loadSyncStatus();
+    };
+    initSyncStatus();
     
     // Listen for real-time sync events
-    const handleSyncEvent = () => {
-      loadSyncStatus();
+    const handleSyncEvent = async () => {
+      await loadSyncStatus();
     };
 
     window.addEventListener('real-time-accounting-sync', handleSyncEvent);
@@ -44,7 +47,9 @@ export function RealTimeSyncStatus() {
     window.addEventListener('transaction-updated', handleSyncEvent);
     
     // Auto-refresh every 30 seconds
-    const interval = setInterval(loadSyncStatus, 30000);
+    const interval = setInterval(() => {
+      loadSyncStatus();
+    }, 30000);
 
     return () => {
       window.removeEventListener('real-time-accounting-sync', handleSyncEvent);
@@ -55,16 +60,20 @@ export function RealTimeSyncStatus() {
     };
   }, []);
 
-  const loadSyncStatus = () => {
-    const status = getAccountingSyncStatus();
-    setSyncStatus(status);
+  const loadSyncStatus = async () => {
+    try {
+      const status = await getAccountingSyncStatus();
+      setSyncStatus(status);
+    } catch (error) {
+      console.error("Failed to load sync status:", error);
+    }
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await forceSyncAll();
-      loadSyncStatus();
+      await loadSyncStatus();
       toast.success('Status sinkronisasi berhasil direfresh');
     } catch (error) {
       toast.error('Gagal refresh status sinkronisasi');
@@ -76,8 +85,8 @@ export function RealTimeSyncStatus() {
   const handleBatchSync = async () => {
     setIsBatchSyncing(true);
     try {
-      const result = batchSyncAllTransactions();
-      loadSyncStatus();
+      const result = await batchSyncAllTransactions();
+      await loadSyncStatus();
       
       toast.success(
         `Batch sync selesai: ${result.successful} berhasil, ${result.failed} gagal dari ${result.totalProcessed} transaksi`

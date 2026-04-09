@@ -38,7 +38,7 @@ export default function AkuntansiStatsCards() {
   const handleBatchSync = async () => {
     try {
       setIsLoading(true);
-      const result = batchSyncTransactionsToAccounting();
+      const result = await batchSyncTransactionsToAccounting();
       
       toast({
         title: "Sinkronisasi Berhasil",

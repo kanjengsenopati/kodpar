@@ -23,12 +23,12 @@ export type {
 /**
  * Generate Laporan Posisi Keuangan (Statement of Financial Position) using Buku Besar data
  */
-export function generatePosisiKeuangan(periode: string): PosisiKeuangan {
+export async function generatePosisiKeuangan(periode: string): Promise<PosisiKeuangan> {
   console.log(`📊 Generating Laporan Posisi Keuangan for period ${periode}`);
   
-  const accounts = getAllChartOfAccounts();
-  const bukuBesarData = getAllBukuBesar(periode);
-  const summary = getBukuBesarSummaryByType(periode);
+  const accounts = await getAllChartOfAccounts();
+  const bukuBesarData = await getAllBukuBesar(periode);
+  const summary = await getBukuBesarSummaryByType(periode);
   
   console.log(`📋 Found ${bukuBesarData.length} accounts with transactions in Buku Besar`);
   
@@ -39,7 +39,7 @@ export function generatePosisiKeuangan(periode: string): PosisiKeuangan {
   });
   
   // Generate Aset items
-  const aset: PosisiKeuanganItem[] = accounts
+  const aset: PosisiKeuanganItem[] = (Array.isArray(accounts) ? accounts : [])
     .filter(acc => acc.jenis === 'ASET' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -53,7 +53,7 @@ export function generatePosisiKeuangan(periode: string): PosisiKeuangan {
     .sort((a, b) => a.kodeAkun.localeCompare(b.kodeAkun));
   
   // Generate Kewajiban items
-  const kewajiban: PosisiKeuanganItem[] = accounts
+  const kewajiban: PosisiKeuanganItem[] = (Array.isArray(accounts) ? accounts : [])
     .filter(acc => acc.jenis === 'KEWAJIBAN' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -67,7 +67,7 @@ export function generatePosisiKeuangan(periode: string): PosisiKeuangan {
     .sort((a, b) => a.kodeAkun.localeCompare(b.kodeAkun));
   
   // Generate Modal items
-  const modal: PosisiKeuanganItem[] = accounts
+  const modal: PosisiKeuanganItem[] = (Array.isArray(accounts) ? accounts : [])
     .filter(acc => acc.jenis === 'MODAL' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -100,12 +100,12 @@ export function generatePosisiKeuangan(periode: string): PosisiKeuangan {
 /**
  * Generate Laporan Penghasilan Komprehensif (Statement of Comprehensive Income) using Buku Besar data
  */
-export function generatePenghasilanKomprehensif(periode: string): PenghasilanKomprehensif {
+export async function generatePenghasilanKomprehensif(periode: string): Promise<PenghasilanKomprehensif> {
   console.log(`📊 Generating Laporan Penghasilan Komprehensif for period ${periode}`);
   
-  const accounts = getAllChartOfAccounts();
-  const bukuBesarData = getAllBukuBesar(periode);
-  const summary = getBukuBesarSummaryByType(periode);
+  const accounts = await getAllChartOfAccounts();
+  const bukuBesarData = await getAllBukuBesar(periode);
+  const summary = await getBukuBesarSummaryByType(periode);
   
   // Create account balance map from Buku Besar
   const accountBalances = new Map<string, number>();
@@ -114,7 +114,7 @@ export function generatePenghasilanKomprehensif(periode: string): PenghasilanKom
   });
   
   // Generate Pendapatan items
-  const pendapatan: PenghasilanKomprehensifItem[] = accounts
+  const pendapatan: PenghasilanKomprehensifItem[] = (Array.isArray(accounts) ? accounts : [])
     .filter(acc => acc.jenis === 'PENDAPATAN' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -128,7 +128,7 @@ export function generatePenghasilanKomprehensif(periode: string): PenghasilanKom
     .sort((a, b) => a.kodeAkun.localeCompare(b.kodeAkun));
   
   // Generate Beban items
-  const beban: PenghasilanKomprehensifItem[] = accounts
+  const beban: PenghasilanKomprehensifItem[] = (Array.isArray(accounts) ? accounts : [])
     .filter(acc => acc.jenis === 'BEBAN' && acc.isActive)
     .map(acc => ({
       coaId: acc.id,
@@ -162,12 +162,12 @@ export function generatePenghasilanKomprehensif(periode: string): PenghasilanKom
 /**
  * Generate Arus Kas (Cash Flow Statement) based on cash account movements
  */
-export function generateArusKas(periode: string): ArusKas {
-  const accounts = getAllChartOfAccounts();
-  const bukuBesarData = getAllBukuBesar(periode);
+export async function generateArusKas(periode: string): Promise<ArusKas> {
+  const accounts = await getAllChartOfAccounts();
+  const bukuBesarData = await getAllBukuBesar(periode);
   
   // Find cash accounts (assuming code starts with 1000)
-  const cashAccounts = accounts.filter(acc => 
+  const cashAccounts = (Array.isArray(accounts) ? accounts : []).filter(acc => 
     acc.jenis === 'ASET' && acc.kode.startsWith('1000')
   );
   
@@ -182,11 +182,11 @@ export function generateArusKas(periode: string): ArusKas {
   bukuBesarData
     .filter(bb => cashAccounts.some(ca => ca.id === bb.coaId))
     .forEach(bukuBesar => {
-      bukuBesar.transaksi.forEach(transaksi => {
-        const netCashFlow = transaksi.debit - transaksi.kredit;
+      bukuBesar.transaksi.forEach(txn => {
+        const netCashFlow = txn.debit - txn.kredit;
         if (Math.abs(netCashFlow) > 0) {
           operasional.push({
-            deskripsi: transaksi.keterangan,
+            deskripsi: txn.keterangan,
             jumlah: Math.abs(netCashFlow),
             jenis: netCashFlow > 0 ? "MASUK" : "KELUAR"
           });
@@ -213,9 +213,8 @@ export function generateArusKas(periode: string): ArusKas {
 /**
  * Generate Perubahan Modal (Statement of Changes in Equity)
  */
-export function generatePerubahanModal(periode: string): PerubahanModal {
-  const summary = getBukuBesarSummaryByType(periode);
-  const penghasilanKomprehensif = generatePenghasilanKomprehensif(periode);
+export async function generatePerubahanModal(periode: string): Promise<PerubahanModal> {
+  const penghasilanKomprehensif = await generatePenghasilanKomprehensif(periode);
   
   const modalAwal = 0; // Could be enhanced to get from previous period
   

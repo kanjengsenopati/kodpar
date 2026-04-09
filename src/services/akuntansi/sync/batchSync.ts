@@ -30,22 +30,22 @@ export function syncPengajuanToAccounting(pengajuan: Pengajuan): any {
 /**
  * Batch sync all transactions to accounting
  */
-export function batchSyncAllTransactions(): { 
+export async function batchSyncAllTransactions(): Promise<{ 
   totalProcessed: number, 
   successful: number, 
   failed: number,
   details: Array<{ id: string, type: string, status: 'success' | 'failed', error?: string }>
-} {
-  const allTransaksi = getAllTransaksi();
+}> {
+  const allTransaksi = await getAllTransaksi();
   let successful = 0;
   let failed = 0;
   const details: Array<{ id: string, type: string, status: 'success' | 'failed', error?: string }> = [];
 
   console.log(`🔄 Starting batch sync of ${allTransaksi.length} transactions...`);
 
-  allTransaksi.forEach(transaksi => {
+  for (const transaksi of allTransaksi) {
     try {
-      const result = syncTransactionToAccounting(transaksi);
+      const result = await syncTransactionToAccounting(transaksi);
       if (result) {
         successful++;
         details.push({
@@ -71,7 +71,7 @@ export function batchSyncAllTransactions(): {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
-  });
+  }
 
   console.log(`✅ Batch sync completed: ${successful} successful, ${failed} failed out of ${allTransaksi.length} total`);
 
@@ -86,13 +86,24 @@ export function batchSyncAllTransactions(): {
 /**
  * Real-time sync status checker
  */
-export function getAccountingSyncStatus(): {
+export async function getAccountingSyncStatus(): Promise<{
   totalTransactions: number,
   syncedTransactions: number,
   unsyncedTransactions: number,
   lastSyncTime: string | null
-} {
-  const allTransaksi = getAllTransaksi();
+}> {
+  const allTransaksi = await getAllTransaksi();
+  
+  if (!Array.isArray(allTransaksi)) {
+    console.error("❌ allTransaksi is not an array:", allTransaksi);
+    return {
+      totalTransactions: 0,
+      syncedTransactions: 0,
+      unsyncedTransactions: 0,
+      lastSyncTime: localStorage.getItem('last_accounting_sync_time')
+    };
+  }
+
   const syncedCount = allTransaksi.filter(t => t.status === "Sukses").length;
   
   return {
