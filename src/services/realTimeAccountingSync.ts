@@ -100,12 +100,12 @@ export class RealTimeAccountingSync {
 
       try {
         if (item.type === 'transaction') {
-          const result = syncTransactionToAccounting(item.data as Transaksi);
+          const result = await syncTransactionToAccounting(item.data as Transaksi);
           if (result) {
             console.log(`✅ Real-time sync completed for transaction ${item.data.id}`);
           }
         } else if (item.type === 'pengajuan') {
-          const result = syncPengajuanToAccounting(item.data as Pengajuan);
+          const result = await syncPengajuanToAccounting(item.data as Pengajuan);
           if (result) {
             console.log(`✅ Real-time sync completed for pengajuan ${item.data.id}`);
           }
@@ -170,6 +170,10 @@ export const realTimeAccountingSync = RealTimeAccountingSync.getInstance();
  */
 export function initializeRealTimeAccountingSync(): void {
   console.log('🚀 Initializing real-time accounting sync...');
+  
+  // Cleanup old cache and force fresh state as requested
+  realTimeAccountingSync.clearProcessedCache();
+  localStorage.removeItem('last_accounting_sync_time');
 
   // Listen for transaction creation events
   window.addEventListener('transaction-created', (event: any) => {

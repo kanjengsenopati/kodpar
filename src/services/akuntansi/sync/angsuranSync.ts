@@ -9,10 +9,10 @@ import { syncAngsuranToKeuangan } from "./keuanganSync";
 /**
  * Sync Angsuran transaction with proper allocation
  */
-export function syncAngsuranTransaction(transaksi: Transaksi): JurnalEntry | null {
+export async function syncAngsuranTransaction(transaksi: Transaksi): Promise<JurnalEntry | null> {
   try {
     // Find the original loan transaction
-    const allTransaksi = getAllTransaksi();
+    const allTransaksi = await getAllTransaksi();
     const loanMatch = transaksi.keterangan?.match(/Pinjaman: (TR\d+)/);
     
     if (!loanMatch) {

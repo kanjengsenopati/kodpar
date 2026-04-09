@@ -45,10 +45,10 @@ export default function LaporanKeuangan() {
     try {
       console.log("Loading reports for period:", selectedPeriod);
       
-      const posisiKeuangan = generatePosisiKeuangan(selectedPeriod);
-      const penghasilanKomprehensif = generatePenghasilanKomprehensif(selectedPeriod);
-      const arusKas = generateArusKas(selectedPeriod);
-      const perubahanModal = generatePerubahanModal(selectedPeriod);
+      const posisiKeuangan = await generatePosisiKeuangan(selectedPeriod);
+      const penghasilanKomprehensif = await generatePenghasilanKomprehensif(selectedPeriod);
+      const arusKas = await generateArusKas(selectedPeriod);
+      const perubahanModal = await generatePerubahanModal(selectedPeriod);
 
       setPosisiKeuanganData(posisiKeuangan);
       setPenghasilanKomprehensifData(penghasilanKomprehensif);

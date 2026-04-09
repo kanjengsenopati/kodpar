@@ -17,7 +17,7 @@ export default function AkuntansiDashboard() {
   }, []);
 
   const loadData = async () => {
-    const journalData = getAllJurnalEntries();
+    const journalData = await getAllJurnalEntries();
     setJournals(journalData);
 
     const accountData = getAllChartOfAccounts();

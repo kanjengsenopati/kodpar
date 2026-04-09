@@ -41,8 +41,8 @@ export default function JurnalUmum() {
     loadJournals();
   }, [lastUpdate]);
 
-  const loadJournals = () => {
-    const data = getAllJurnalEntries();
+  const loadJournals = async () => {
+    const data = await getAllJurnalEntries();
     setJournals(data);
     console.log(`Loaded ${data.length} journal entries`);
   };
@@ -52,32 +52,32 @@ export default function JurnalUmum() {
     setAccounts(data);
   };
 
-  const handleCreate = (data: any) => {
+  const handleCreate = async (data: any) => {
     try {
-      createJurnalEntry({
+      await createJurnalEntry({
         ...data,
         totalDebit: data.details.reduce((sum: number, detail: any) => sum + detail.debit, 0),
         totalKredit: data.details.reduce((sum: number, detail: any) => sum + detail.kredit, 0),
         status: 'DRAFT',
         createdBy: 'current_user'
       });
-      loadJournals();
+      await loadJournals();
       toast.success("Jurnal berhasil dibuat");
     } catch (error) {
       toast.error("Gagal membuat jurnal");
     }
   };
 
-  const handleUpdate = (data: any) => {
+  const handleUpdate = async (data: any) => {
     if (!selectedJournal) return;
     
     try {
-      updateJurnalEntry(selectedJournal.id, {
+      await updateJurnalEntry(selectedJournal.id, {
         ...data,
         totalDebit: data.details.reduce((sum: number, detail: any) => sum + detail.debit, 0),
         totalKredit: data.details.reduce((sum: number, detail: any) => sum + detail.kredit, 0)
       });
-      loadJournals();
+      await loadJournals();
       setSelectedJournal(null);
       toast.success("Jurnal berhasil diperbarui");
     } catch (error) {
@@ -85,12 +85,12 @@ export default function JurnalUmum() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteJournal) return;
     
     try {
-      deleteJurnalEntry(deleteJournal.id);
-      loadJournals();
+      await deleteJurnalEntry(deleteJournal.id);
+      await loadJournals();
       setDeleteJournal(null);
       toast.success("Jurnal berhasil dihapus");
     } catch (error) {
@@ -98,20 +98,20 @@ export default function JurnalUmum() {
     }
   };
 
-  const handlePost = (journal: JurnalEntry) => {
+  const handlePost = async (journal: JurnalEntry) => {
     try {
-      postJurnalEntry(journal.id);
-      loadJournals();
+      await postJurnalEntry(journal.id);
+      await loadJournals();
       toast.success("Jurnal berhasil di-post");
     } catch (error) {
       toast.error("Gagal mem-post jurnal");
     }
   };
 
-  const handleReverse = (journal: JurnalEntry) => {
+  const handleReverse = async (journal: JurnalEntry) => {
     try {
-      reverseJurnalEntry(journal.id);
-      loadJournals();
+      await reverseJurnalEntry(journal.id);
+      await loadJournals();
       toast.success("Jurnal berhasil di-reverse");
     } catch (error) {
       toast.error("Gagal me-reverse jurnal");

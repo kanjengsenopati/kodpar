@@ -6,7 +6,7 @@ import { syncTransactionToAccounting } from "./transactionSync";
 /**
  * Sync Pengajuan approval to accounting
  */
-export function syncPengajuanToAccounting(pengajuan: Pengajuan): any {
+export async function syncPengajuanToAccounting(pengajuan: Pengajuan): Promise<any> {
   if (pengajuan.status !== "Disetujui") return null;
 
   // Create a temporary transaction object for sync
@@ -24,7 +24,7 @@ export function syncPengajuanToAccounting(pengajuan: Pengajuan): any {
     updatedAt: pengajuan.updatedAt
   };
 
-  return syncTransactionToAccounting(tempTransaction);
+  return await syncTransactionToAccounting(tempTransaction);
 }
 
 /**

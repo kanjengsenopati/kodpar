@@ -42,15 +42,15 @@ export default function BukuBesarPage() {
     setAccounts(data);
   };
 
-  const loadBukuBesar = () => {
+  const loadBukuBesar = async () => {
     setIsLoading(true);
     try {
       let data: BukuBesar[];
       
       if (selectedAccountType === "ALL") {
-        data = getAllBukuBesar(selectedPeriod);
+        data = await getAllBukuBesar(selectedPeriod);
       } else {
-        data = getBukuBesarByAccountType(selectedAccountType as any, selectedPeriod);
+        data = await getBukuBesarByAccountType(selectedAccountType as any, selectedPeriod);
       }
       
       setBukuBesarData(data);
