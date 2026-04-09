@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, ShieldAlert, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { consistencyService, ConsistencyStatus } from "@/services/akuntansi/consistencyService";
 import { toast } from "sonner";
-import * as Text from "@/components/ui/typography";
+import * as Text from "@/components/ui/text";
 
 export function SyncConsistencyWidget() {
   const [status, setStatus] = useState<ConsistencyStatus | null>(null);
