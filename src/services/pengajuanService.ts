@@ -119,6 +119,8 @@ export async function deletePengajuan(id: string): Promise<boolean> {
   return true;
 }
 
+import { getPengaturan } from "./pengaturanService";
+
 /**
  * Approve a pengajuan dan convert ke transaction dengan centralized sync
  */
@@ -126,13 +128,42 @@ export async function approvePengajuan(id: string): Promise<boolean> {
   const pengajuan = await getPengajuanById(id);
   if (!pengajuan || pengajuan.status !== "Menunggu") return false;
   
+  // Custom validation rules for Penarikan (Withdrawal)
   if (pengajuan.jenis === "Penarikan") {
+    const settings = getPengaturan();
     const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
-    if (pengajuan.jumlah > availableBalance) {
-      console.error(`Insufficient balance for withdrawal. Requested: ${pengajuan.jumlah}, Available: ${availableBalance}`);
+    
+    // 1. Calculate Minimum Preserved Balance (Fixed vs Percentage)
+    let minRequired = 0;
+    if (settings.penarikan) {
+      if (settings.penarikan.minPreservedBalanceType === "fixed") {
+        minRequired = settings.penarikan.minPreservedBalanceValue;
+      } else {
+        minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
+      }
+    }
+
+    // 2. Calculate Maximum Allowed Withdrawal (Fixed vs Percentage)
+    let maxAllowedByRule = availableBalance - minRequired;
+    if (settings.penarikan) {
+      let maxRule = 0;
+      if (settings.penarikan.maxWithdrawalType === "fixed") {
+        maxRule = settings.penarikan.maxWithdrawalValue;
+      } else {
+        maxRule = (availableBalance * settings.penarikan.maxWithdrawalValue) / 100;
+      }
+      maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
+    }
+
+    // 3. Final Validation
+    if (pengajuan.jumlah > maxAllowedByRule) {
+      const errorMsg = `Penarikan ditolak based on rules. Requested: ${pengajuan.jumlah}, Max Allowed: ${maxAllowedByRule}. (Total Savings: ${availableBalance}, Min Preserved: ${minRequired})`;
+      console.error(errorMsg);
       return false;
     }
   }
+  
+  // Note: Pinjam (Loan) no longer has automatic balance checks as per user request.
   
   if (pengajuan.jenis === "Pinjam") {
     await ensureAutoDeductionCategories();

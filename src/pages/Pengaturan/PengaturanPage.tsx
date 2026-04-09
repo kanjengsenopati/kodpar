@@ -19,6 +19,7 @@ import { DendaSettings } from "@/components/pengaturan/DendaSettings";
 import { SHUSettings } from "@/components/pengaturan/SHUSettings";
 import { BackupResetSettings } from "@/components/pengaturan/BackupResetSettings";
 import { NotificationSettings } from "@/components/pengaturan/NotificationSettings";
+import { PenarikanSettings } from "@/components/pengaturan/PenarikanSettings";
 
 const sidebarItems = [
   {
@@ -107,6 +108,18 @@ export default function PengaturanPage() {
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
                   <DendaSettings settings={settings} setSettings={setSettings} />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="penarikan" className="border rounded-lg px-4 border-amber-200 bg-amber-50/10">
+                <AccordionTrigger className="text-lg font-medium text-amber-900">
+                  <div className="flex items-center gap-2">
+                    <span>Aturan Penarikan Simpanan</span>
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-wider">New</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                  <PenarikanSettings settings={settings} setSettings={setSettings} />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

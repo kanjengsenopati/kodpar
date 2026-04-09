@@ -92,6 +92,12 @@ const initialPengaturan: Pengaturan = {
     marketingEmails: false,
     reminderTiming: "3",
     emailFrequency: "immediate"
+  },
+  penarikan: {
+    maxWithdrawalType: "percentage",
+    maxWithdrawalValue: 100,
+    minPreservedBalanceType: "fixed",
+    minPreservedBalanceValue: 50000
   }
 };
 
@@ -142,6 +148,10 @@ export function updatePengaturan(updatedFields: Partial<Pengaturan>): Pengaturan
     notifications: {
       ...currentPengaturan.notifications,
       ...(updatedFields.notifications || {})
+    },
+    penarikan: {
+      ...currentPengaturan.penarikan,
+      ...(updatedFields.penarikan || {})
     }
   };
   

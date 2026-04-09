@@ -53,6 +53,12 @@ export interface Pengaturan {
     reminderTiming: string;
     emailFrequency: string;
   };
+  penarikan?: {
+    maxWithdrawalType: "fixed" | "percentage";
+    maxWithdrawalValue: number;
+    minPreservedBalanceType: "fixed" | "percentage";
+    minPreservedBalanceValue: number;
+  };
 }
 
 export interface FormulaComponent {
