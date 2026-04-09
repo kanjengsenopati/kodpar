@@ -120,18 +120,18 @@ export default function PengajuanList() {
     setDeleteId(null);
   };
   
-  // Filter pengajuan based on search query and filter status
-  const filteredPengajuan = pengajuanList.filter(pengajuan => {
+  // Filter pengajuan based on search query and filter status with defensive checks
+  const filteredPengajuan = Array.isArray(pengajuanList) ? pengajuanList.filter(pengajuan => {
     const matchesSearch = 
-      pengajuan.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      pengajuan.anggotaNama.toLowerCase().includes(searchQuery.toLowerCase());
+      (pengajuan.id?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+       pengajuan.anggotaNama?.toLowerCase().includes(searchQuery.toLowerCase()));
     
     if (filterStatus === "semua") {
       return matchesSearch;
     }
     
-    return matchesSearch && pengajuan.status.toLowerCase() === filterStatus.toLowerCase();
-  });
+    return matchesSearch && pengajuan.status?.toLowerCase() === filterStatus.toLowerCase();
+  }) : [];
   
   console.log("Filtered pengajuan:", filteredPengajuan);
   

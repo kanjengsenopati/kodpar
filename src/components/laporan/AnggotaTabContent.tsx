@@ -43,6 +43,7 @@ interface ChartDataItem {
 
 interface AnggotaTabContentProps {
   anggotaList: Anggota[];
+  transaksiList: Transaksi[];
   chartData: {
     anggota: ChartDataItem[];
   };
@@ -54,10 +55,28 @@ interface AnggotaTabContentProps {
 
 export function AnggotaTabContent({
   anggotaList,
+  transaksiList,
   chartData,
   totalAnggota,
   chartColors,
 }: AnggotaTabContentProps) {
+  // Calculate dynamic stats
+  const maleCount = anggotaList.filter(a => a.jenisKelamin === "L").length;
+  const femaleCount = anggotaList.filter(a => a.jenisKelamin === "P").length;
+  
+  const malePercent = totalAnggota > 0 ? (maleCount / totalAnggota) * 100 : 0;
+  const femalePercent = totalAnggota > 0 ? (femaleCount / totalAnggota) * 100 : 0;
+
+  // Helper to get total simpanan for an anggota
+  const getAnggotaSimpanan = (anggotaId: string) => {
+    return transaksiList
+      .filter(t => t.anggotaId === anggotaId && t.jenis === "Simpan" && t.status === "Sukses")
+      .reduce((sum, t) => sum + (t.jumlah || 0), 0) - 
+      transaksiList
+      .filter(t => t.anggotaId === anggotaId && t.jenis === "Penarikan" && t.status === "Sukses")
+      .reduce((sum, t) => sum + (t.jumlah || 0), 0);
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -111,8 +130,8 @@ export function AnggotaTabContent({
                 <PieChart>
                   <Pie
                     data={[
-                      { name: "Laki-laki", value: 75 },
-                      { name: "Perempuan", value: 45 }
+                      { name: "Laki-laki", value: maleCount },
+                      { name: "Perempuan", value: femaleCount }
                     ]}
                     cx="50%"
                     cy="50%"
@@ -144,14 +163,14 @@ export function AnggotaTabContent({
                     <div className="w-3 h-3 bg-[#8B5CF6] mr-2 rounded-sm"></div>
                     Laki-laki
                   </span>
-                  <span className="font-medium">75 (62.5%)</span>
+                  <span className="font-medium">{maleCount} ({malePercent.toFixed(1)}%)</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm flex items-center">
                     <div className="w-3 h-3 bg-[#EC4899] mr-2 rounded-sm"></div>
                     Perempuan
                   </span>
-                  <span className="font-medium">45 (37.5%)</span>
+                  <span className="font-medium">{femaleCount} ({femalePercent.toFixed(1)}%)</span>
                 </div>
               </div>
             </div>
@@ -241,7 +260,7 @@ export function AnggotaTabContent({
                       </span>
                     </TableCell>
                     <TableCell>{anggota.tanggalBergabung ? formatDate(anggota.tanggalBergabung) : "-"}</TableCell>
-                    <TableCell>{formatCurrency(750000)}</TableCell>
+                    <TableCell>{formatCurrency(getAnggotaSimpanan(anggota.id))}</TableCell>
                   </TableRow>
                 ))}
                 {anggotaList.length === 0 && (

@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Home, CreditCard, Users, Settings, PlusCircle } from "lucide-react";
+import { Home, CreditCard, Users, Settings, PlusCircle, PiggyBank, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { logoutUser } from "@/services/authService";

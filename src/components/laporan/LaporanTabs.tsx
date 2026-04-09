@@ -182,6 +182,7 @@ export function LaporanTabs({
           </div>
           <AnggotaTabContent 
             anggotaList={anggotaList}
+            transaksiList={transaksiList}
             chartData={chartData}
             totalAnggota={stats.totalAnggota}
             chartColors={chartColors}

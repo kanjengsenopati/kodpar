@@ -224,7 +224,7 @@ export function generatePerubahanModal(periode: string): PerubahanModal {
   ];
   
   const pengurangan: PerubahanModalItem[] = [
-    { deskripsi: "Rugi periode berjalan", jumlah: Math.max(0, -labaRugi.labaBersih) }
+    { deskripsi: "Rugi periode berjalan", jumlah: Math.max(0, -penghasilanKomprehensif.labaBersih) }
   ];
   
   const totalPenambahan = penambahan.reduce((sum, item) => sum + item.jumlah, 0);

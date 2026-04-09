@@ -1,7 +1,6 @@
 
 import { Pengajuan } from "@/types";
 import { formatCurrency, formatDate } from "@/utils/formatters";
-import { getPengajuanByStatus } from "@/services/pengajuanService";
 import { ChartPie, Download, FileCheck, FileText, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,21 +102,21 @@ export function PengajuanTabContent({
                     <div className="w-3 h-3 bg-amber-500 mr-2 rounded-sm"></div>
                     Menunggu
                   </span>
-                  <span className="font-medium">{getPengajuanByStatus("Menunggu").length}</span>
+                  <span className="font-medium">{pengajuanList.filter(p => p.status === "Menunggu").length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm flex items-center">
                     <div className="w-3 h-3 bg-green-500 mr-2 rounded-sm"></div>
                     Disetujui
                   </span>
-                  <span className="font-medium">{getPengajuanByStatus("Disetujui").length}</span>
+                  <span className="font-medium">{pengajuanList.filter(p => p.status === "Disetujui").length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm flex items-center">
                     <div className="w-3 h-3 bg-red-500 mr-2 rounded-sm"></div>
                     Ditolak
                   </span>
-                  <span className="font-medium">{getPengajuanByStatus("Ditolak").length}</span>
+                  <span className="font-medium">{pengajuanList.filter(p => p.status === "Ditolak").length}</span>
                 </div>
               </div>
               
