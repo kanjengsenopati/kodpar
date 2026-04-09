@@ -11,7 +11,7 @@ import { db } from "@/db/db";
 export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
     // Create the transaction using core service inside a Dexie transaction for atomicity
-    const result = await db.transaction('rw', db.transaksi, async () => {
+    const result = await db.transaction('rw', [db.transaksi, db.anggota], async () => {
       return await createTransaksiCore(data);
     });
     

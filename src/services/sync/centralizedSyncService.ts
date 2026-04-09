@@ -382,6 +382,11 @@ export function initializeCentralizedSync(): void {
   try {
     console.log('🚀 Initializing centralized sync service...');
     
+    // Cleanup old and potentially stale sync cache for version stabilization
+    // This ensures that any previously failed or stuck syncs are cleared
+    centralizedSync.clearSyncCache();
+    console.log('🧹 Centralized sync cache cleared for stabilization');
+    
     const addEventListeners = () => {
       if (typeof window === 'undefined') return;
       
