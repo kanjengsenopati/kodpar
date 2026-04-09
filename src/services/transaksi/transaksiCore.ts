@@ -116,7 +116,7 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): b
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<Transaksi | null> {
   try {
-    const newId = generateTransaksiId();
+    const newId = await generateTransaksiId();
     const now = new Date().toISOString();
     
     // If anggotaId is provided but anggotaNama is not, try to get anggota name
@@ -150,23 +150,15 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Transak
       updatedAt: now,
     };
     
+    // Add to database
     await db.transaksi.add(newTransaksi);
     
-    // Auto-sync to accounting system if status is Sukses
-    if (newTransaksi.status === "Sukses") {
-      try {
-        const journalEntry = await syncTransactionToAccounting(newTransaksi);
-        if (journalEntry) {
-          console.log(`✅ Transaction ${newTransaksi.id} (${newTransaksi.jenis}) automatically synced to accounting (Journal: ${journalEntry.nomorJurnal})`);
-        }
-      } catch (syncError) {
-        console.error("❌ Failed to sync transaction to accounting:", syncError);
-      }
-    }
+    // NOTE: Accounting sync is now handled by the calling service (centralized synchronization)
+    // to prevent duplicate journal entries and maintain high data integrity.
     
     return newTransaksi;
   } catch (error) {
-    console.error("Error creating transaksi:", error);
+    console.error("Error in core createTransaksi:", error);
     return null;
   }
 }
