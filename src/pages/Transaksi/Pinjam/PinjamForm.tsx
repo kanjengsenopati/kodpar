@@ -13,8 +13,16 @@ export default function PinjamForm() {
   
   useEffect(() => {
     // Load anggota list on component mount
-    const listAnggota = getAnggotaList();
-    setAnggotaList(listAnggota);
+    const loadData = async () => {
+      try {
+        const listAnggota = await getAnggotaList();
+        setAnggotaList(listAnggota);
+      } catch (error) {
+        console.error("Error loading anggota list:", error);
+      }
+    };
+    
+    loadData();
   }, []);
   
   const handleSuccess = () => {

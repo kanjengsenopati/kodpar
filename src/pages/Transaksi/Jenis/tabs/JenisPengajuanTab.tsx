@@ -29,17 +29,23 @@ export function JenisPengajuanTab() {
   };
 
   // Calculate how many pengajuan use each jenis
-  const calculateJenisUsage = () => {
-    const pengajuanList = getPengajuanList();
-    
-    const usage: Record<string, number> = {};
-    pengajuanList.forEach(pengajuan => {
-      if (pengajuan.kategori) {
-        usage[pengajuan.kategori] = (usage[pengajuan.kategori] || 0) + 1;
+  const calculateJenisUsage = async () => {
+    try {
+      const pengajuanList = await getPengajuanList();
+      
+      const usage: Record<string, number> = {};
+      if (Array.isArray(pengajuanList)) {
+        pengajuanList.forEach(pengajuan => {
+          if (pengajuan.kategori) {
+            usage[pengajuan.kategori] = (usage[pengajuan.kategori] || 0) + 1;
+          }
+        });
       }
-    });
-    
-    setJenisUsage(usage);
+      
+      setJenisUsage(usage);
+    } catch (error) {
+      console.error("Error calculating jenis usage:", error);
+    }
   };
 
   const handleRefreshData = () => {

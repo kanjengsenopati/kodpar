@@ -56,11 +56,21 @@ export default function PengajuanList() {
     loadPengajuanData();
   }, []);
   
-  const loadPengajuanData = () => {
+  const loadPengajuanData = async () => {
     console.log("Loading pengajuan data...");
-    const data = getPengajuanList();
-    console.log("Loaded pengajuan data:", data);
-    setPengajuanList(data);
+    try {
+      const data = await getPengajuanList();
+      console.log("Loaded pengajuan data:", data);
+      setPengajuanList(data || []);
+    } catch (error) {
+      console.error("Error loading pengajuan data:", error);
+      toast({
+        title: "Gagal memuat data",
+        description: "Terjadi kesalahan saat mengambil data pengajuan",
+        variant: "destructive",
+      });
+      setPengajuanList([]);
+    }
   };
   
   const handleToggleColumn = (columnId: string) => {
@@ -79,20 +89,29 @@ export default function PengajuanList() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteId) {
       console.log("Deleting pengajuan:", deleteId);
-      const success = deletePengajuan(deleteId);
-      if (success) {
-        toast({
-          title: "Pengajuan berhasil dihapus",
-          description: `Pengajuan dengan ID ${deleteId} telah dihapus`,
-        });
-        loadPengajuanData(); // Reload data after deletion
-      } else {
+      try {
+        const success = await deletePengajuan(deleteId);
+        if (success) {
+          toast({
+            title: "Pengajuan berhasil dihapus",
+            description: `Pengajuan dengan ID ${deleteId} telah dihapus`,
+          });
+          await loadPengajuanData(); // Reload data after deletion
+        } else {
+          toast({
+            title: "Gagal menghapus pengajuan",
+            description: "Data pengajuan tidak ditemukan atau gagal dihapus",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting pengajuan:", error);
         toast({
           title: "Gagal menghapus pengajuan",
-          description: "Terjadi kesalahan saat menghapus data pengajuan",
+          description: "Terjadi kesalahan sistem saat menghapus data",
           variant: "destructive",
         });
       }

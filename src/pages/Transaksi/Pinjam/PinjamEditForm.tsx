@@ -20,26 +20,39 @@ export default function PinjamEditForm() {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Load anggota list
-    const listAnggota = getAnggotaList();
-    setAnggotaList(listAnggota);
-    
-    // Load transaction data
-    if (id) {
-      const loadedTransaksi = getTransaksiById(id);
-      if (loadedTransaksi && loadedTransaksi.jenis === "Pinjam") {
-        setTransaksi(loadedTransaksi);
-      } else {
+    const loadInitialData = async () => {
+      try {
+        // Load anggota list
+        const listAnggota = await getAnggotaList();
+        setAnggotaList(listAnggota);
+        
+        // Load transaction data
+        if (id) {
+          const loadedTransaksi = await getTransaksiById(id);
+          if (loadedTransaksi && loadedTransaksi.jenis === "Pinjam") {
+            setTransaksi(loadedTransaksi);
+          } else {
+            toast({
+              title: "Transaksi tidak ditemukan",
+              description: "Data pinjaman tidak ditemukan atau bukan merupakan transaksi pinjaman",
+              variant: "destructive"
+            });
+            navigate("/transaksi/pinjam");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading pinjam edit data:", error);
         toast({
-          title: "Transaksi tidak ditemukan",
-          description: "Data pinjaman tidak ditemukan atau bukan merupakan transaksi pinjaman",
+          title: "Kesalahan sistem",
+          description: "Gagal memuat data pinjaman",
           variant: "destructive"
         });
-        navigate("/transaksi/pinjam");
+      } finally {
+        setIsLoading(false);
       }
-    }
-    
-    setIsLoading(false);
+    };
+
+    loadInitialData();
   }, [id, navigate, toast]);
   
   const handleSuccess = () => {

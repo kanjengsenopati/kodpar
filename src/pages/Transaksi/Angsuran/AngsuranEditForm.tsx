@@ -20,24 +20,37 @@ export default function AngsuranEditForm() {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const listAnggota = getAnggotaList();
-    setAnggotaList(listAnggota);
-    
-    if (id) {
-      const loadedTransaksi = getTransaksiById(id);
-      if (loadedTransaksi && loadedTransaksi.jenis === "Angsuran") {
-        setTransaksi(loadedTransaksi);
-      } else {
+    const loadInitialData = async () => {
+      try {
+        const listAnggota = await getAnggotaList();
+        setAnggotaList(listAnggota);
+        
+        if (id) {
+          const loadedTransaksi = await getTransaksiById(id);
+          if (loadedTransaksi && loadedTransaksi.jenis === "Angsuran") {
+            setTransaksi(loadedTransaksi);
+          } else {
+            toast({
+              title: "Transaksi tidak ditemukan",
+              description: "Data angsuran tidak ditemukan atau bukan merupakan transaksi angsuran",
+              variant: "destructive"
+            });
+            navigate("/transaksi/angsuran");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading angsuran edit data:", error);
         toast({
-          title: "Transaksi tidak ditemukan",
-          description: "Data angsuran tidak ditemukan atau bukan merupakan transaksi angsuran",
+          title: "Kesalahan sistem",
+          description: "Gagal memuat data angsuran",
           variant: "destructive"
         });
-        navigate("/transaksi/angsuran");
+      } finally {
+        setIsLoading(false);
       }
-    }
-    
-    setIsLoading(false);
+    };
+
+    loadInitialData();
   }, [id, navigate, toast]);
   
   const handleSuccess = () => {

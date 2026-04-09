@@ -100,87 +100,89 @@ export default function Laporan() {
   
   // Load data on component mount
   useEffect(() => {
-    const loadData = () => {
-      // Load basic entities
-      const anggota = getAnggotaList();
-      const transaksi = getAllTransaksi();
-      const pengajuan = getPengajuanList();
-      
-      // Get unified financial summary using real-time calculations
-      const financialSummary = calculateAggregateFinancialData();
-      
-      // Get overdue and upcoming loans
-      const overdue = getOverdueLoans("ALL");
-      const upcoming = getUpcomingDueLoans("ALL", 30);
-      
-      setAnggotaList(anggota);
-      setTransaksiList(transaksi);
-      setPengajuanList(pengajuan);
-      setOverdueLoans(overdue);
-      setUpcomingDueLoans(upcoming);
-      
-      // Calculate penalty amount
-      const totalPenaltyAmount = overdue.reduce((sum, loan) => {
-        const penalty = calculatePenalty(loan.transaksi.jumlah, loan.daysOverdue);
-        return sum + penalty;
-      }, 0);
-      
-      setTotalPenalty(totalPenaltyAmount);
-      
-      // Use unified financial summary for consistent totals
-      setStats({
-        totalAnggota: anggota.length,
-        totalSimpanan: financialSummary.totalSimpanan,
-        totalPinjaman: financialSummary.totalPinjaman,
-        totalAngsuran: financialSummary.totalAngsuran,
-        totalPenarikan: financialSummary.totalPenarikan,
-        totalPengajuan: pengajuan.length,
-        totalTunggakan: overdue.length,
-        totalJatuhTempo: upcoming.length
-      });
-      
-      // Prepare chart data
-      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-      const simpananData = months.map((name, index) => ({
-        name,
-        simpanan: 15000000 + (index * 2500000)
-      }));
-      
-      const pinjamanData = months.map((name, index) => ({
-        name,
-        pinjaman: 10000000 + (index * 2000000)
-      }));
-      
-      const angsuranData = months.map((name, index) => ({
-        name,
-        angsuran: 5000000 + (index * 1000000)
-      }));
+    const loadData = async () => {
+      try {
+        // Load basic entities concurrently
+        const [anggota, transaksi, pengajuan, financialSummary, overdue, upcoming] = await Promise.all([
+          getAnggotaList(),
+          getAllTransaksi(),
+          getPengajuanList(),
+          calculateAggregateFinancialData(),
+          getOverdueLoans("ALL"),
+          getUpcomingDueLoans("ALL", 30)
+        ]);
+        
+        setAnggotaList(anggota);
+        setTransaksiList(transaksi);
+        setPengajuanList(pengajuan);
+        setOverdueLoans(overdue);
+        setUpcomingDueLoans(upcoming);
+        
+        // Calculate penalty amount
+        const totalPenaltyAmount = overdue.reduce((sum, loan) => {
+          const penalty = calculatePenalty(loan.transaksi.jumlah, loan.daysOverdue);
+          return sum + penalty;
+        }, 0);
+        
+        setTotalPenalty(totalPenaltyAmount);
+        
+        // Use unified financial summary for consistent totals
+        setStats({
+          totalAnggota: anggota.length,
+          totalSimpanan: financialSummary.totalSimpanan,
+          totalPinjaman: financialSummary.totalPinjaman,
+          totalAngsuran: financialSummary.totalAngsuran,
+          totalPenarikan: financialSummary.totalPenarikan,
+          totalPengajuan: pengajuan.length,
+          totalTunggakan: overdue.length,
+          totalJatuhTempo: upcoming.length
+        });
+        
+        // Prepare chart data
+        const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+        const simpananData = months.map((name, index) => ({
+          name,
+          simpanan: 15000000 + (index * 2500000)
+        }));
+        
+        const pinjamanData = months.map((name, index) => ({
+          name,
+          pinjaman: 10000000 + (index * 2000000)
+        }));
+        
+        const angsuranData = months.map((name, index) => ({
+          name,
+          angsuran: 5000000 + (index * 1000000)
+        }));
 
-      const penarikanData = months.map((name, index) => ({
-        name,
-        penarikan: 2000000 + (index * 500000)
-      }));
-      
-      const pengajuanData = [
-        { name: "Simpan", value: pengajuan.filter(p => p.jenis === "Simpan" && p.status === "Menunggu").length },
-        { name: "Pinjam", value: pengajuan.filter(p => p.jenis === "Pinjam" && p.status === "Menunggu").length },
-        { name: "Disetujui", value: pengajuan.filter(p => p.status === "Disetujui").length },
-        { name: "Ditolak", value: pengajuan.filter(p => p.status === "Ditolak").length }
-      ];
-      
-      const anggotaGrowthData = months.map((name, index) => ({
-        name,
-        anggota: 50 + (index * 10)
-      }));
-      
-      setChartData({
-        simpanan: simpananData,
-        pinjaman: pinjamanData,
-        angsuran: angsuranData,
-        penarikan: penarikanData,
-        pengajuan: pengajuanData,
-        anggota: anggotaGrowthData
-      });
+        const penarikanData = months.map((name, index) => ({
+          name,
+          penarikan: 2000000 + (index * 500000)
+        }));
+        
+        const pengajuanData = [
+          { name: "Simpan", value: pengajuan.filter(p => p.jenis === "Simpan" && p.status === "Menunggu").length },
+          { name: "Pinjam", value: pengajuan.filter(p => p.jenis === "Pinjam" && p.status === "Menunggu").length },
+          { name: "Disetujui", value: pengajuan.filter(p => p.status === "Disetujui").length },
+          { name: "Ditolak", value: pengajuan.filter(p => p.status === "Ditolak").length }
+        ];
+        
+        const anggotaGrowthData = months.map((name, index) => ({
+          name,
+          anggota: 50 + (index * 10)
+        }));
+        
+        setChartData({
+          simpanan: simpananData,
+          pinjaman: pinjamanData,
+          angsuran: angsuranData,
+          penarikan: penarikanData,
+          pengajuan: pengajuanData,
+          anggota: anggotaGrowthData
+        });
+      } catch (error) {
+        console.error("Error loading reports data:", error);
+      }
     };
     
     loadData();

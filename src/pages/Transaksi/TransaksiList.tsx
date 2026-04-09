@@ -26,11 +26,21 @@ export default function TransaksiList() {
   
   // Load data on mount
   useEffect(() => {
-    const loadedTransaksi = getAllTransaksi();
-    const loadedPengajuan = getPengajuanList();
+    const loadData = async () => {
+      try {
+        const [loadedTransaksi, loadedPengajuan] = await Promise.all([
+          getAllTransaksi(),
+          getPengajuanList()
+        ]);
+        
+        setTransaksiList(loadedTransaksi || []);
+        setPengajuanList(loadedPengajuan || []);
+      } catch (error) {
+        console.error("Error loading transaksi list data:", error);
+      }
+    };
     
-    setTransaksiList(loadedTransaksi);
-    setPengajuanList(loadedPengajuan);
+    loadData();
   }, []);
   
   // Extract summaries from data
