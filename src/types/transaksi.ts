@@ -12,6 +12,8 @@ export interface Transaksi {
   status: "Sukses" | "Pending" | "Gagal";
   accountingSyncStatus?: "PENDING" | "SUCCESS" | "FAILED";
   lastSyncError?: string;
+  nominalPokok?: number;
+  nominalJasa?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +31,8 @@ export interface Pengajuan {
   dokumen?: PersyaratanDokumen[];
   buktiTransfer?: string; // Base64 image
   referensiPinjamanId?: string; // ID of the loan being paid
+  nominalPokok?: number;
+  nominalJasa?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -4,51 +4,49 @@ import { Transaksi } from "@/types";
 
 /**
  * Centralized Financial Calculation Service
- * Provides consistent calculations across all modules
+ * Provides consistent calculations across all modules with SAK EP compliance
  */
 
 /**
- * Centralized Financial Calculation Service
- * Provides consistent calculations across all modules
- */
-
-/**
- * Calculate remaining loan balance for a specific member with CONSISTENT logic
+ * Calculate remaining loan balance for a specific member with SAK EP precision
+ * SAK EP REQUIRES: Using amortized cost (Principal Balance)
  */
 export async function calculateMemberRemainingLoan(anggotaId: string): Promise<number> {
   const transaksiList = await getAllTransaksi();
   
-  // Get all successful loans for this member
-  const memberLoans = transaksiList.filter(
-    t => t.jenis === "Pinjam" && t.anggotaId === anggotaId && t.status === "Sukses"
-  );
+  // 1. Total Successful Loans (Pencairan)
+  const totalLoanAmount = transaksiList
+    .filter(t => t.jenis === "Pinjam" && t.anggotaId === anggotaId && t.status === "Sukses")
+    .reduce((sum, loan) => sum + (loan.jumlah || 0), 0);
   
-  // Calculate total original loan amount
-  const totalLoanAmount = memberLoans.reduce((sum, loan) => sum + loan.jumlah, 0);
-  
-  // Get all successful installment payments for this member
+  // 2. Total Principal Repayments
   const memberPayments = transaksiList.filter(
     t => t.jenis === "Angsuran" && t.anggotaId === anggotaId && t.status === "Sukses"
   );
   
-  // Calculate total principal payments (extract pokok from keterangan or use full amount)
   let totalPrincipalPaid = 0;
   memberPayments.forEach(payment => {
-    // Try to extract pokok amount from keterangan
-    const pokokMatch = payment.keterangan?.match(/Pokok:\s*[\w\s]*?(\d+(?:[\.,]\d+)*)/);
-    if (pokokMatch && pokokMatch[1]) {
-      const pokokAmount = parseFloat(pokokMatch[1].replace(/[,\.]/g, ''));
-      totalPrincipalPaid += pokokAmount;
-    } else {
-      // If no pokok info in keterangan, estimate 80% as principal (conservative approach)
-      totalPrincipalPaid += Math.floor(payment.jumlah * 0.8);
+    // Priority 1: Structured field (SAK EP Compliant)
+    if (payment.nominalPokok !== undefined && payment.nominalPokok !== null) {
+      totalPrincipalPaid += payment.nominalPokok;
+    } 
+    // Priority 2: Structured metadata in keterangan (Regex fallback)
+    else {
+      const pokokMatch = payment.keterangan?.match(/Pokok:\s*[\w\s]*?(\d+(?:[\.,]\d+)*)/);
+      if (pokokMatch && pokokMatch[1]) {
+        const pokokAmount = parseFloat(pokokMatch[1].replace(/[,\.]/g, ''));
+        totalPrincipalPaid += pokokAmount;
+      } 
+      // NOTE: Removed arbitrary 80% estimation to maintain SAK EP integrity. 
+      // If no principal data found, it defaults to 0 to prevent overstated repayments.
     }
   });
   
-  // Return remaining balance (cannot be negative)
   const remainingBalance = Math.max(0, totalLoanAmount - totalPrincipalPaid);
   
-  console.log(`Member ${anggotaId}: Total Loans=${totalLoanAmount}, Principal Paid=${totalPrincipalPaid}, Remaining=${remainingBalance}`);
+  if (remainingBalance > 0) {
+    console.log(`📊 SAK EP Member Balance Audit [${anggotaId}]: Gross=${totalLoanAmount}, Paid=${totalPrincipalPaid}, Balance=${remainingBalance}`);
+  }
   
   return remainingBalance;
 }
@@ -59,11 +57,9 @@ export async function calculateMemberRemainingLoan(anggotaId: string): Promise<n
 export async function calculateSpecificLoanRemainingBalance(loanId: string): Promise<number> {
   const transaksiList = await getAllTransaksi();
   
-  // Find the specific loan
   const loan = transaksiList.find(t => t.id === loanId && t.jenis === "Pinjam" && t.status === "Sukses");
   if (!loan) return 0;
   
-  // Get all successful installment payments for this specific loan
   const loanPayments = transaksiList.filter(
     t => t.jenis === "Angsuran" && 
          t.anggotaId === loan.anggotaId && 
@@ -71,24 +67,20 @@ export async function calculateSpecificLoanRemainingBalance(loanId: string): Pro
          t.keterangan?.includes(loanId)
   );
   
-  // Calculate total principal payments for this specific loan
   let totalPrincipalPaid = 0;
   loanPayments.forEach(payment => {
-    const pokokMatch = payment.keterangan?.match(/Pokok:\s*[\w\s]*?(\d+(?:[\.,]\d+)*)/);
-    if (pokokMatch && pokokMatch[1]) {
-      const pokokAmount = parseFloat(pokokMatch[1].replace(/[,\.]/g, ''));
-      totalPrincipalPaid += pokokAmount;
+    if (payment.nominalPokok !== undefined && payment.nominalPokok !== null) {
+      totalPrincipalPaid += payment.nominalPokok;
     } else {
-      // Fallback: assume 80% is principal
-      totalPrincipalPaid += Math.floor(payment.jumlah * 0.8);
+      const pokokMatch = payment.keterangan?.match(/Pokok:\s*[\w\s]*?(\d+(?:[\.,]\d+)*)/);
+      if (pokokMatch && pokokMatch[1]) {
+        const pokokAmount = parseFloat(pokokMatch[1].replace(/[,\.]/g, ''));
+        totalPrincipalPaid += pokokAmount;
+      }
     }
   });
   
-  const remainingBalance = Math.max(0, loan.jumlah - totalPrincipalPaid);
-  
-  console.log(`Loan ${loanId}: Original=${loan.jumlah}, Principal Paid=${totalPrincipalPaid}, Remaining=${remainingBalance}`);
-  
-  return remainingBalance;
+  return Math.max(0, (loan.jumlah || 0) - totalPrincipalPaid);
 }
 
 /**
@@ -97,60 +89,52 @@ export async function calculateSpecificLoanRemainingBalance(loanId: string): Pro
 export async function calculateMemberTotalSimpanan(anggotaId: string): Promise<number> {
   const transaksiList = await getAllTransaksi();
   
-  // Calculate total deposits
   const totalDeposits = transaksiList
-    .filter(t => t.anggotaId === anggotaId && t.jenis === "Simpan" && t.status === "Sukses" && t.jumlah > 0)
-    .reduce((total, t) => total + t.jumlah, 0);
+    .filter(t => t.anggotaId === anggotaId && t.jenis === "Simpan" && t.status === "Sukses" && (t.jumlah || 0) > 0)
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
   
-  // Calculate total withdrawals (including negative simpan transactions)
   const totalWithdrawals = transaksiList
     .filter(t => t.anggotaId === anggotaId && t.status === "Sukses")
-    .filter(t => 
-      (t.jenis === "Penarikan") || 
-      (t.jenis === "Simpan" && t.jumlah < 0)
-    )
-    .reduce((total, t) => total + Math.abs(t.jumlah), 0);
+    .filter(t => (t.jenis === "Penarikan") || (t.jenis === "Simpan" && (t.jumlah || 0) < 0))
+    .reduce((total, t) => total + Math.abs(t.jumlah || 0), 0);
   
   return Math.max(0, totalDeposits - totalWithdrawals);
 }
 
 /**
- * Calculate total installment payments for a member
+ * Calculate total installment payments for a member (Total cash flow)
  */
 export async function calculateMemberTotalAngsuran(anggotaId: string): Promise<number> {
   const transaksiList = await getAllTransaksi();
   return transaksiList
     .filter(t => t.anggotaId === anggotaId && t.jenis === "Angsuran" && t.status === "Sukses")
-    .reduce((total, t) => total + t.jumlah, 0);
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
 }
 
 /**
- * Get comprehensive financial summary for all members
+ * Get comprehensive financial summary for all members with SAK EP reconciliation
  */
 export async function getAllMembersFinancialSummary() {
   const transaksiList = await getAllTransaksi();
   
-  // Calculate total original loan amounts
   const totalPinjaman = transaksiList
     .filter(t => t.jenis === "Pinjam" && t.status === "Sukses")
-    .reduce((total, t) => total + t.jumlah, 0);
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
   
-  // Calculate total savings (net after withdrawals)
   const totalSimpanan = transaksiList
-    .filter(t => t.jenis === "Simpan" && t.status === "Sukses" && t.jumlah > 0)
-    .reduce((total, t) => total + t.jumlah, 0);
+    .filter(t => t.jenis === "Simpan" && t.status === "Sukses" && (t.jumlah || 0) > 0)
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
   
   const totalPenarikan = transaksiList
     .filter(t => t.status === "Sukses")
-    .filter(t => (t.jenis === "Penarikan") || (t.jenis === "Simpan" && t.jumlah < 0))
-    .reduce((total, t) => total + Math.abs(t.jumlah), 0);
+    .filter(t => (t.jenis === "Penarikan") || (t.jenis === "Simpan" && (t.jumlah || 0) < 0))
+    .reduce((total, t) => total + Math.abs(t.jumlah || 0), 0);
   
-  // Calculate total installment payments
   const totalAngsuran = transaksiList
     .filter(t => t.jenis === "Angsuran" && t.status === "Sukses")
-    .reduce((total, t) => total + t.jumlah, 0);
+    .reduce((total, t) => total + (t.jumlah || 0), 0);
   
-  // Calculate total remaining loans for all members
+  // Aggregate sisa pinjaman using precise member-level logic
   const uniqueAnggotaIds = [...new Set(transaksiList
     .filter(t => t.jenis === "Pinjam" && t.status === "Sukses")
     .map(t => t.anggotaId))];
