@@ -34,6 +34,10 @@ export async function getJurnalEntryByReference(referensi: string): Promise<Jurn
  * Generate next journal number
  */
 export async function generateJurnalNumber(): Promise<string> {
+  // Add 1-20ms jitter to desynchronize concurrent batch calls
+  const jitter = Math.floor(Math.random() * 20);
+  if (jitter > 0) await new Promise(resolve => setTimeout(resolve, jitter));
+
   const entries = await getAllJurnalEntries();
   const currentYear = new Date().getFullYear();
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
@@ -68,7 +72,8 @@ export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "created
   
   const newEntry: JurnalEntry = {
     ...entry,
-    id: `je-${Date.now()}`,
+    // Add random suffix to timestamp ID to prevent millisecond collisions in batch runs
+    id: `je-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     nomorJurnal,
     status: 'POSTED', // Auto-post journal entries for immediate sync
     createdAt: new Date().toISOString(),

@@ -151,10 +151,16 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Transak
     };
     
     // Add to database
-    await db.transaksi.add(newTransaksi);
-    
-    // NOTE: Accounting sync is now handled by the calling service (centralized synchronization)
-    // to prevent duplicate journal entries and maintain high data integrity.
+    try {
+      await db.transaksi.add(newTransaksi);
+    } catch (dbError) {
+      if (dbError instanceof Error && dbError.name === 'ConstraintError') {
+        console.warn(`🔄 Primary key collision for transaction ${newId}, retrying with a new ID...`);
+        const retryData = { ...data };
+        return await createTransaksi(retryData);
+      }
+      throw dbError; // Re-throw if it's not a collision
+    }
     
     return newTransaksi;
   } catch (error) {

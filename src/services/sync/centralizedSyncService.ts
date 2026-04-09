@@ -195,7 +195,11 @@ class CentralizedSyncService {
         return { success: false, message: 'Transaction not successful, skipping sync' };
       }
 
-      console.log(`🔄 Starting centralized sync for transaction ${transaksi.id} (${transaksi.jenis})`);
+      // Add small jitter (delay) to sequester timestamp-based ID generation from other threads
+      const jitter = Math.floor(Math.random() * 40) + 10;
+      await new Promise(resolve => setTimeout(resolve, jitter));
+
+      console.log(`🔄 Starting centralized sync for transaction ${transaksi.id} (${transaksi.jenis}) [Ref: ${referensiTXN}]`);
       
       const journalEntry = await syncTransactionToAccounting(transaksi);
       
