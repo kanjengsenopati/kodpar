@@ -7,7 +7,7 @@ import { AngsuranAllocation } from "../allocationService";
 import { formatCurrency } from "./journalUtils";
 
 /**
- * Create journal entry for Angsuran transaction following SAK ETAP
+ * Create journal entry for Angsuran transaction following SAK EP
  * Properly allocating principal and interest with enhanced sync to Keuangan
  */
 export async function createAngsuranJournalEntry(
@@ -23,7 +23,7 @@ export async function createAngsuranJournalEntry(
         coaId: getCoaIdByCode("1000"), // Kas
         debit: transaksi.jumlah,
         kredit: 0,
-        keterangan: `Penerimaan angsuran dari ${transaksi.anggotaNama} - SAK ETAP: Pokok ${formatCurrency(allocation.nominalPokok)}, Jasa ${formatCurrency(allocation.nominalJasa)}`
+        keterangan: `Penerimaan angsuran dari ${transaksi.anggotaNama} - SAK EP: Pokok ${formatCurrency(allocation.nominalPokok)}, Jasa ${formatCurrency(allocation.nominalJasa)}`
       }
     ];
 
@@ -35,7 +35,7 @@ export async function createAngsuranJournalEntry(
         coaId: getCoaIdByCode("1100"), // Piutang Anggota
         debit: 0,
         kredit: allocation.nominalPokok,
-        keterangan: `Pengurangan piutang anggota - Pembayaran pokok ${formatCurrency(allocation.nominalPokok)} (SAK ETAP)`
+        keterangan: `Pengurangan piutang anggota - Pembayaran pokok ${formatCurrency(allocation.nominalPokok)} (SAK EP)`
       });
     }
 
@@ -47,7 +47,7 @@ export async function createAngsuranJournalEntry(
         coaId: getCoaIdByCode("4000"), // Pendapatan Jasa Pinjaman
         debit: 0,
         kredit: allocation.nominalJasa,
-        keterangan: `Pendapatan jasa pinjaman ${formatCurrency(allocation.nominalJasa)} - Bunga ${allocation.sukuBungaPersen.toFixed(2)}% (SAK ETAP + Keuangan Sync)`
+        keterangan: `Pendapatan jasa pinjaman ${formatCurrency(allocation.nominalJasa)} - Bunga ${allocation.sukuBungaPersen.toFixed(2)}% (SAK EP + Keuangan Sync)`
       });
     }
 
@@ -60,7 +60,7 @@ export async function createAngsuranJournalEntry(
     return await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
-      deskripsi: `SAK ETAP ANGSURAN + KEUANGAN SYNC - ${transaksi.anggotaNama} | Pokok: ${pokokPercentage}% (${formatCurrency(allocation.nominalPokok)}) | Jasa: ${jasaPercentage}% (${formatCurrency(allocation.nominalJasa)}) | Rate: ${allocation.sukuBungaPersen.toFixed(2)}%`,
+      deskripsi: `SAK EP ANGSURAN + KEUANGAN SYNC - ${transaksi.anggotaNama} | Pokok: ${pokokPercentage}% (${formatCurrency(allocation.nominalPokok)}) | Jasa: ${jasaPercentage}% (${formatCurrency(allocation.nominalJasa)}) | Rate: ${allocation.sukuBungaPersen.toFixed(2)}%`,
       referensi: `TXN-${transaksi.id}`,
       status: "POSTED",
       createdBy: "system_auto_sync",

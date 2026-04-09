@@ -1,6 +1,6 @@
 
 import { getAllJurnalEntries } from "./jurnalService";
-import { getAllChartOfAccounts } from "./coaService";
+import { getAllChartOfAccounts, getCoaIdByCode } from "./coaService";
 import { JurnalEntry, ChartOfAccount } from "@/types/akuntansi";
 
 export interface SAKEPFinancialPosition {
@@ -56,27 +56,38 @@ export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialP
   // Calculate account balances
   const balances = calculateAccountBalances(journals, accounts, periode);
   
+  // Dynamic ID resolution for SAK EP standards
+  const coaIds = {
+    kas: getCoaIdByCode("1000"),
+    piutang: getCoaIdByCode("1100"),
+    sukarela: getCoaIdByCode("2100"),
+    pokok: getCoaIdByCode("3100"),
+    wajib: getCoaIdByCode("3200"),
+    cadangan: getCoaIdByCode("3300"),
+    shu: getCoaIdByCode("cadangan-shu") // Adjust if needed
+  };
+
   const report: SAKEPFinancialPosition = {
     periode,
     aset: {
       asetLancar: {
-        kas: balances["2"] || 0, // Kas
-        bank: balances["3"] || 0, // Bank
-        piutangAnggota: balances["4"] || 0, // Piutang Anggota
+        kas: balances[coaIds.kas] || 0,
+        bank: 0, // Bank coa ID needed if separate
+        piutangAnggota: balances[coaIds.piutang] || 0,
         totalAsetLancar: 0
       },
       totalAset: 0
     },
     kewajibanDanEkuitas: {
       kewajibanJangkaPendek: {
-        utangSimpananSukarela: Math.abs(balances["6"] || 0), // Utang Simpanan Sukarela
+        utangSimpananSukarela: Math.abs(balances[coaIds.sukarela] || 0),
         totalKewajiban: 0
       },
       ekuitas: {
-        simpananPokok: Math.abs(balances["8"] || 0), // Simpanan Pokok
-        simpananWajib: Math.abs(balances["9"] || 0), // Simpanan Wajib
-        cadanganUmum: Math.abs(balances["10"] || 0), // Cadangan Umum
-        shuBelumDibagi: Math.abs(balances["11"] || 0), // SHU Belum Dibagi
+        simpananPokok: Math.abs(balances[coaIds.pokok] || 0),
+        simpananWajib: Math.abs(balances[coaIds.wajib] || 0),
+        cadanganUmum: Math.abs(balances[coaIds.cadangan] || 0),
+        shuBelumDibagi: Math.abs(balances[coaIds.shu] || 0),
         totalEkuitas: 0
       },
       totalKewajibanDanEkuitas: 0
@@ -122,16 +133,22 @@ export function generateSAKEPComprehensiveIncome(periode: string): SAKEPComprehe
   
   const balances = calculateAccountBalances(periodJournals, accounts, periode);
   
+  const coaIds = {
+    jasa: getCoaIdByCode("4000"),
+    bebanOps: getCoaIdByCode("5000"),
+    bebanAdmin: getCoaIdByCode("5100")
+  };
+
   const report: SAKEPComprehensiveIncome = {
     periode,
     pendapatan: {
-      pendapatanJasaPinjaman: Math.abs(balances["13"] || 0), // Pendapatan Jasa Pinjaman
+      pendapatanJasaPinjaman: Math.abs(balances[coaIds.jasa] || 0),
       pendapatanLain: 0,
       totalPendapatan: 0
     },
     beban: {
-      bebanOperasional: balances["15"] || 0, // Beban Operasional
-      bebanAdministrasi: 0,
+      bebanOperasional: balances[coaIds.bebanOps] || 0,
+      bebanAdministrasi: balances[coaIds.bebanAdmin] || 0,
       totalBeban: 0
     },
     shuSebelumPajak: 0,

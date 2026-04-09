@@ -6,7 +6,7 @@ import { getCoaIdByCode } from "../coaService";
 import { formatCurrency } from "./journalUtils";
 
 /**
- * Create journal entry for Penarikan transaction following SAK ETAP
+ * Create journal entry for Penarikan transaction following SAK EP
  */
 export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry | null {
   try {
@@ -19,7 +19,7 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
         coaId: getCoaIdByCode("2100"), // Simpanan Sukarela (assuming sukarela withdrawal)
         debit: Math.abs(transaksi.jumlah),
         kredit: 0,
-        keterangan: `Penarikan simpanan oleh ${transaksi.anggotaNama} (SAK ETAP)`
+        keterangan: `Penarikan simpanan oleh ${transaksi.anggotaNama} (SAK EP)`
       },
       {
         id: "2",
@@ -37,7 +37,7 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
     return createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
-      deskripsi: `SAK ETAP PENARIKAN - ${transaksi.anggotaNama} | ${formatCurrency(Math.abs(transaksi.jumlah))}`,
+      deskripsi: `SAK EP PENARIKAN - ${transaksi.anggotaNama} | ${formatCurrency(Math.abs(transaksi.jumlah))}`,
       referensi: `TXN-${transaksi.id}`,
       status: "POSTED",
       createdBy: "system_auto_sync",
