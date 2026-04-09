@@ -3,7 +3,7 @@ import { ChartOfAccount } from "@/types/akuntansi";
 
 const COA_STORAGE_KEY = "chart_of_accounts";
 const COA_VERSION_KEY = "coa_data_version";
-const CURRENT_COA_VERSION = "2.0"; // Increment this to force reset for all users
+const CURRENT_COA_VERSION = "3.0"; // Increment this to force reset for all users
 
 // Standardized initial Chart of Accounts data
 const initialChartOfAccounts: ChartOfAccount[] = [
@@ -33,6 +33,20 @@ const initialChartOfAccounts: ChartOfAccount[] = [
     isActive: true,
     saldoNormal: "DEBIT",
     deskripsi: "Piutang pokok pinjaman dari anggota",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "coa-cadangan-kerugian-piutang",
+    kode: "1190",
+    nama: "CADANGAN KERUGIAN PIUTANG",
+    jenis: "ASET",
+    kategori: "Aset Lancar",
+    level: 1,
+    isGroup: false,
+    isActive: true,
+    saldoNormal: "KREDIT",
+    deskripsi: "Penyisihan kerugian piutang tak tertagih (Kontra-Aset)",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },

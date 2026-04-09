@@ -60,6 +60,7 @@ export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialP
   const coaIds = {
     kas: getCoaIdByCode("1000"),
     piutang: getCoaIdByCode("1100"),
+    cadanganPiutang: getCoaIdByCode("1190"),
     sukarela: getCoaIdByCode("2100"),
     pokok: getCoaIdByCode("3100"),
     wajib: getCoaIdByCode("3200"),
@@ -67,13 +68,18 @@ export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialP
     shu: getCoaIdByCode("cadangan-shu") // Adjust if needed
   };
 
+  // SAK EP: Piutang disajikan NETTO (Bruto - Cadangan)
+  const piutangBruto = balances[coaIds.piutang] || 0;
+  const cadanganPiutang = Math.abs(balances[coaIds.cadanganPiutang] || 0); // Balances are normal-based
+  const piutangNetto = piutangBruto - cadanganPiutang;
+
   const report: SAKEPFinancialPosition = {
     periode,
     aset: {
       asetLancar: {
         kas: balances[coaIds.kas] || 0,
-        bank: 0, // Bank coa ID needed if separate
-        piutangAnggota: balances[coaIds.piutang] || 0,
+        bank: 0, 
+        piutangAnggota: piutangNetto,
         totalAsetLancar: 0
       },
       totalAset: 0
