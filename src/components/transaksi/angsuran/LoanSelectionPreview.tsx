@@ -31,60 +31,82 @@ export function LoanSelectionPreview({
   const [loanDetails, setLoanDetails] = useState<any>(null);
 
   useEffect(() => {
-    if (anggotaId) {
-      const allTransaksi = getAllTransaksi();
-      const pinjamanList = allTransaksi.filter(
-        t => t.anggotaId === anggotaId && 
-            t.jenis === "Pinjam" && 
-            t.status === "Sukses"
-      );
+    const loadLoans = async () => {
+      if (anggotaId) {
+        try {
+          const allTransaksi = await getAllTransaksi();
+          const pinjamanList = allTransaksi.filter(
+            t => t.anggotaId === anggotaId && 
+                t.jenis === "Pinjam" && 
+                t.status === "Sukses"
+          );
 
-      // Filter only loans that still have remaining balance
-      const loansWithBalance = pinjamanList.filter(pinjaman => {
-        const remaining = getRemainingLoanAmount(pinjaman.id);
-        return remaining > 0;
-      });
+          // Filter only loans that still have remaining balance (properly awaited)
+          const loansWithBalance = [];
+          for (const pinjaman of pinjamanList) {
+            const remaining = await getRemainingLoanAmount(pinjaman.id);
+            if (remaining > 0) {
+              loansWithBalance.push({
+                ...pinjaman,
+                actualRemaining: remaining
+              });
+            }
+          }
 
-      setAvailableLoans(loansWithBalance);
+          setAvailableLoans(loansWithBalance);
 
-      // Auto-select first loan if available
-      if (loansWithBalance.length > 0 && !selectedLoanId) {
-        onLoanSelect(loansWithBalance[0].id);
+          // Auto-select first loan if available
+          if (loansWithBalance.length > 0 && !selectedLoanId) {
+            onLoanSelect(loansWithBalance[0].id);
+          }
+        } catch (error) {
+          console.error("Error loading available loans:", error);
+        }
       }
-    }
+    };
+    
+    loadLoans();
   }, [anggotaId, selectedLoanId, onLoanSelect]);
 
   useEffect(() => {
-    if (selectedLoanId) {
-      const selectedLoan = availableLoans.find(loan => loan.id === selectedLoanId);
-      if (selectedLoan) {
-        const remainingAmount = getRemainingLoanAmount(selectedLoanId);
-        const pengaturan = getPengaturan();
-        
-        // Get interest rate using the centralized function with proper conversion
-        const sukuBungaDecimal = getLoanInterestRate(selectedLoan.kategori || "");
-        const sukuBungaPersen = sukuBungaDecimal * 100; // Convert to percentage for display
+    const loadLoanDetails = async () => {
+      if (selectedLoanId) {
+        try {
+          const selectedLoan = availableLoans.find(loan => loan.id === selectedLoanId);
+          if (selectedLoan) {
+            const remainingAmount = await getRemainingLoanAmount(selectedLoanId);
+            const pengaturan = getPengaturan();
+            
+            // Get interest rate using the centralized function with proper conversion
+            const sukuBungaDecimal = getLoanInterestRate(selectedLoan.kategori || "");
+            const sukuBungaPersen = sukuBungaDecimal * 100; // Convert to percentage for display
 
-        // Calculate monthly interest (jasa bulanan) based on remaining principal
-        const monthlyInterest = Math.round(remainingAmount * sukuBungaDecimal);
-        
-        // Calculate suggested monthly installment (interest + some principal)
-        const suggestedPrincipal = Math.min(remainingAmount * 0.1, remainingAmount); // 10% of remaining or full amount
-        const suggestedAmount = monthlyInterest + suggestedPrincipal;
+            // Calculate monthly interest (jasa bulanan) based on remaining principal
+            const monthlyInterest = Math.round(remainingAmount * sukuBungaDecimal);
+            
+            // Calculate suggested monthly installment (interest + some principal)
+            const suggestedPrincipal = Math.min(remainingAmount * 0.1, remainingAmount); // 10% of remaining or full amount
+            const suggestedAmount = monthlyInterest + suggestedPrincipal;
 
-        setLoanDetails({
-          ...selectedLoan,
-          remainingAmount,
-          monthlyInterest,
-          suggestedAmount,
-          sukuBunga: sukuBungaPersen,
-          sukuBungaDecimal: sukuBungaDecimal,
-          jatuhTempo: calculateJatuhTempo(selectedLoan.tanggal, pengaturan?.tenor?.defaultTenor || 12)
-        });
+            setLoanDetails({
+              ...selectedLoan,
+              remainingAmount,
+              monthlyInterest,
+              suggestedAmount,
+              sukuBunga: sukuBungaPersen,
+              sukuBungaDecimal: sukuBungaDecimal,
+              jatuhTempo: calculateJatuhTempo(selectedLoan.tanggal, pengaturan?.tenor?.defaultTenor || 12)
+            });
 
-        onAmountChange(suggestedAmount);
+            onAmountChange(suggestedAmount);
+          }
+        } catch (error) {
+          console.error("Error loading loan details:", error);
+        }
       }
-    }
+    };
+    
+    loadLoanDetails();
   }, [selectedLoanId, availableLoans, onAmountChange]);
 
   if (!anggotaId) {
