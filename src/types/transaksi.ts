@@ -27,6 +27,12 @@ export interface Transaksi {
   lastSyncError?: string;
 }
 
+export interface SubmissionResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 export interface Pengajuan {
   id: string;
   anggotaId: string;

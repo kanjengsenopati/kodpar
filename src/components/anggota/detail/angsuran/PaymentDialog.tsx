@@ -66,7 +66,7 @@ export function PaymentDialog({
       const keteranganPinjaman = `Angsuran ke-${currentAngsuran.nomorAngsuran} untuk pinjaman #${selectedPinjaman} ${allocationInfo}`;
       
       // Create angsuran transaction with enhanced allocation info
-      const angsuranTransaksi = createTransaksi({
+      const angsuranResult = await createTransaksi({
         tanggal: new Date().toISOString().split('T')[0],
         anggotaId: pinjaman.anggotaId,
         jenis: "Angsuran",
@@ -76,7 +76,7 @@ export function PaymentDialog({
       });
 
       // Create simpanan withdraw transaction
-      const simpananTransaksi = createTransaksi({
+      const simpananResult = await createTransaksi({
         tanggal: new Date().toISOString().split('T')[0],
         anggotaId: pinjaman.anggotaId,
         jenis: "Simpan",
@@ -85,14 +85,15 @@ export function PaymentDialog({
         status: "Sukses"
       });
 
-      if (angsuranTransaksi && simpananTransaksi) {
+      if (angsuranResult.success && simpananResult.success) {
         toast({
           title: "Pembayaran Berhasil & Auto-Sync ke Akuntansi",
           description: `Angsuran berhasil dibayarkan. Auto-Split: Jasa ${formatCurrency(allocation.nominalJasa)} → Pendapatan Jasa, Pokok ${formatCurrency(allocation.nominalPokok)} → Modal Koperasi`,
         });
         onPaymentComplete();
       } else {
-        throw new Error("Gagal menyimpan transaksi");
+        const errorMsg = [angsuranResult.error, simpananResult.error].filter(Boolean).join(" | ");
+        throw new Error(errorMsg || "Gagal menyimpan transaksi pembayaran");
       }
 
     } catch (error) {

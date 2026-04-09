@@ -125,7 +125,7 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
     setIsSubmitting(true);
 
     try {
-      const newTransaksi = createTransaksi({
+      const result = await createTransaksi({
         tanggal: formData.tanggal,
         anggotaId: formData.anggotaId,
         jenis: "Penarikan",
@@ -135,20 +135,20 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
         status: "Sukses"
       });
 
-      if (newTransaksi) {
+      if (result.success && result.data) {
         toast({
           title: "Penarikan Berhasil Diproses",
           description: `Penarikan ${formData.kategori} sebesar ${formatCurrency(jumlahPenarikan)} telah berhasil diproses`,
         });
         onSuccess();
       } else {
-        throw new Error("Failed to create penarikan");
+        throw new Error(result.error || "Gagal membuat transaksi penarikan");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating penarikan:", error);
       toast({
         title: "Gagal Memproses Penarikan",
-        description: "Terjadi kesalahan saat memproses penarikan. Silakan periksa kembali data yang dimasukkan.",
+        description: error.message || "Terjadi kesalahan saat memproses penarikan.",
         variant: "destructive"
       });
     } finally {

@@ -74,17 +74,18 @@ export function SimpananForm({ anggotaList, initialData, onSuccess }: SimpananFo
         
         onSuccess();
       } else {
+        console.error("Submission failed:", result.error);
         toast({
-          title: "Terjadi kesalahan",
-          description: result.error || "Gagal menyimpan data simpanan",
+          title: "Gagal Menyimpan Simpanan",
+          description: result.error || "Terjadi kesalahan pada server/database.",
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving simpanan:", error);
       toast({
-        title: "Terjadi kesalahan",
-        description: "Gagal menyimpan data simpanan",
+        title: "Kesalahan Sistem",
+        description: error.message || "Gagal menghubungi database koperasi.",
         variant: "destructive"
       });
     } finally {

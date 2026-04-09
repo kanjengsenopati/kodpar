@@ -94,16 +94,15 @@ export async function createSimpananJournalEntry(transaksi: Transaksi): Promise<
       details
     });
 
-    if (result) {
-      console.log(`✅ Simpanan journal entry created successfully: ${result.nomorJurnal}`);
+    if (result.success && result.data) {
+      console.log(`✅ Simpanan journal entry created successfully: ${result.data.nomorJurnal}`);
+      return result.data;
     } else {
-      console.error(`❌ Failed to create journal entry for Simpanan ${transaksi.id}`);
+      console.error(`❌ Failed to create journal entry for Simpanan ${transaksi.id}: ${result.error}`);
+      return null;
     }
-
-    return result;
   } catch (error) {
     console.error("Error in createSimpananJournalEntry:", error);
-    // Provide a more descriptive error object instead of just null if possible
     return null;
   }
 }

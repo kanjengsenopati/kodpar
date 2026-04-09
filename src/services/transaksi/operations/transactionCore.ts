@@ -1,5 +1,4 @@
-
-import { Transaksi } from "@/types";
+import { Transaksi, SubmissionResult } from "@/types";
 import { createTransaksi as createTransaksiCore } from "../transaksiCore";
 import { syncTransactionToKeuangan } from "../../sync/comprehensiveSyncService";
 import { logAuditEntry } from "../../auditService";
@@ -9,14 +8,15 @@ import { db } from "@/db/db";
 /**
  * Enhanced create transaksi with controlled accounting sync to prevent duplicates
  */
-export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<Transaksi | null> {
+export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
     // Create the transaction using core service inside a Dexie transaction for atomicity
-    const newTransaksi = await db.transaction('rw', db.transaksi, async () => {
+    const result = await db.transaction('rw', db.transaksi, async () => {
       return await createTransaksiCore(data);
     });
     
-    if (newTransaksi && newTransaksi.status === "Sukses") {
+    if (result.success && result.data && result.data.status === "Sukses") {
+      const newTransaksi = result.data;
       console.log(`✅ Transaction ${newTransaksi.id} created successfully`);
       
       // Note: Accounting sync will be handled by the calling function to prevent duplicates
@@ -46,9 +46,9 @@ export async function createTransactionWithSync(data: Partial<Transaksi>): Promi
       // Financial data updates are now managed via 'transaction-created' events.
     }
     
-    return newTransaksi;
-  } catch (error) {
+    return result;
+  } catch (error: any) {
     console.error("Error creating transaksi in sync wrapper:", error);
-    return null;
+    return { success: false, error: `Sync Wrapper Error: ${error.message || 'Kesalahan sinkronisasi transaksi'}` };
   }
 }

@@ -7,13 +7,13 @@ import { formatCurrency } from "./journalUtils";
 /**
  * Create journal entry for SHU distribution based on RAT decision
  */
-export function createSHUDistributionEntry(
+export async function createSHUDistributionEntry(
   totalSHU: number,
   jasaModal: number,
   jasaUsaha: number,
   tanggal: string,
   keterangan: string = "Pembagian SHU berdasarkan RAT"
-): JurnalEntry | null {
+): Promise<JurnalEntry | null> {
   try {
     const details: JurnalDetail[] = [
       {
@@ -58,7 +58,7 @@ export function createSHUDistributionEntry(
     const totalDebit = details.reduce((sum, detail) => sum + detail.debit, 0);
     const totalKredit = details.reduce((sum, detail) => sum + detail.kredit, 0);
 
-    return createJurnalEntry({
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal,
       deskripsi: `SAK EP SHU DISTRIBUTION - Total: ${formatCurrency(totalSHU)} | Jasa Modal: ${formatCurrency(jasaModal)} | Jasa Usaha: ${formatCurrency(jasaUsaha)}`,
@@ -69,6 +69,8 @@ export function createSHUDistributionEntry(
       totalKredit,
       details
     });
+
+    return result.success ? result.data || null : null;
   } catch (error) {
     console.error("Error creating SAK EP SHU distribution entry:", error);
     return null;

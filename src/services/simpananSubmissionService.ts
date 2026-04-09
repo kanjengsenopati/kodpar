@@ -36,11 +36,12 @@ export async function submitSimpananForm(
       if (updatedTransaksi) {
         return { success: true, data: updatedTransaksi };
       } else {
-        return { success: false, error: "Gagal memperbarui data simpanan" };
+        return { success: false, error: "Gagal memperbarui data simpanan. Pastikan data valid." };
       }
     } else {
       // Create new transaction
-      const newTransaksi = await createTransaksi({
+      // The core createTransaksi now returns SubmissionResult, which we propagate
+      const result = await createTransaksi({
         tanggal: formData.tanggal,
         anggotaId: formData.anggotaId,
         jenis: "Simpan",
@@ -50,17 +51,13 @@ export async function submitSimpananForm(
         status: "Sukses"
       });
 
-      if (newTransaksi) {
-        return { success: true, data: newTransaksi };
-      } else {
-        return { success: false, error: "Gagal menyimpan data simpanan" };
-      }
+      return result;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in submitSimpananForm:", error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : "Terjadi kesalahan tidak terduga" 
+      error: error.message || "Terjadi kesalahan tidak terduga saat mengirim form" 
     };
   }
 }

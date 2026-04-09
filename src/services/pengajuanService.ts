@@ -180,7 +180,7 @@ export async function approvePengajuan(id: string): Promise<boolean> {
       }
       
       // 3. Create the Transaction first
-      const transaction = await createTransaksi({
+      const result = await createTransaksi({
         tanggal: pengajuan.tanggal,
         anggotaId: pengajuan.anggotaId,
         jenis: pengajuan.jenis,
@@ -190,9 +190,11 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         status: "Sukses"
       });
       
-      if (!transaction) {
-        throw new Error("Gagal membuat transaksi finansial");
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Gagal membuat transaksi finansial");
       }
+      
+      const transaction = result.data;
       
       // 4. Update Application Status only after transaction is ready
       const updatedPengajuan = await updatePengajuan(id, { status: "Disetujui" });

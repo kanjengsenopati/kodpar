@@ -7,10 +7,10 @@ import { formatCurrency } from "./journalUtils";
 /**
  * Create journal entry for Pengeluaran (Expense) transactions to Biaya Operasional
  */
-export function createPengeluaranJournalEntry(
+export async function createPengeluaranJournalEntry(
   pengeluaran: any,
   referensi: string = ""
-): JurnalEntry | null {
+): Promise<JurnalEntry | null> {
   try {
     const details: JurnalDetail[] = [
       {
@@ -34,7 +34,7 @@ export function createPengeluaranJournalEntry(
     const totalDebit = details.reduce((sum, detail) => sum + detail.debit, 0);
     const totalKredit = details.reduce((sum, detail) => sum + detail.kredit, 0);
 
-    return createJurnalEntry({
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: pengeluaran.tanggal,
       deskripsi: `PENGELUARAN TO BIAYA OPERASIONAL - ${pengeluaran.kategori} | ${formatCurrency(pengeluaran.jumlah)}`,
@@ -45,6 +45,8 @@ export function createPengeluaranJournalEntry(
       totalKredit,
       details
     });
+
+    return result.success ? result.data || null : null;
   } catch (error) {
     console.error("Error creating pengeluaran journal entry:", error);
     return null;

@@ -109,7 +109,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
 
       if (initialData) {
         // Update existing transaction
-        const updatedTransaksi = await updateTransaksi(initialData.id, {
+        const result = await updateTransaksi(initialData.id, {
           tanggal: formData.tanggal,
           anggotaId: formData.anggotaId,
           jenis: "Angsuran",
@@ -118,18 +118,18 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           status: initialData.status
         });
 
-        if (updatedTransaksi) {
+        if (result.success && result.data) {
           toast({
             title: "Angsuran berhasil diupdate",
-            description: `Transaksi dengan ID ${updatedTransaksi.id} telah diperbarui dan disinkronkan ke akuntansi`,
+            description: `Transaksi dengan ID ${result.data.id} telah diperbarui dan disinkronkan ke akuntansi`,
           });
           onSuccess();
         } else {
-          throw new Error("Gagal mengupdate transaksi");
+          throw new Error(result.error || "Gagal mengupdate transaksi");
         }
       } else {
         // Create new transaction
-        const newTransaksi = await createTransaksi({
+        const result = await createTransaksi({
           tanggal: formData.tanggal,
           anggotaId: formData.anggotaId,
           jenis: "Angsuran",
@@ -138,10 +138,10 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           status: "Sukses"
         });
 
-        if (newTransaksi) {
+        if (result.success && result.data) {
           toast({
             title: "Angsuran berhasil disimpan",
-            description: `Transaksi dengan ID ${newTransaksi.id} telah dibuat dan disinkronkan ke akuntansi`,
+            description: `Transaksi dengan ID ${result.data.id} telah dibuat dan disinkronkan ke akuntansi`,
           });
           
           // Auto-reset form for next entry (Stay on page)
@@ -154,7 +154,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           
           if (onSuccess) onSuccess();
         } else {
-          throw new Error("Gagal membuat transaksi");
+          throw new Error(result.error || "Gagal membuat transaksi");
         }
       }
     } catch (error) {

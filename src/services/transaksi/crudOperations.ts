@@ -1,4 +1,4 @@
-import { Transaksi } from "@/types";
+import { Transaksi, SubmissionResult } from "@/types";
 import { getAnggotaById } from "../anggotaService";
 // refreshFinancialCalculations removed (Decommissioned Legacy Logic)
 import { logAuditEntry } from "../auditService";
@@ -27,42 +27,42 @@ import { db } from "@/db/db";
 /**
  * Enhanced create transaksi dengan centralized sync untuk mencegah duplikasi
  */
-export async function createTransaksi(data: Partial<Transaksi>): Promise<Transaksi | null> {
+export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
     // Create the transaction using improved async sync wrapper
-    const newTransaksi = await createTransactionWithSync(data);
+    const result = await createTransactionWithSync(data);
     
-    if (newTransaksi && newTransaksi.status === "Sukses") {
+    if (result.success && result.data && result.data.status === "Sukses") {
       // Accounting sync is now handled solely via 'transaction-created' event listener
       // to prevent double-processing. No explicit call needed here.
       
-      handleTransactionCreateSuccess(newTransaksi);
+      handleTransactionCreateSuccess(result.data);
       
       // Process auto deductions for loan transactions AFTER centralized sync
-      if (newTransaksi.jenis === "Pinjam") {
-        await processLoanAutoDeductions(newTransaksi);
+      if (result.data.jenis === "Pinjam") {
+        await processLoanAutoDeductions(result.data);
       }
-    } else if (newTransaksi) {
-      handleTransactionPending(newTransaksi);
+    } else if (result.success && result.data) {
+      handleTransactionPending(result.data);
     }
     
-    return newTransaksi;
-  } catch (error) {
+    return result;
+  } catch (error: any) {
     console.error("Error creating transaksi in crud wrapper:", error);
-    handleTransactionError();
-    return null;
+    // Note: handleTransactionError() is usually called by the UI based on result.success
+    return { success: false, error: `Wrapper Error: ${error.message || 'Gagal memproses transaksi'}` };
   }
 }
 
 /**
  * Update an existing transaksi dengan centralized sync
  */
-export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>): Promise<Transaksi | null> {
+export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   const existing = await db.transaksi.get(id);
   
   if (!existing) {
     handleTransactionNotFound();
-    return null;
+    return { success: false, error: "Transaksi tidak ditemukan" };
   }
   
   const oldTransaksi = { ...existing };
@@ -72,7 +72,7 @@ export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>)
     const anggota = await getAnggotaById(transaksi.anggotaId);
     if (!anggota) {
       handleMemberNotFound();
-      return null;
+      return { success: false, error: "Anggota tidak ditemukan" };
     }
     transaksi.anggotaNama = anggota.nama;
   }
@@ -83,7 +83,11 @@ export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>)
     updatedAt: new Date().toISOString(),
   };
   
-  await db.transaksi.put(updatedTransaksi);
+  try {
+    await db.transaksi.put(updatedTransaksi);
+  } catch (error: any) {
+    return { success: false, error: `Database Error: ${error.message || 'Gagal memperbarui transaksi'}` };
+  }
   
   handleTransactionUpdateSuccess(updatedTransaksi);
   
@@ -120,10 +124,7 @@ export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>)
     id
   );
   
-  // Refresh financial calculations for real-time consistency
-  // Real-time consistency is now handled via centralized-sync events.
-  
-  return updatedTransaksi;
+  return { success: true, data: updatedTransaksi };
 }
 
 /**

@@ -18,7 +18,7 @@ export async function syncTransactionToAccounting(transaksi: any): Promise<Jurna
       return null;
     }
 
-    const journalEntry = await createJurnalEntry({
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `${transaksi.jenis}: ${transaksi.keterangan}`,
@@ -39,7 +39,7 @@ export async function syncTransactionToAccounting(transaksi: any): Promise<Jurna
       ]
     });
 
-    return journalEntry;
+    return result.success ? result.data || null : null;
   } catch (error) {
     console.error("Error syncing transaction to accounting:", error);
     return null;

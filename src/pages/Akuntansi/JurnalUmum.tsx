@@ -54,17 +54,22 @@ export default function JurnalUmum() {
 
   const handleCreate = async (data: any) => {
     try {
-      await createJurnalEntry({
+      const result = await createJurnalEntry({
         ...data,
         totalDebit: data.details.reduce((sum: number, detail: any) => sum + detail.debit, 0),
         totalKredit: data.details.reduce((sum: number, detail: any) => sum + detail.kredit, 0),
         status: 'DRAFT',
         createdBy: 'current_user'
       });
-      await loadJournals();
-      toast.success("Jurnal berhasil dibuat");
+
+      if (result.success) {
+        await loadJournals();
+        toast.success("Jurnal berhasil dibuat");
+      } else {
+        toast.error(result.error || "Gagal membuat jurnal");
+      }
     } catch (error) {
-      toast.error("Gagal membuat jurnal");
+      toast.error("Terjadi kesalahan sistem saat membuat jurnal");
     }
   };
 

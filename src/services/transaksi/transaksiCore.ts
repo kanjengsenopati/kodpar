@@ -1,4 +1,4 @@
-import { Transaksi } from "@/types";
+import { Transaksi, SubmissionResult } from "@/types";
 import { db } from "@/db/db";
 import { initialTransaksi } from "./initialData";
 import { generateTransaksiId } from "./idGenerator";
@@ -113,17 +113,24 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): b
 /**
  * Create a new transaksi with automatic accounting sync
  */
-export async function createTransaksi(data: Partial<Transaksi>): Promise<Transaksi | null> {
+export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
     const newId = await generateTransaksiId();
     const now = new Date().toISOString();
     
+    // VALIDATION: Ensure required fields are present
+    if (!data.anggotaId) {
+      return { success: false, error: "ID Anggota wajib diisi" };
+    }
+
     // If anggotaId is provided but anggotaNama is not, try to get anggota name
     let anggotaNama = data.anggotaNama || "";
     if (data.anggotaId && !data.anggotaNama) {
       const anggota = await getAnggotaById(data.anggotaId);
       if (anggota) {
         anggotaNama = anggota.nama;
+      } else {
+        return { success: false, error: `Anggota dengan ID ${data.anggotaId} tidak ditemukan` };
       }
     }
     
@@ -153,18 +160,17 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Transak
     // Add to database
     try {
       await db.transaksi.add(newTransaksi);
-    } catch (dbError) {
-      if (dbError instanceof Error && dbError.name === 'ConstraintError') {
+    } catch (dbError: any) {
+      if (dbError.name === 'ConstraintError') {
         console.warn(`🔄 Primary key collision for transaction ${newId}, retrying with a new ID...`);
-        const retryData = { ...data };
-        return await createTransaksi(retryData);
+        return await createTransaksi(data);
       }
-      throw dbError; // Re-throw if it's not a collision
+      return { success: false, error: `Database Error: ${dbError.message || 'Gagal menulis ke IndexedDB'}` };
     }
     
-    return newTransaksi;
-  } catch (error) {
+    return { success: true, data: newTransaksi };
+  } catch (error: any) {
     console.error("Error in core createTransaksi:", error);
-    return null;
+    return { success: false, error: `Critical Error: ${error.message || 'Kesalahan sistem saat membuat transaksi'}` };
   }
 }

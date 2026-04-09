@@ -47,7 +47,7 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
     const totalDebit = details.reduce((sum, detail) => sum + detail.debit, 0);
     const totalKredit = details.reduce((sum, detail) => sum + detail.kredit, 0);
 
-    const journalEntry = await createJurnalEntry({
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `SAK EP PINJAMAN - ${transaksi.anggotaNama} | ${transaksi.kategori || 'Reguler'}: ${formatCurrency(transaksi.jumlah)}`,
@@ -59,11 +59,13 @@ export async function createPinjamanJournalEntry(transaksi: Transaksi): Promise<
       details
     });
 
-    if (journalEntry) {
-      console.log(`✅ Pinjaman journal entry created: ${journalEntry.nomorJurnal} for transaction ${transaksi.id}`);
+    if (result.success && result.data) {
+      console.log(`✅ Pinjaman journal entry created: ${result.data.nomorJurnal} for transaction ${transaksi.id}`);
+      return result.data;
+    } else {
+      console.error(`❌ Failed to create journal entry for Pinjaman ${transaksi.id}: ${result.error}`);
+      return null;
     }
-
-    return journalEntry;
   } catch (error) {
     console.error("Error creating SAK EP pinjaman journal entry:", error);
     return null;

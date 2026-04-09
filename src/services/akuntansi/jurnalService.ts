@@ -58,40 +58,61 @@ export async function generateJurnalNumber(): Promise<string> {
 /**
  * Create new journal entry with duplicate prevention and auto-posting
  */
-export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "createdAt" | "updatedAt">): Promise<JurnalEntry> {
-  // Check for existing entry with same reference to prevent duplicates
-  if (entry.referensi) {
-    const existingEntry = await getJurnalEntryByReference(entry.referensi);
-    if (existingEntry) {
-      console.log(`⚠️ Journal entry already exists for reference ${entry.referensi}, returning existing entry`);
-      return existingEntry;
+export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "createdAt" | "updatedAt">): Promise<SubmissionResult<JurnalEntry>> {
+  try {
+    // 1. DATA INTEGRITY AUDIT: Ensure debit/kredit is balanced
+    const validationErrors = validateJurnalEntry(entry);
+    if (validationErrors.length > 0) {
+      return { success: false, error: `Integrity Audit Failed: ${validationErrors.join(", ")}` };
     }
+
+    // 2. Check for existing entry with same reference to prevent duplicates
+    if (entry.referensi) {
+      const existingEntry = await getJurnalEntryByReference(entry.referensi);
+      if (existingEntry) {
+        console.log(`⚠️ Journal entry already exists for reference ${entry.referensi}, returning existing entry`);
+        return { success: true, data: existingEntry };
+      }
+    }
+    
+    const nomorJurnal = entry.nomorJurnal || await generateJurnalNumber();
+    
+    const newEntry: JurnalEntry = {
+      ...entry,
+      // Add random suffix to timestamp ID to prevent millisecond collisions in batch runs
+      id: `je-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      nomorJurnal,
+      status: 'POSTED', // Auto-post journal entries for immediate sync
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // 3. Commit to database
+    try {
+      await db.jurnal.add(newEntry);
+    } catch (dbError: any) {
+      if (dbError.name === 'ConstraintError') {
+        const jitter = Math.floor(Math.random() * 30) + 10;
+        await new Promise(resolve => setTimeout(resolve, jitter));
+        return await createJurnalEntry(entry);
+      }
+      return { success: false, error: `Jurnal DB Error: ${dbError.message || 'Gagal menyimpan jurnal'}` };
+    }
+    
+    console.log(`✅ Journal entry created and auto-posted: ${newEntry.nomorJurnal}`);
+    
+    // Trigger sync events for Buku Besar and Reports
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('journal-entry-posted', {
+        detail: { journalEntry: newEntry }
+      }));
+    }, 100);
+    
+    return { success: true, data: newEntry };
+  } catch (error: any) {
+    console.error("Critical error in createJurnalEntry:", error);
+    return { success: false, error: `Jurnal System Error: ${error.message || 'Kesalahan internal'}` };
   }
-  
-  const nomorJurnal = entry.nomorJurnal || await generateJurnalNumber();
-  
-  const newEntry: JurnalEntry = {
-    ...entry,
-    // Add random suffix to timestamp ID to prevent millisecond collisions in batch runs
-    id: `je-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    nomorJurnal,
-    status: 'POSTED', // Auto-post journal entries for immediate sync
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  await db.jurnal.add(newEntry);
-  
-  console.log(`✅ Journal entry created and auto-posted: ${newEntry.nomorJurnal}`);
-  
-  // Trigger sync events for Buku Besar and Reports
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('journal-entry-posted', {
-      detail: { journalEntry: newEntry }
-    }));
-  }, 100);
-  
-  return newEntry;
 }
 
 /**

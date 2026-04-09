@@ -57,7 +57,7 @@ export async function createAngsuranJournalEntry(
     const pokokPercentage = transaksi.jumlah > 0 ? ((allocation.nominalPokok / transaksi.jumlah) * 100).toFixed(1) : '0';
     const jasaPercentage = transaksi.jumlah > 0 ? ((allocation.nominalJasa / transaksi.jumlah) * 100).toFixed(1) : '0';
 
-    return await createJurnalEntry({
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `SAK EP ANGSURAN + KEUANGAN SYNC - ${transaksi.anggotaNama} | Pokok: ${pokokPercentage}% (${formatCurrency(allocation.nominalPokok)}) | Jasa: ${jasaPercentage}% (${formatCurrency(allocation.nominalJasa)}) | Rate: ${allocation.sukuBungaPersen.toFixed(2)}%`,
@@ -68,6 +68,13 @@ export async function createAngsuranJournalEntry(
       totalKredit,
       details
     });
+
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      console.error(`❌ Failed to create journal entry for Angsuran ${transaksi.id}: ${result.error}`);
+      return null;
+    }
   } catch (error) {
     console.error("Error creating SAK EP angsuran journal entry:", error);
     return null;

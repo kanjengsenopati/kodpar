@@ -8,7 +8,7 @@ import { formatCurrency } from "./journalUtils";
 /**
  * Create journal entry for Penarikan transaction following SAK EP
  */
-export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry | null {
+export async function createPenarikanJournalEntry(transaksi: Transaksi): Promise<JurnalEntry | null> {
   try {
     // For withdrawal, we need to determine if it's from savings equity or liability
     // Default to liability (simpanan sukarela) unless specified
@@ -34,7 +34,7 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
     const totalDebit = details.reduce((sum, detail) => sum + detail.debit, 0);
     const totalKredit = details.reduce((sum, detail) => sum + detail.kredit, 0);
 
-    return createJurnalEntry({
+    const result = await createJurnalEntry({
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `SAK EP PENARIKAN - ${transaksi.anggotaNama} | ${formatCurrency(Math.abs(transaksi.jumlah))}`,
@@ -45,6 +45,8 @@ export function createPenarikanJournalEntry(transaksi: Transaksi): JurnalEntry |
       totalKredit,
       details
     });
+
+    return result.success ? result.data || null : null;
   } catch (error) {
     console.error("Error creating SAK EP penarikan journal entry:", error);
     return null;

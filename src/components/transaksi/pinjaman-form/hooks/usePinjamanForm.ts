@@ -147,31 +147,31 @@ export const usePinjamanForm = ({ initialData, onSuccess }: UsePinjamanFormProps
         status: "Sukses" as const,
       };
       
-      let result;
+      let result: SubmissionResult<Transaksi>;
       
       if (isEditMode && initialData?.id) {
         // Update existing transaction
-        result = updateTransaksi(initialData.id, transaksiData);
+        result = await updateTransaksi(initialData.id, transaksiData);
         
-        if (result) {
+        if (result.success && result.data) {
           toast({
             title: "Pinjaman berhasil diperbarui",
-            description: `Pinjaman dengan ID ${result.id} telah diperbarui.`,
+            description: `Pinjaman dengan ID ${result.data.id} telah diperbarui.`,
           });
         }
       } else {
         // Create new transaction
-        result = createTransaksi(transaksiData);
+        result = await createTransaksi(transaksiData);
         
-        if (result) {
+        if (result.success && result.data) {
           toast({
             title: "Pinjaman berhasil disimpan",
-            description: `Pinjaman baru dengan ID ${result.id} telah dibuat.`,
+            description: `Pinjaman baru dengan ID ${result.data.id} telah dibuat.`,
           });
         }
       }
       
-      if (result) {
+      if (result.success) {
         // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess();
@@ -179,7 +179,7 @@ export const usePinjamanForm = ({ initialData, onSuccess }: UsePinjamanFormProps
           navigate("/transaksi/pinjam");
         }
       } else {
-        throw new Error("Gagal menyimpan pinjaman");
+        throw new Error(result.error || "Gagal menyimpan pinjaman");
       }
       
     } catch (error) {
