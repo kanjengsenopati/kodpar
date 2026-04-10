@@ -134,6 +134,39 @@ export async function seedDemoData(): Promise<void> {
 
     if (pengajuan) {
       await approvePengajuan(pengajuan.id);
+      
+      // Allow IndexedDB transaction to commit before query
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const { getActiveLoansByAnggotaId } = await import("./transaksiService");
+      const activeLoans = await getActiveLoansByAnggotaId(anggota.id);
+      
+      if (activeLoans && activeLoans.length > 0) {
+        // Grab the most recently created loan
+        const pinjaman = activeLoans[activeLoans.length - 1];
+        
+        const { calculateLoanDetails } = await import("../utils/loanCalculations");
+        const details = calculateLoanDetails(pinjaman.kategori || "Pinjaman Reguler", pinjaman.jumlah, pinjaman.tenor || 12);
+        
+        // 3. Seed exactly 1 Angsuran (Installment) Payment
+        // Set date to 1 month AFTER loan approval date
+        const angsuranDate = new Date(today);
+        angsuranDate.setMonth(angsuranDate.getMonth() + 1);
+        
+        await createTransaksi({
+          anggotaId: anggota.id,
+          anggotaNama: anggota.nama,
+          jenis: "Angsuran",
+          kategori: "Pinjaman Reguler",
+          jumlah: details.angsuranPerBulan,
+          tanggal: formatDate(angsuranDate),
+          keterangan: `Angsuran ke-1 Pinjaman Reguler (Seed)`,
+          status: "Sukses",
+          referensiPinjamanId: pinjaman.id,
+          nominalPokok: details.nominalPokok / (pinjaman.tenor || 12),
+          nominalJasa: details.nominalJasa // nominalJasa calculation is natively per month
+        });
+      }
     }
   }
 
