@@ -25,17 +25,17 @@ export class KoperasiDB extends Dexie {
     // v3: Pure DB Driven Schema with structured financial fields
     this.version(3).stores({
       anggota: '++id, nama, nip, noHp, status, unitKerja',
-      transaksi: 'id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
+      transaksi: '++id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
       coa: '++id, kode, nama, jenis, kategori',
-      jurnal: 'id, nomorJurnal, tanggal, status, referensi',
+      jurnal: '++id, nomorJurnal, tanggal, status, referensi',
       pengajuan: '++id, anggotaId, jenis, status, tanggal, loanId'
     });
     // v4: Persistent Installment Schedule
     this.version(4).stores({
       anggota: '++id, nama, nip, noHp, status, unitKerja',
-      transaksi: 'id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
+      transaksi: '++id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
       coa: '++id, kode, nama, jenis, kategori',
-      jurnal: 'id, nomorJurnal, tanggal, status, referensi',
+      jurnal: '++id, nomorJurnal, tanggal, status, referensi',
       pengajuan: '++id, anggotaId, jenis, status, tanggal, loanId',
       jadwal_angsuran: '++id, loanId, anggotaId, status, tanggalJatuhTempo'
     });
