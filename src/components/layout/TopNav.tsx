@@ -30,15 +30,6 @@ import {
   Search
 } from 'lucide-react';
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -147,36 +138,42 @@ export function TopNav() {
           </div>
         </div>
 
-        {/* Navigation Menu */}
-        <NavigationMenu className="hidden md:flex flex-1 max-w-none justify-start px-2">
-          <NavigationMenuList className="gap-0.5">
-            {menuGroups.map((group) => (
-              <NavigationMenuItem key={group.title}>
-                <NavigationMenuTrigger className="px-2.5 h-9 bg-transparent hover:bg-slate-50 data-[state=open]:bg-slate-50 text-[13px] font-semibold text-slate-700">
-                  <div className="flex items-center gap-1.5">
-                    <group.icon className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{group.title}</span>
-                  </div>
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="flex flex-col w-[260px] gap-0 p-1 bg-white shadow-2xl border border-slate-200 rounded-xl">
-                    {group.items.map((item) => (
-                      <ListItem
-                        key={item.title}
-                        title={item.title}
-                        onClick={() => navigate(item.path)}
-                        className="cursor-pointer"
-                        icon={<item.icon size={14} />}
-                      >
+        {/* Navigation Actions */}
+        <div className="hidden md:flex flex-1 max-w-none justify-start px-2 gap-1">
+          {menuGroups.map((group) => (
+            <DropdownMenu key={group.title}>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="px-2.5 h-9 bg-transparent hover:bg-slate-50 data-[state=open]:bg-slate-50 text-[13px] font-semibold text-slate-700 flex items-center gap-1.5 focus-visible:ring-0"
+                >
+                  <group.icon className="h-3.5 w-3.5 text-slate-400" />
+                  <span>{group.title}</span>
+                  <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[260px] p-1 bg-white shadow-2xl border border-slate-200 rounded-xl mt-1">
+                <div className="flex flex-col gap-0">
+                  {group.items.map((item) => (
+                    <div
+                      key={item.title}
+                      onClick={() => navigate(item.path)}
+                      className="group block select-none space-y-0.5 rounded-lg px-2.5 py-1.5 leading-none no-underline outline-none transition-colors hover:bg-slate-50 cursor-pointer text-left"
+                    >
+                      <div className="flex items-center gap-2 text-[13px] font-semibold leading-tight text-slate-900">
+                        <item.icon size={14} className="text-blue-600/70 opacity-70" />
+                        {item.title}
+                      </div>
+                      <p className="line-clamp-1 text-[10px] leading-tight text-slate-400 mb-0.5">
                         {item.description}
-                      </ListItem>
-                    ))}
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ))}
+        </div>
 
         {/* Action Section */}
         <div className="flex items-center gap-2">
@@ -230,32 +227,3 @@ export function TopNav() {
     </div>
   );
 }
-
-const ListItem = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div"> & { title: string; icon?: React.ReactNode }
->(({ className, title, children, icon, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <div
-          ref={ref}
-          className={cn(
-            "block select-none space-y-0.5 rounded-lg px-2.5 py-1.5 leading-none no-underline outline-none transition-colors hover:bg-slate-50 hover:text-accent-foreground focus:bg-slate-50 focus:text-accent-foreground text-left",
-            className
-          )}
-          {...props}
-        >
-          <div className="flex items-center gap-2 text-[13px] font-semibold leading-tight text-slate-900">
-            {icon && <span className="text-blue-600/70">{icon}</span>}
-            {title}
-          </div>
-          <p className="line-clamp-1 text-[10px] leading-tight text-slate-400 mb-0.5">
-            {children}
-          </p>
-        </div>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = "ListItem";
