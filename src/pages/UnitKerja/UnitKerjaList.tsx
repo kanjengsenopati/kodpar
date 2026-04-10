@@ -159,24 +159,26 @@ export default function UnitKerjaList() {
   }
 
   return (
-    <Layout pageTitle="Unit Kerja">
-      <div className="space-y-6">
-        <div className="flex justify-end items-center mb-6">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSyncWithAnggota} disabled={isLoading} size="sm" className="rounded-full shadow-sm">
-              <Database className="h-4 w-4 mr-2" />
-              Sinkronisasi
-            </Button>
-            <Button onClick={refreshUnitKerja} variant="outline" disabled={isLoading} size="sm" className="rounded-full shadow-sm">
-              <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button onClick={handleOpenAdd} size="sm" className="rounded-full shadow-md bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Unit Kerja
-            </Button>
-          </div>
+    <Layout 
+      pageTitle="Unit Kerja"
+      actions={
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSyncWithAnggota} disabled={isLoading} size="sm" className="rounded-full shadow-sm">
+            <Database className="h-4 w-4 mr-2" />
+            Sinkronisasi
+          </Button>
+          <Button onClick={refreshUnitKerja} variant="outline" disabled={isLoading} size="sm" className="rounded-full shadow-sm">
+            <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={handleOpenAdd} size="sm" className="rounded-full shadow-md bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Unit Kerja
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-6">
 
         {/* Search and View Toggle */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

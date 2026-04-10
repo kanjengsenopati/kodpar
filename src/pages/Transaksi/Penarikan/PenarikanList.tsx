@@ -114,15 +114,16 @@ export default function PenarikanList() {
   });
   
   return (
-    <Layout pageTitle="Daftar Penarikan">
-      <div className="flex justify-end items-center mb-6">
-        <Button asChild className="gap-2">
+    <Layout 
+      pageTitle="Daftar Penarikan"
+      actions={
+        <Button asChild className="gap-2 rounded-full shadow-md">
           <Link to="/transaksi/penarikan/tambah">
             <Plus size={16} /> Tambah Penarikan
           </Link>
         </Button>
-      </div>
-      
+      }
+    >
       <Card>
         <CardContent className="p-0">
           <div className="p-6 border-b flex flex-wrap gap-4 items-end">

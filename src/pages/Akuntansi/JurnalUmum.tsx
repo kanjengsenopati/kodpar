@@ -161,14 +161,15 @@ export default function JurnalUmum() {
   const keuanganSyncedCount = journals.filter(j => j.referensi?.includes('KEUANGAN-')).length;
 
   return (
-    <Layout pageTitle="Jurnal Umum">
+    <Layout 
+      pageTitle="Jurnal Umum"
+      actions={
+        <Button onClick={() => setIsFormOpen(true)} className="rounded-full shadow-md">
+          <Plus className="h-4 w-4 mr-2" /> Buat Jurnal Baru
+        </Button>
+      }
+    >
       <div className="space-y-6">
-        <div className="flex justify-end items-center mb-6">
-          <Button onClick={() => setIsFormOpen(true)} className="rounded-full shadow-md">
-            <Plus className="h-4 w-4 mr-2" /> Buat Jurnal Baru
-          </Button>
-        </div>
-
         {/* Enhanced Auto-Sync Status Card */}
         {(autoSyncedCount > 0 || keuanganSyncedCount > 0) && (
           <Card className="border-none bg-emerald-50/30 rounded-[24px]">

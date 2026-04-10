@@ -84,13 +84,14 @@ export default function WorkOrderList() {
   };
 
   return (
-    <Layout pageTitle="Work Orders">
-      <div className="flex justify-end items-center mb-6">
+    <Layout 
+      pageTitle="Work Orders"
+      actions={
         <Button onClick={() => navigate("/manufaktur/work-orders/tambah")} className="rounded-full shadow-md">
           <Plus className="h-4 w-4 mr-2" /> Buat Work Order
         </Button>
-      </div>
-
+      }
+    >
       <Card className="overflow-hidden">
         <div className="p-6 border-b flex flex-wrap gap-4 items-center justify-between bg-slate-50/10">
           <div className="flex items-center gap-4 flex-1">

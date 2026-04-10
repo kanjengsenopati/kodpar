@@ -74,23 +74,25 @@ export default function TransaksiList() {
     .slice(0, 5);
   
   return (
-    <Layout pageTitle="Daftar Transaksi">
-      <div className="flex justify-end items-center mb-6">
+    <Layout 
+      pageTitle="Daftar Transaksi"
+      actions={
         <div className="flex gap-2">
-          <Button onClick={() => navigate("/transaksi/pengajuan/tambah")}>
+          <Button onClick={() => navigate("/transaksi/pengajuan/tambah")} className="rounded-full shadow-md text-xs sm:text-sm h-9 px-3">
             Tambah Pengajuan
           </Button>
-          <Button onClick={() => navigate("/transaksi/simpan/tambah")}>
+          <Button onClick={() => navigate("/transaksi/simpan/tambah")} className="rounded-full shadow-md text-xs sm:text-sm h-9 px-3">
             Tambah Simpanan
           </Button>
-          <Button onClick={() => navigate("/transaksi/pinjam/tambah")}>
+          <Button onClick={() => navigate("/transaksi/pinjam/tambah")} className="rounded-full shadow-md text-xs sm:text-sm h-9 px-3">
             Tambah Pinjaman
           </Button>
-          <Button onClick={() => navigate("/transaksi/angsuran/tambah")}>
+          <Button onClick={() => navigate("/transaksi/angsuran/tambah")} className="rounded-full shadow-md text-xs sm:text-sm h-9 px-3">
             Tambah Angsuran
           </Button>
         </div>
-      </div>
+      }
+    >
 
       <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">

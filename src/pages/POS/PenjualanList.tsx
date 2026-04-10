@@ -77,15 +77,16 @@ export default function PenjualanList() {
   });
   
   return (
-    <Layout pageTitle="Daftar Transaksi Penjualan">
-      <div className="flex justify-end items-center mb-6">
+    <Layout 
+      pageTitle="Daftar Transaksi Penjualan"
+      actions={
         <Link to="/pos/penjualan">
           <Button className="gap-2 rounded-full shadow-md">
             <Plus size={16} /> Transaksi Baru
           </Button>
         </Link>
-      </div>
-      
+      }
+    >
       <Card>
         <CardContent className="p-0">
           <PenjualanSearchFilter

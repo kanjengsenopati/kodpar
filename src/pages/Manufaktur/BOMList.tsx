@@ -66,12 +66,14 @@ export default function BOMList() {
   };
 
   return (
-    <Layout pageTitle="Bill of Materials">
-      <div className="flex justify-end items-center mb-6">
+    <Layout 
+      pageTitle="Bill of Materials"
+      actions={
         <Button onClick={() => navigate("/manufaktur/bom/tambah")} className="rounded-full shadow-md">
           <Plus className="h-4 w-4 mr-2" /> Tambah BOM
         </Button>
-      </div>
+      }
+    >
 
       <Card className="overflow-hidden">
         <div className="p-6 border-b flex items-center justify-between bg-slate-50/10">
