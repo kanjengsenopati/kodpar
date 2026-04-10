@@ -1,7 +1,7 @@
 
 import { ProdukItem } from "@/types";
 import { formatRupiah } from "@/lib/utils";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Plus } from "lucide-react";
 import { Text } from "@/components/ui/text";
 
 interface ProductCardProps {
