@@ -143,9 +143,6 @@ export default function KuitansiPembayaran() {
     <Layout pageTitle="Kuitansi Pembayaran">
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight">Kuitansi Pembayaran</h2>
-          </div>
           
           <Card>
             <CardHeader>

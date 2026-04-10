@@ -470,9 +470,14 @@ export function AppRoutes() {
           <KategoriBarang />
         </AuthGuard>
       } />
-      <Route path="/pos/kasir" element={
+      <Route path="/pos/manajemen-kasir" element={
         <AuthGuard>
           <NamaKasir />
+        </AuthGuard>
+      } />
+      <Route path="/pos/kasir" element={
+        <AuthGuard>
+          <PenjualanKasir />
         </AuthGuard>
       } />
       <Route path="/pos/kuitansi" element={

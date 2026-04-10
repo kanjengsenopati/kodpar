@@ -68,7 +68,32 @@ export default function InventoryList() {
   const formatCurrency = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
 
   return (
-    <Layout pageTitle="Inventory Manufaktur">
+    <Layout 
+      pageTitle="Inventory Manufaktur"
+      actions={
+        <Dialog open={showAdd} onOpenChange={setShowAdd}>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Tambah Material</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Tambah Material Baru</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Kode Material</Label><Input value={newItem.materialCode} onChange={e => setNewItem({...newItem, materialCode: e.target.value})} placeholder="MAT-xxx" /></div>
+              <div><Label>Nama Material</Label><Input value={newItem.materialName} onChange={e => setNewItem({...newItem, materialName: e.target.value})} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Kategori</Label><Select value={newItem.category} onValueChange={v => setNewItem({...newItem, category: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{INVENTORY_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>Satuan</Label><Select value={newItem.unit} onValueChange={v => setNewItem({...newItem, unit: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MATERIAL_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent></Select></div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Stok Awal</Label><Input type="number" value={newItem.currentStock} onChange={e => setNewItem({...newItem, currentStock: Number(e.target.value)})} /></div>
+                <div><Label>Min. Stok</Label><Input type="number" value={newItem.minimumStock} onChange={e => setNewItem({...newItem, minimumStock: Number(e.target.value)})} /></div>
+                <div><Label>Harga/Unit</Label><Input type="number" value={newItem.unitCost} onChange={e => setNewItem({...newItem, unitCost: Number(e.target.value)})} /></div>
+              </div>
+              <div><Label>Lokasi</Label><Input value={newItem.location} onChange={e => setNewItem({...newItem, location: e.target.value})} placeholder="Gudang A" /></div>
+              <Button className="w-full" onClick={handleAddItem}>Simpan</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      }
+    >
       <div className="space-y-4">
         {/* Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -96,8 +121,8 @@ export default function InventoryList() {
         )}
 
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-between">
-          <div className="flex gap-2 flex-1">
+        <div className="mb-4">
+          <div className="flex gap-2">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Cari material..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
@@ -107,27 +132,6 @@ export default function InventoryList() {
               <SelectContent><SelectItem value="all">Semua</SelectItem>{INVENTORY_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <Dialog open={showAdd} onOpenChange={setShowAdd}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Tambah Material</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Tambah Material Baru</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div><Label>Kode Material</Label><Input value={newItem.materialCode} onChange={e => setNewItem({...newItem, materialCode: e.target.value})} placeholder="MAT-xxx" /></div>
-                <div><Label>Nama Material</Label><Input value={newItem.materialName} onChange={e => setNewItem({...newItem, materialName: e.target.value})} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Kategori</Label><Select value={newItem.category} onValueChange={v => setNewItem({...newItem, category: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{INVENTORY_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-                  <div><Label>Satuan</Label><Select value={newItem.unit} onValueChange={v => setNewItem({...newItem, unit: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MATERIAL_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent></Select></div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div><Label>Stok Awal</Label><Input type="number" value={newItem.currentStock} onChange={e => setNewItem({...newItem, currentStock: Number(e.target.value)})} /></div>
-                  <div><Label>Min. Stok</Label><Input type="number" value={newItem.minimumStock} onChange={e => setNewItem({...newItem, minimumStock: Number(e.target.value)})} /></div>
-                  <div><Label>Harga/Unit</Label><Input type="number" value={newItem.unitCost} onChange={e => setNewItem({...newItem, unitCost: Number(e.target.value)})} /></div>
-                </div>
-                <div><Label>Lokasi</Label><Input value={newItem.location} onChange={e => setNewItem({...newItem, location: e.target.value})} placeholder="Gudang A" /></div>
-                <Button className="w-full" onClick={handleAddItem}>Simpan</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Table */}

@@ -43,10 +43,17 @@ export default function QualityControlList() {
   };
 
   return (
-    <Layout pageTitle="Quality Control">
+    <Layout 
+      pageTitle="Quality Control"
+      actions={
+        <Button onClick={() => navigate('/manufaktur/quality-control/tambah')}>
+          <Plus className="h-4 w-4 mr-1" /> Buat Inspeksi
+        </Button>
+      }
+    >
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-3 justify-between">
-          <div className="flex gap-2 flex-1">
+        <div className="mb-4">
+          <div className="flex gap-2">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Cari inspeksi..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
@@ -59,9 +66,6 @@ export default function QualityControlList() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={() => navigate('/manufaktur/quality-control/tambah')}>
-            <Plus className="h-4 w-4 mr-1" /> Buat Inspeksi
-          </Button>
         </div>
 
         <Card>

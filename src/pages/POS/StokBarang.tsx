@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import Layout from "@/components/layout/Layout";
 import { useInventory } from "@/hooks/useInventory";
 import { ProdukItem } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 // Import the components
 import { InventoryView } from "@/components/inventory/InventoryView";
@@ -30,13 +32,11 @@ export default function StokBarang() {
     isStockDialogOpen,
     isDeleteDialogOpen,
     setViewMode,
-    setSelectedProductId,
     setIsStockDialogOpen,
     setIsDeleteDialogOpen,
     handleViewProduct,
     handleEditProduct,
-    handleDeleteProduct,
-    handleShowStockDialog
+    handleDeleteProduct
   } = useInventoryUI(products);
 
   // Handle form submission
@@ -70,7 +70,6 @@ export default function StokBarang() {
     }
   };
 
-  // Render functions based on view mode
   const renderContent = () => {
     switch (viewMode) {
       case "list":
@@ -83,14 +82,14 @@ export default function StokBarang() {
             onAddItem={() => setViewMode("add")}
           />
         );
-        
+      
       case "details":
         return selectedProduct ? (
           <ProductDetails
             product={selectedProduct}
             onEdit={() => setViewMode("edit")}
             onBack={() => setViewMode("list")}
-            onAdjustStock={handleShowStockDialog}
+            onAdjustStock={() => setIsStockDialogOpen(true)}
           />
         ) : (
           <ProductNotFound onBack={() => setViewMode("list")} />
@@ -118,16 +117,23 @@ export default function StokBarang() {
         ) : (
           <ProductNotFound onBack={() => setViewMode("list")} />
         );
+      default:
+        return null;
     }
   };
 
   return (
-    <Layout pageTitle="Stok Barang">
+    <Layout 
+      pageTitle="Stok Barang"
+      actions={
+        viewMode === "list" ? (
+          <Button onClick={() => setViewMode("add")}>
+            <Plus className="mr-2 h-4 w-4" /> Tambah Produk
+          </Button>
+        ) : null
+      }
+    >
       <div className="grid gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Stok Barang</h2>
-        </div>
-        
         {renderContent()}
         
         {/* Dialogs */}

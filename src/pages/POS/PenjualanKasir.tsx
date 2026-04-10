@@ -38,31 +38,27 @@ export default function PenjualanKasir() {
   
   return (
     <Layout pageTitle="Penjualan Kasir">
-      <div className="bg-gray-50 p-4 -mt-6 -mx-6">
-        <div className="container mx-auto">
-          <h1 className="text-xl font-bold mb-4 text-gray-800">Penjualan Kasir</h1>
+      <div className="px-5 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Products Section */}
+          <div className="lg:col-span-2">
+            <ProductSection 
+              products={products}
+              onAddToCart={handleAddToCart}
+            />
+          </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Products Section */}
-            <div className="lg:col-span-2">
-              <ProductSection 
-                products={products}
-                onAddToCart={handleAddToCart}
-              />
-            </div>
-            
-            {/* Cart Section */}
-            <div className="lg:col-span-1">
-              <CartSection
-                items={cartItems}
-                onUpdateQuantity={handleUpdateQuantity}
-                onRemove={handleRemoveFromCart}
-                onClear={handleClearCart}
-                onCheckout={handleCheckout}
-                kasirList={getAllKasir()}
-                processing={isProcessing}
-              />
-            </div>
+          {/* Cart Section */}
+          <div className="lg:col-span-1">
+            <CartSection
+              items={cartItems}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemove={handleRemoveFromCart}
+              onClear={handleClearCart}
+              onCheckout={handleCheckout}
+              kasirList={getAllKasir()}
+              processing={isProcessing}
+            />
           </div>
         </div>
       </div>

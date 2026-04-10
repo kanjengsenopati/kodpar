@@ -1,9 +1,8 @@
-
 import React from "react";
 import { ShoppingCart } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CardHeader } from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
 interface CartHeaderProps {
   itemCount: number;
@@ -12,15 +11,19 @@ interface CartHeaderProps {
 
 export function CartHeader({ itemCount, onClear }: CartHeaderProps) {
   return (
-    <CardHeader className="border-b flex justify-between items-center bg-primary/5">
-      <div className="flex items-center gap-2">
-        <ShoppingCart className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-medium">Keranjang</h2>
-        {itemCount > 0 && (
-          <Badge variant="secondary" className="bg-primary/20 text-primary hover:bg-primary/30">
-            {itemCount} item
-          </Badge>
-        )}
+    <div className="flex items-center justify-between p-5 border-b border-slate-50 bg-white">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-2xl bg-blue-50 flex items-center justify-center">
+          <ShoppingCart className="h-5 w-5 text-blue-600" strokeWidth={2} />
+        </div>
+        <div className="flex flex-col">
+          <Text.H2 className="leading-tight">Keranjang</Text.H2>
+          {itemCount > 0 && (
+            <Text.Caption className="not-italic text-blue-600 font-bold">
+              {itemCount} item terpilih
+            </Text.Caption>
+          )}
+        </div>
       </div>
       
       {itemCount > 0 && (
@@ -28,11 +31,11 @@ export function CartHeader({ itemCount, onClear }: CartHeaderProps) {
           variant="ghost" 
           size="sm"
           onClick={onClear}
-          className="text-sm text-muted-foreground hover:text-destructive"
+          className="rounded-xl text-xs font-bold text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
         >
           Kosongkan
         </Button>
       )}
-    </CardHeader>
+    </div>
   );
 }

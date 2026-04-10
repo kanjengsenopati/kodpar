@@ -55,15 +55,20 @@ export default function Inventori() {
   };
 
   return (
-    <Layout pageTitle="Inventori">
-      <div className="grid gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Inventori</h2>
-          <Button onClick={() => window.location.href = "/pos/stok"}>
+    <Layout 
+      pageTitle="Inventori"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => window.location.href = "/pos/stok"}>
             <Package className="mr-2 h-4 w-4" /> Kelola Stok
           </Button>
+          <Button onClick={() => window.location.href = "/pos/stok?action=add"}>
+            <Plus className="mr-2 h-4 w-4" /> Tambah Produk
+          </Button>
         </div>
-        
+      }
+    >
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -71,19 +76,14 @@ export default function Inventori() {
                 <Archive className="h-5 w-5 text-primary" />
                 <CardTitle>Manajemen Inventori</CardTitle>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="relative w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari produk..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    className="pl-8"
-                  />
-                </div>
-                <Button onClick={() => window.location.href = "/pos/stok?action=add"}>
-                  <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-                </Button>
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari produk..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-8"
+                />
               </div>
             </div>
           </CardHeader>

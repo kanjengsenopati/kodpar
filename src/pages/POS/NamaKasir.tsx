@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User, Plus, Search } from "lucide-react";
@@ -35,6 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Text } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
 export default function NamaKasir() {
   const { toast } = useToast();
@@ -198,169 +199,189 @@ export default function NamaKasir() {
   };
 
   return (
-    <Layout pageTitle="Nama Kasir">
-      <div className="grid gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Nama Kasir</h2>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Tambah Kasir
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Tambah Kasir Baru</DialogTitle>
-                <DialogDescription>
-                  Isi informasi kasir baru di bawah ini.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="userId" className="text-sm font-medium">Pilih User</label>
-                  <Select onValueChange={handleUserSelect} value={formData.userId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih user dari sistem" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map(user => (
-                        <SelectItem key={user.id} value={user.id}>{user.nama} ({user.username})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="nama" className="text-sm font-medium">Nama Kasir</label>
-                  <Input
-                    id="nama"
-                    name="nama"
-                    value={formData.nama}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan nama kasir"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="noHp" className="text-sm font-medium">Nomor HP</label>
-                  <Input
-                    id="noHp"
-                    name="noHp"
-                    value={formData.noHp}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan nomor HP"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-medium">Username</label>
-                  <Input
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan username"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="role" className="text-sm font-medium">Role</label>
-                  <Select onValueChange={handleRoleSelect} defaultValue={formData.role}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="kasir">Kasir</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Simpan</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                <CardTitle>Manajemen Kasir</CardTitle>
+    <Layout 
+      pageTitle="Nama Kasir"
+      actions={
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="rounded-xl shadow-sm hover:shadow-md transition-all">
+              <Plus className="mr-2 h-4 w-4" /> Tambah Kasir
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] rounded-[24px]">
+            <DialogHeader>
+              <DialogTitle><Text.H2>Tambah Kasir Baru</Text.H2></DialogTitle>
+              <DialogDescription>
+                <Text.Body className="text-slate-400">Isi informasi kasir baru di bawah ini.</Text.Body>
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Text.Label className="block">Pilih User</Text.Label>
+                <Select onValueChange={handleUserSelect} value={formData.userId}>
+                  <SelectTrigger className="rounded-xl bg-slate-50 border-none h-11">
+                    <SelectValue placeholder="Pilih user dari sistem" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id} className="rounded-lg mb-1">{user.nama} ({user.username})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="relative w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <div className="space-y-2">
+                <Text.Label className="block">Nama Kasir</Text.Label>
                 <Input
-                  placeholder="Cari kasir..."
+                  id="nama"
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan nama kasir"
+                  required
+                  className="rounded-xl bg-slate-50 border-none h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Text.Label className="block">Nomor HP</Text.Label>
+                <Input
+                  id="noHp"
+                  name="noHp"
+                  value={formData.noHp}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan nomor HP"
+                  required
+                  className="rounded-xl bg-slate-50 border-none h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Text.Label className="block">Username</Text.Label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan username"
+                  required
+                  className="rounded-xl bg-slate-50 border-none h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Text.Label className="block">Role</Text.Label>
+                <Select onValueChange={handleRoleSelect} defaultValue={formData.role}>
+                  <SelectTrigger className="rounded-xl bg-slate-50 border-none h-11">
+                    <SelectValue placeholder="Pilih role" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="admin" className="rounded-lg">Admin</SelectItem>
+                    <SelectItem value="kasir" className="rounded-lg">Kasir</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter className="pt-4">
+                <Button type="submit" className="w-full rounded-xl py-6 font-bold shadow-blue-600/10 hover:shadow-lg transition-all">Simpan Data Kasir</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      }
+    >
+      <div className="px-5 pb-10">
+        <Card className="rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none overflow-hidden">
+          <CardHeader className="pb-0 pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-blue-50 flex items-center justify-center">
+                  <User className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                </div>
+                <Text.H2>Manajemen Kasir</Text.H2>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" strokeWidth={2} />
+                <Input
+                  placeholder="Cari data kasir..."
                   value={searchQuery}
                   onChange={handleSearchChange}
-                  className="pl-8"
+                  className="pl-10 rounded-xl bg-slate-50 border-none h-10 text-sm font-medium focus-visible:ring-blue-600/20"
                 />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {kasirList.length === 0 ? (
-              <Alert>
+              <Alert className="rounded-[20px] bg-blue-50/50 border-none">
                 <AlertDescription>
-                  Belum ada data kasir. Klik tombol 'Tambah Kasir' untuk menambahkan kasir baru.
+                  <Text.Body>Belum ada data kasir. Klik tombol 'Tambah Kasir' untuk menambahkan kasir baru.</Text.Body>
                 </AlertDescription>
               </Alert>
             ) : filteredKasir.length === 0 ? (
-              <Alert>
+              <Alert className="rounded-[20px] bg-slate-50 border-none">
                 <AlertDescription>
-                  Tidak ada kasir yang cocok dengan pencarian Anda.
+                  <Text.Body>Tidak ada data kasir yang cocok dengan pencarian Anda.</Text.Body>
                 </AlertDescription>
               </Alert>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Nomor HP</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredKasir.map((kasir) => (
-                    <TableRow key={kasir.id}>
-                      <TableCell className="font-medium">{kasir.nama}</TableCell>
-                      <TableCell>{kasir.username}</TableCell>
-                      <TableCell>{kasir.noHp}</TableCell>
-                      <TableCell>
-                        <Badge variant={kasir.role === "admin" ? "default" : "outline"}>
-                          {kasir.role === "admin" ? "Admin" : "Kasir"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={kasir.aktif ? "success" : "destructive"}>
-                          {kasir.aktif ? "Aktif" : "Nonaktif"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => toggleKasirStatus(kasir.id, kasir.aktif)}
-                        >
-                          {kasir.aktif ? "Nonaktifkan" : "Aktifkan"}
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteKasir(kasir.id)}
-                        >
-                          Hapus
-                        </Button>
-                      </TableCell>
+              <div className="rounded-2xl border border-slate-50 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-slate-50/50">
+                    <TableRow className="hover:bg-transparent border-slate-50">
+                      <TableHead><Text.Label>Nama</Text.Label></TableHead>
+                      <TableHead><Text.Label>Username</Text.Label></TableHead>
+                      <TableHead><Text.Label>Nomor HP</Text.Label></TableHead>
+                      <TableHead><Text.Label>Role</Text.Label></TableHead>
+                      <TableHead><Text.Label>Status</Text.Label></TableHead>
+                      <TableHead className="text-right"><Text.Label>Aksi</Text.Label></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredKasir.map((kasir) => (
+                      <TableRow key={kasir.id} className="hover:bg-slate-50/50 transition-colors border-slate-50">
+                        <TableCell><Text.Body className="font-bold text-slate-900">{kasir.nama}</Text.Body></TableCell>
+                        <TableCell><Text.Body className="text-slate-500">{kasir.username}</Text.Body></TableCell>
+                        <TableCell><Text.Body className="text-slate-500">{kasir.noHp}</Text.Body></TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={cn(
+                            "rounded-lg px-2.5 py-0.5 border-none font-bold text-[10px] uppercase tracking-wider",
+                            kasir.role === "admin" ? "bg-indigo-50 text-indigo-600" : "bg-slate-100 text-slate-600"
+                          )}>
+                            {kasir.role === "admin" ? "Admin" : "Kasir"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={cn(
+                            "rounded-lg px-2.5 py-0.5 border-none font-bold text-[10px] uppercase tracking-wider",
+                            kasir.aktif ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                          )}>
+                            {kasir.aktif ? "Aktif" : "Nonaktif"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => toggleKasirStatus(kasir.id, kasir.aktif)}
+                              className={cn(
+                                "rounded-lg text-xs font-bold transition-all",
+                                kasir.aktif ? "text-slate-400 hover:text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"
+                              )}
+                            >
+                              {kasir.aktif ? "Nonaktif" : "Aktifkan"}
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleDeleteKasir(kasir.id)}
+                              className="rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all p-2"
+                            >
+                              Hapus
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

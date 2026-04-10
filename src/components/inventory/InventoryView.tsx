@@ -25,14 +25,9 @@ export function InventoryView({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            <CardTitle>Manajemen Stok Barang</CardTitle>
-          </div>
-          <Button onClick={onAddItem}>
-            <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-          </Button>
+        <div className="flex items-center gap-2">
+          <Package className="h-5 w-5 text-primary" />
+          <CardTitle>Manajemen Stok Barang</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
