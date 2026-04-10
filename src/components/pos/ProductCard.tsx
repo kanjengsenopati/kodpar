@@ -28,35 +28,36 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingCart className="h-10 w-10 text-slate-200" />
+            <ShoppingCart className="h-10 w-10 text-slate-200" strokeWidth={1.5} />
           </div>
         )}
         
-        {product.stok <= 0 ? (
+        {product.stok <= 0 && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
             <span className="bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-sm">
               Habis
             </span>
           </div>
-        ) : (
-          <div className="absolute top-3 right-3">
-             <span className="bg-white/90 backdrop-blur-md text-slate-500 text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm border border-slate-100">
-               Stock: {product.stok}
-             </span>
-          </div>
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-1 justify-between">
-        <Text.Body className="line-clamp-2 mb-2 leading-tight min-h-[2.5rem] group-hover:text-blue-600 transition-colors">
+      <div className="p-3 flex flex-col flex-1 justify-between">
+        <Text.Body className="line-clamp-2 mb-2 leading-tight font-bold text-slate-800 transition-colors group-hover:text-blue-600">
           {product.nama}
         </Text.Body>
-        <div className="flex items-center justify-between mt-auto">
-          <Text.Amount>
-            {formatRupiah(product.hargaJual)}
-          </Text.Amount>
-          <div className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <ShoppingCart size={16} strokeWidth={2} />
+        <div className="flex items-baseline justify-between gap-2 mt-auto">
+          <div className="flex items-baseline gap-1 overflow-hidden">
+            <Text.Amount className="text-[14px]">
+              {formatRupiah(product.hargaJual)}
+            </Text.Amount>
+            {product.stok > 0 && (
+              <Text.Caption className="not-italic text-[10px] text-slate-400 font-bold whitespace-nowrap">
+                Stok {product.stok}
+              </Text.Caption>
+            )}
+          </div>
+          <div className="h-7 w-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+            <Plus size={14} strokeWidth={3} />
           </div>
         </div>
       </div>
