@@ -55,14 +55,17 @@ export default function AnggotaList() {
   const displayAnggotaList = syncedAnggotaList.length > 0 ? syncedAnggotaList : filteredAnggota;
 
   return (
-    <Layout pageTitle="Data Anggota">
-      <AnggotaListHeader 
-        onResetData={handleResetDataClick}
-        onResetSHU={handleResetSHUClick}
-        onLoadDemoData={handleLoadDemoData}
-      />
-      
-      <Card>
+    <Layout 
+      pageTitle="Data Anggota"
+      actions={
+        <AnggotaListHeader 
+          onResetData={handleResetDataClick}
+          onResetSHU={handleResetSHUClick}
+          onLoadDemoData={handleLoadDemoData}
+        />
+      }
+    >
+      <Card className="rounded-[24px] border-none shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <AnggotaListFilters
             searchQuery={searchQuery}

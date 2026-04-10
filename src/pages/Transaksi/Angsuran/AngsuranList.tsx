@@ -78,16 +78,17 @@ export default function AngsuranList() {
   const headers = ["ID Transaksi", "Tanggal", "Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
 
   return (
-    <Layout pageTitle="Daftar Angsuran">
-      <div className="flex justify-end items-center mb-6">
-        <Button asChild className="gap-2">
+    <Layout 
+      pageTitle="Daftar Angsuran"
+      actions={
+        <Button asChild className="rounded-full h-9 px-4 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100 gap-2">
           <Link to="/transaksi/angsuran/tambah">
             <Plus size={16} /> Tambah Angsuran
           </Link>
         </Button>
-      </div>
-
-      <Card>
+      }
+    >
+      <Card className="rounded-[24px] border-none shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <div className="p-6 border-b flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[200px]">

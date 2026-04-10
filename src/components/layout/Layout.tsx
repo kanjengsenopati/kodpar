@@ -6,6 +6,7 @@ import "@/styles/form-styles.css";
 type LayoutProps = {
   children: ReactNode;
   pageTitle: string;
+  actions?: ReactNode;
 };
 
 /**
@@ -13,14 +14,14 @@ type LayoutProps = {
  * This component acts as the central entry point for all page layouts,
  * automatically rendering either the Desktop or Mobile view.
  */
-export default function Layout({ children, pageTitle }: LayoutProps) {
+export default function Layout({ children, pageTitle, actions }: LayoutProps) {
   // Update document title centrally
   if (typeof document !== 'undefined') {
-    document.title = `${pageTitle} | Koperasi-ERP`;
+    document.title = `${pageTitle} | KOPIMU`;
   }
   
   return (
-    <LayoutSwitcher pageTitle={pageTitle}>
+    <LayoutSwitcher pageTitle={pageTitle} actions={actions}>
       {children}
     </LayoutSwitcher>
   );

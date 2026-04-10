@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Edit, Trash2, History, Info } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatCurrency } from "@/utils/formatters";
@@ -8,6 +7,7 @@ import { Pengajuan } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { getPengaturan } from "@/services/pengaturanService";
 import * as Text from "@/components/ui/text";
+import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 import { cn } from "@/lib/utils";
 
 interface ExpandablePengajuanRowProps {
@@ -44,29 +44,10 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index }: Expan
     );
   };
 
-  const getInterestRate = (kategori: string): number => {
-    if (pengaturan?.sukuBunga?.pinjamanByCategory && kategori in pengaturan.sukuBunga.pinjamanByCategory) {
-      return pengaturan.sukuBunga.pinjamanByCategory[kategori];
-    }
-    return pengaturan?.sukuBunga?.pinjaman || 1.5;
-  };
-
-  const detailFields = [
-    { label: "ID Pengajuan", value: item.id },
-    { label: "Tanggal", value: formatDate(item.tanggal) },
-    { label: "Nama Anggota", value: item.anggotaNama },
-    { label: "ID Anggota", value: item.anggotaId },
-    { label: "Jenis", value: item.jenis, jenisBadge: true },
-    { label: "Kategori", value: item.kategori || "-" },
-    { label: "Jumlah", value: formatCurrency(item.jumlah), highlight: true },
-    { label: "Status", value: item.status, statusBadge: true },
-    ...(item.jenis === "Pinjam" ? [
-      { label: "Suku Bunga", value: `${getInterestRate(item.kategori)}% per bulan` },
-      { label: "Tenor", value: `${(item as any).tenor || 12} bulan` },
-    ] : []),
-    { label: "Keterangan", value: item.keterangan || "-", full: true },
-    { label: "Dibuat", value: formatDate(item.createdAt) },
-    { label: "Diperbarui", value: formatDate(item.updatedAt) },
+  const mockHistory = [
+    { tgl: "10 Apr 2026, 14:00", aksi: "Diajukan", oleh: "Anggota (Mariem)", ket: "Via Mobile App" },
+    { tgl: "10 Apr 2026, 15:30", aksi: "Review", oleh: "Admin (Susi)", ket: "Verifikasi dokumen OK" },
+    { tgl: "Sedang diproses", aksi: "Validasi", oleh: "Petugas Lapangan", ket: "Pengecekan unit" },
   ];
 
   return (
@@ -90,7 +71,7 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index }: Expan
         <TableCell><Text.Amount className="text-sm">{formatCurrency(item.jumlah)}</Text.Amount></TableCell>
         <TableCell>{getStatusBadge(item.status)}</TableCell>
         <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
-          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex justify-end gap-1.5 transition-opacity">
             <Button
               variant="ghost"
               size="icon"
@@ -112,34 +93,66 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index }: Expan
       </TableRow>
 
       {isOpen && (
-        <TableRow className="bg-slate-50/30 hover:bg-slate-50/30">
+        <TableRow className="bg-slate-50/20 hover:bg-slate-50/20 shadow-inner">
           <TableCell colSpan={colSpan + 1} className="p-0 border-none">
-            <div className="px-10 py-6 border-l-4 border-slate-100 animate-in slide-in-from-top-1 duration-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {detailFields.map((field) => (
-                  <div key={field.label} className={field.full ? "col-span-2 md:col-span-4" : ""}>
-                    <Text.Label className="block mb-1">{field.label}</Text.Label>
-                    {field.statusBadge ? (
-                      getStatusBadge(field.value)
-                    ) : field.jenisBadge ? (
-                      getJenisBadge(field.value)
-                    ) : field.highlight ? (
-                      <Text.Amount className="text-base block">{field.value}</Text.Amount>
-                    ) : (
-                      <Text.Body className="text-[13px]">{field.value}</Text.Body>
-                    )}
+            <div className="px-10 py-6 border-l-4 border-slate-100 bg-white/40 backdrop-blur-sm animate-in slide-in-from-top-1 duration-200">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                {/* Summary Panel */}
+                <div className="md:col-span-4 space-y-4">
+                  <div className="bg-slate-50/50 rounded-[20px] p-5 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Info className="h-3.5 w-3.5 text-blue-500" />
+                      <Text.Label className="text-slate-400">Informasi Pengajuan</Text.Label>
+                    </div>
+                    <div className="space-y-2">
+                       <div className="flex justify-between items-center">
+                        <Text.Caption className="not-italic">Kategori</Text.Caption>
+                        <Text.Body className="text-xs font-bold">{item.kategori || "Umum"}</Text.Body>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Text.Caption className="not-italic">ID Anggota</Text.Caption>
+                        <Text.Body className="text-xs font-bold">{item.anggotaId}</Text.Body>
+                      </div>
+                      <div className="pt-2 border-t border-slate-100">
+                        <Text.Caption className="not-italic mb-1 block">Catatan Tambahan</Text.Caption>
+                        <Text.Body className="text-[12px] italic text-slate-500 leading-relaxed">
+                          {item.keterangan || "Pemohon mengajukan dana untuk keperluan mendesak modal usaha."}
+                        </Text.Body>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-full shadow-sm text-xs font-bold"
-                  onClick={(e) => { e.stopPropagation(); navigate(`/transaksi/pengajuan/${item.id}`); }}
-                >
-                  Lihat Detail Lengkap
-                </Button>
+                  <Button
+                    size="sm"
+                    variant="link"
+                    className="text-blue-600 hover:text-blue-700 text-[11px] font-bold h-auto p-0"
+                    onClick={() => navigate(`/transaksi/pengajuan/${item.id}`)}
+                  >
+                    Buka Dokumen & Detail Lengkap →
+                  </Button>
+                </div>
+
+                {/* History Table */}
+                <div className="md:col-span-8">
+                  <NestedDetailTable 
+                    title="Riwayat Status & Validasi"
+                    data={mockHistory}
+                    columns={[
+                      { header: "Waktu Update", accessor: "tgl" },
+                      { 
+                        header: "Aktivitas", 
+                        accessor: "aksi",
+                        render: (val) => (
+                           <div className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                              <Text.Body className="text-xs font-semibold">{val}</Text.Body>
+                           </div>
+                        )
+                      },
+                      { header: "Oleh", accessor: "oleh" },
+                      { header: "Keterangan Petugas", accessor: "ket", className: "italic text-slate-400" }
+                    ]}
+                  />
+                </div>
               </div>
             </div>
           </TableCell>

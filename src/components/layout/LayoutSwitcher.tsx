@@ -7,18 +7,19 @@ import MobileAppLayout from "./MobileAppLayout";
 type LayoutSwitcherProps = {
   children: ReactNode;
   pageTitle: string;
+  actions?: ReactNode;
 };
 
 /**
  * Component that automatically switches between Desktop and Mobile layouts
  * based on device detection.
  */
-export default function LayoutSwitcher({ children, pageTitle }: LayoutSwitcherProps) {
+export default function LayoutSwitcher({ children, pageTitle, actions }: LayoutSwitcherProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return <MobileAppLayout pageTitle={pageTitle}>{children}</MobileAppLayout>;
   }
 
-  return <DesktopLayout pageTitle={pageTitle}>{children}</DesktopLayout>;
+  return <DesktopLayout pageTitle={pageTitle} actions={actions}>{children}</DesktopLayout>;
 }

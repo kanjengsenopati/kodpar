@@ -77,17 +77,18 @@ export default function SimpanList() {
   const headers = ["ID Transaksi", "Tanggal", "Nama Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
 
   return (
-    <Layout pageTitle="Daftar Simpanan">
-      <div className="flex justify-end items-center mb-6">
-        <Button asChild>
+    <Layout 
+      pageTitle="Daftar Simpanan"
+      actions={
+        <Button asChild className="rounded-full h-9 px-4 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100">
           <Link to="/transaksi/simpan/tambah">
             <Plus className="w-4 h-4 mr-2" />
             Tambah Simpanan
           </Link>
         </Button>
-      </div>
-
-      <Card>
+      }
+    >
+      <Card className="rounded-[24px] border-none shadow-sm overflow-hidden">
         <CardHeader>
           <CardTitle>Transaksi Simpanan</CardTitle>
           <div className="flex items-center space-x-2">

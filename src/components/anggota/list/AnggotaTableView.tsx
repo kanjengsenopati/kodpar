@@ -68,6 +68,7 @@ export function AnggotaTableView({
               <TableHead className="w-[60px] text-center">
                 <Text.Label className="text-slate-500">No</Text.Label>
               </TableHead>
+              <TableHead className="w-8" />
               {visibleColumns.map((column) => (
                 <TableHead key={column.id}>
                   <Text.Label className="text-slate-500">{column.label}</Text.Label>
@@ -81,70 +82,25 @@ export function AnggotaTableView({
           <TableBody>
             {anggotaList.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length + 2} className="h-32 text-center">
+                <TableCell colSpan={visibleColumns.length + 3} className="h-32 text-center">
                   <Text.Body className="text-slate-400">Tidak ada data ditemukan</Text.Body>
                 </TableCell>
               </TableRow>
             ) : (
               anggotaList.map((anggota, index) => (
-                <TableRow key={anggota.id} className="group border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <TableCell className="text-center font-medium text-slate-400 text-xs">
-                    {startIndex + index + 1}
-                  </TableCell>
-                  {visibleColumns.map((column) => (
-                    <TableCell key={column.id} className="py-2.5">
-                      {column.id === "id" && <Text.Caption className="not-italic font-bold text-slate-400">{anggota.id}</Text.Caption>}
-                      {column.id === "nama" && <Text.Body className="font-bold text-slate-800">{anggota.nama}</Text.Body>}
-                      {column.id === "nip" && <Text.Body className="text-xs">{anggota.nip}</Text.Body>}
-                      {column.id === "noHp" && <Text.Body className="text-xs">{anggota.noHp}</Text.Body>}
-                      {column.id === "unitKerja" && <Text.Body className="text-[13px]">{anggota.unitKerja}</Text.Body>}
-                      {column.id === "jenisKelamin" && <Text.Body className="text-xs">{anggota.jenisKelamin}</Text.Body>}
-                      {column.id === "status" && (
-                        <div className={cn(
-                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                          anggota.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"
-                        )}>
-                          {anggota.status === "active" ? "Aktif" : "Tidak Aktif"}
-                        </div>
-                      )}
-                      {column.id === "totalSimpanan" && <Text.Amount className="text-sm">{formatRupiah(getTotalSimpanan(anggota.id))}</Text.Amount>}
-                      {column.id === "totalPinjaman" && <Text.Amount className="text-sm text-blue-600">{formatRupiah(getTotalPinjaman(anggota.id))}</Text.Amount>}
-                      {column.id === "totalSHU" && <Text.Amount className="text-sm text-purple-600">{formatRupiah(getTotalSHU(anggota.id))}</Text.Amount>}
-                      {column.id === "petugas" && <Text.Body className="text-xs">{getPetugas(anggota.id)}</Text.Body>}
-                      {column.id === "tanggalBergabung" && <Text.Body className="text-xs">{anggota.tanggalBergabung && new Date(anggota.tanggalBergabung).toLocaleDateString('id-ID')}</Text.Body>}
-                    </TableCell>
-                  ))}
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                        onClick={() => onViewDetail(anggota.id)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                        asChild
-                      >
-                        <Link to={`/master/anggota/edit/${anggota.id}`}>
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => onDelete(anggota)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <AnggotaFinanceExpandable
+                  key={anggota.id}
+                  anggota={anggota}
+                  index={startIndex + index + 1}
+                  columns={columns}
+                  visibleColumns={visibleColumns}
+                  getTotalSimpanan={getTotalSimpanan}
+                  getTotalPinjaman={getTotalPinjaman}
+                  getTotalSHU={getTotalSHU}
+                  getPetugas={getPetugas}
+                  onViewDetail={onViewDetail}
+                  onDelete={onDelete}
+                />
               ))
             )}
           </TableBody>
