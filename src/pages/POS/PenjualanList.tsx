@@ -78,10 +78,9 @@ export default function PenjualanList() {
   
   return (
     <Layout pageTitle="Daftar Transaksi Penjualan">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Daftar Transaksi Penjualan</h1>
+      <div className="flex justify-end items-center mb-6">
         <Link to="/pos/penjualan">
-          <Button className="gap-2">
+          <Button className="gap-2 rounded-full shadow-md">
             <Plus size={16} /> Transaksi Baru
           </Button>
         </Link>

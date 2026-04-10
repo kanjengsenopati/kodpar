@@ -2,12 +2,16 @@
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { Pengajuan } from "@/types";
 import { ExpandablePengajuanRow } from "./ExpandablePengajuanRow";
+import * as Text from "@/components/ui/text";
+import { TablePaginationFooter } from "@/components/ui/TablePaginationFooter";
+import { usePagination } from "@/hooks/ui/usePagination";
 
 interface PengajuanTableProps {
   pengajuan: Pengajuan[];
@@ -15,36 +19,69 @@ interface PengajuanTableProps {
 }
 
 export function PengajuanTable({ pengajuan, onDelete }: PengajuanTableProps) {
-  if (!Array.isArray(pengajuan) || pengajuan.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        Tidak ada data pengajuan
-      </div>
-    );
-  }
-
-  const headers = ["ID", "Tanggal", "Anggota", "Jenis", "Jumlah", "Status", "Aksi"];
+  const {
+    paginatedData,
+    currentPage,
+    rowsPerPage,
+    totalRecords,
+    totalPages,
+    handlePageChange,
+    handleRowsPerPageChange,
+    startIndex
+  } = usePagination({ data: pengajuan || [] });
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-8" />
-          {headers.map((h) => (
-            <TableHead key={h}>{h}</TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {pengajuan.map((item) => (
-          <ExpandablePengajuanRow
-            key={item.id}
-            item={item}
-            onDelete={onDelete}
-            colSpan={headers.length}
-          />
-        ))}
-      </TableBody>
-    </Table>
+    <div className="flex flex-col">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-slate-100">
+              <TableHead className="w-[60px] text-center">
+                <Text.Label className="text-slate-500">No</Text.Label>
+              </TableHead>
+              <TableHead className="w-8" />
+              <TableHead><Text.Label className="text-slate-500">ID</Text.Label></TableHead>
+              <TableHead><Text.Label className="text-slate-500">Tanggal</Text.Label></TableHead>
+              <TableHead><Text.Label className="text-slate-500">Anggota</Text.Label></TableHead>
+              <TableHead><Text.Label className="text-slate-500">Jenis</Text.Label></TableHead>
+              <TableHead><Text.Label className="text-slate-500">Jumlah</Text.Label></TableHead>
+              <TableHead><Text.Label className="text-slate-500">Status</Text.Label></TableHead>
+              <TableHead className="text-right"><Text.Label className="text-slate-500">Aksi</Text.Label></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="h-32 text-center">
+                  <Text.Body className="text-slate-400">Tidak ada data pengajuan</Text.Body>
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedData.map((item, index) => (
+                <ExpandablePengajuanRow
+                  key={item.id}
+                  item={item}
+                  onDelete={onDelete}
+                  colSpan={8}
+                  index={startIndex + index + 1}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      <TablePaginationFooter
+        currentPage={currentPage}
+        totalPages={totalPages}
+        rowsPerPage={rowsPerPage}
+        totalRecords={totalRecords}
+        startIndex={startIndex}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        label="pengajuan"
+        className="rounded-b-[24px]"
+      />
+    </div>
   );
 }

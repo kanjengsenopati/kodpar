@@ -80,8 +80,7 @@ export default function PinjamList() {
 
   return (
     <Layout pageTitle="Daftar Pinjaman">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Transaksi Pinjaman</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button asChild className="gap-2">
           <Link to="/transaksi/pinjam/tambah">
             <Plus size={16} /> Tambah Pinjaman

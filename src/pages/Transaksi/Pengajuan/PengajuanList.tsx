@@ -137,8 +137,7 @@ export default function PengajuanList() {
   
   return (
     <Layout pageTitle="Daftar Pengajuan">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Daftar Pengajuan</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button asChild className="gap-2">
           <Link to="/transaksi/pengajuan/tambah">
             <Plus size={16} /> Tambah Pengajuan

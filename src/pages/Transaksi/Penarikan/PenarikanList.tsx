@@ -115,8 +115,7 @@ export default function PenarikanList() {
   
   return (
     <Layout pageTitle="Daftar Penarikan">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Daftar Penarikan Simpanan</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button asChild className="gap-2">
           <Link to="/transaksi/penarikan/tambah">
             <Plus size={16} /> Tambah Penarikan

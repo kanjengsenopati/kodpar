@@ -75,9 +75,7 @@ export default function TransaksiList() {
   
   return (
     <Layout pageTitle="Daftar Transaksi">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Manajemen Transaksi</h1>
-        
+      <div className="flex justify-end items-center mb-6">
         <div className="flex gap-2">
           <Button onClick={() => navigate("/transaksi/pengajuan/tambah")}>
             Tambah Pengajuan

@@ -79,8 +79,7 @@ export default function AngsuranList() {
 
   return (
     <Layout pageTitle="Daftar Angsuran">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Transaksi Angsuran</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button asChild className="gap-2">
           <Link to="/transaksi/angsuran/tambah">
             <Plus size={16} /> Tambah Angsuran

@@ -8,6 +8,9 @@ import { Plus, Building2, RefreshCcw, Database, Edit, Trash2, AlertTriangle, Gri
 import { useUnitKerja } from "@/hooks/useUnitKerja";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import * as Text from "@/components/ui/text";
+import { usePagination } from "@/hooks/ui/usePagination";
+import { TablePaginationFooter } from "@/components/ui/TablePaginationFooter";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createUnitKerja, updateUnitKerja, deleteUnitKerja } from "@/services/unitKerjaService";
 import { UnitKerja } from "@/types/unitKerja";
@@ -126,12 +129,17 @@ export default function UnitKerjaList() {
     }
   };
 
-  // Filter units based on search query
-  const filteredUnits = unitKerjaList.filter(unit =>
-    unit.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    unit.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (unit.keterangan && unit.keterangan.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Initialize pagination
+  const {
+    paginatedData,
+    currentPage,
+    rowsPerPage,
+    totalRecords,
+    totalPages,
+    handlePageChange,
+    handleRowsPerPageChange,
+    startIndex
+  } = usePagination({ data: filteredUnits });
 
   if (error) {
     return (
@@ -153,23 +161,17 @@ export default function UnitKerjaList() {
   return (
     <Layout pageTitle="Unit Kerja">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="page-title">Master Unit Kerja</h1>
-            <p className="text-muted-foreground mt-1">
-              Kelola unit kerja dan sinkronisasi dengan data anggota
-            </p>
-          </div>
+        <div className="flex justify-end items-center mb-6">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSyncWithAnggota} disabled={isLoading}>
+            <Button variant="outline" onClick={handleSyncWithAnggota} disabled={isLoading} size="sm" className="rounded-full shadow-sm">
               <Database className="h-4 w-4 mr-2" />
               Sinkronisasi
             </Button>
-            <Button onClick={refreshUnitKerja} variant="outline" disabled={isLoading}>
+            <Button onClick={refreshUnitKerja} variant="outline" disabled={isLoading} size="sm" className="rounded-full shadow-sm">
               <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button onClick={handleOpenAdd}>
+            <Button onClick={handleOpenAdd} size="sm" className="rounded-full shadow-md bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
               Tambah Unit Kerja
             </Button>
@@ -177,228 +179,241 @@ export default function UnitKerjaList() {
         </div>
 
         {/* Search and View Toggle */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Input
-              placeholder="Cari unit kerja..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-md"
-            />
-            <div className="text-sm text-muted-foreground">
-              {filteredUnits.length} dari {unitKerjaList.length} unit kerja
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-80">
+              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                placeholder="Cari unit kerja..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-10 rounded-xl"
+              />
             </div>
+            <Text.Caption className="not-italic text-slate-400 hidden lg:block">
+              {filteredUnits.length} dari {unitKerjaList.length} unit
+            </Text.Caption>
           </div>
           
-          <div className="flex border rounded-lg">
+          <div className="flex bg-slate-50 p-1 rounded-xl shadow-inner">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              variant="ghost"
               size="sm"
               onClick={() => setViewMode('grid')}
-              className="rounded-r-none"
+              className={cn(
+                "rounded-lg h-8 transition-all px-4",
+                viewMode === 'grid' ? "bg-white shadow-sm text-blue-600" : "text-slate-400"
+              )}
             >
               <Grid3X3 className="h-4 w-4 mr-2" />
-              Grid
+              <Text.Label className={viewMode === 'grid' ? "text-blue-600" : "text-slate-400"}>Grid</Text.Label>
             </Button>
             <Button
-              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              variant="ghost"
               size="sm"
               onClick={() => setViewMode('table')}
-              className="rounded-l-none"
+              className={cn(
+                "rounded-lg h-8 transition-all px-4",
+                viewMode === 'table' ? "bg-white shadow-sm text-blue-600" : "text-slate-400"
+              )}
             >
               <List className="h-4 w-4 mr-2" />
-              Table
+              <Text.Label className={viewMode === 'table' ? "text-blue-600" : "text-slate-400"}>Table</Text.Label>
             </Button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-64 bg-slate-50/50 rounded-[24px]">
             <div className="text-center">
-              <RefreshCcw className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p>Memuat data unit kerja...</p>
+              <RefreshCcw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+              <Text.Body>Memuat data unit kerja...</Text.Body>
             </div>
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredUnits.map((unit) => (
-              <Card key={unit.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    {unit.nama}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {unit.id}
-                    </Badge>
-                    {unit.isActive && (
-                      <Badge variant="success" className="text-xs">
-                        Aktif
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {unit.keterangan && (
-                    <div className="text-sm text-muted-foreground">
-                      {unit.keterangan}
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedData.map((unit) => (
+                <Card key={unit.id} className="hover:shadow-md transition-all group overflow-hidden relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="bg-blue-50 p-2.5 rounded-2xl group-hover:scale-110 transition-transform">
+                        <Building2 className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600"
+                          onClick={() => handleOpenEdit(unit)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          onClick={() => handleDelete(unit)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="text-xs text-muted-foreground">
-                    Dibuat: {new Date(unit.createdAt).toLocaleDateString('id-ID')}
-                  </div>
-                  
-                  <div className="flex gap-2 pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => handleOpenEdit(unit)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => handleDelete(unit)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Hapus
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {filteredUnits.length === 0 && !isLoading && (
-              <div className="col-span-full text-center py-12">
-                <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum Ada Unit Kerja'}
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchQuery 
-                    ? 'Coba ubah kata kunci pencarian'
-                    : 'Mulai dengan menambahkan unit kerja baru atau sinkronisasi dengan data anggota'
-                  }
-                </p>
-                {!searchQuery && (
-                  <div className="flex gap-2 justify-center">
-                    <Button onClick={handleSyncWithAnggota} variant="outline">
-                      <Database className="h-4 w-4 mr-2" />
-                      Sinkronisasi dari Anggota
-                    </Button>
-                    <Button onClick={handleOpenAdd}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Tambah Manual
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Nama Unit Kerja</TableHead>
-                    <TableHead>Keterangan</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Dibuat</TableHead>
-                    <TableHead className="text-center">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUnits.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12">
-                        <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">
-                          {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum Ada Unit Kerja'}
-                        </h3>
-                        <p className="text-muted-foreground mb-4">
-                          {searchQuery 
-                            ? 'Coba ubah kata kunci pencarian'
-                            : 'Mulai dengan menambahkan unit kerja baru atau sinkronisasi dengan data anggota'
-                          }
-                        </p>
-                        {!searchQuery && (
-                          <div className="flex gap-2 justify-center">
-                            <Button onClick={handleSyncWithAnggota} variant="outline">
-                              <Database className="h-4 w-4 mr-2" />
-                              Sinkronisasi dari Anggota
-                            </Button>
-                            <Button onClick={handleOpenAdd}>
-                              <Plus className="h-4 w-4 mr-2" />
-                              Tambah Manual
-                            </Button>
+                    <div className="mt-3">
+                      <Text.H2 className="block truncate">{unit.nama}</Text.H2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Text.Caption className="not-italic font-bold text-slate-400">{unit.id}</Text.Caption>
+                        {unit.isActive && (
+                          <div className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase tracking-wider">
+                            Aktif
                           </div>
                         )}
-                      </TableCell>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pb-5">
+                    <Text.Body className="text-sm text-slate-500 line-clamp-2 min-h-[40px]">
+                      {unit.keterangan || 'Tidak ada keterangan tambahan'}
+                    </Text.Body>
+                    
+                    <div className="pt-2 flex items-center justify-between border-t border-slate-50">
+                      <Text.Caption className="not-italic text-slate-300">
+                        {new Date(unit.createdAt).toLocaleDateString('id-ID')}
+                      </Text.Caption>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {paginatedData.length === 0 && !isLoading && (
+                <div className="col-span-full text-center py-20 bg-slate-50/50 rounded-[24px]">
+                  <Building2 className="h-12 w-12 mx-auto text-slate-200 mb-4" />
+                  <Text.H2 className="mb-2">
+                    {searchQuery ? 'Hasil tidak ditemukan' : 'Belum Ada Unit Kerja'}
+                  </Text.H2>
+                  <Text.Body className="text-slate-400 mb-6">
+                    Mulai dengan menambahkan unit kerja baru
+                  </Text.Body>
+                  {!searchQuery && (
+                    <Button onClick={handleOpenAdd} className="rounded-full shadow-lg">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Tambah Unit Pertama
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <TablePaginationFooter
+              currentPage={currentPage}
+              totalPages={totalPages}
+              rowsPerPage={rowsPerPage}
+              totalRecords={totalRecords}
+              startIndex={startIndex}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              label="unit kerja"
+              className="rounded-[24px] shadow-sm bg-white"
+            />
+          </div>
+        ) : (
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-slate-100">
+                      <TableHead className="w-[60px] text-center">
+                        <Text.Label className="text-slate-500">No</Text.Label>
+                      </TableHead>
+                      <TableHead><Text.Label className="text-slate-500">ID</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500">Nama Unit Kerja</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500">Keterangan</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500">Status</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500">Dibuat</Text.Label></TableHead>
+                      <TableHead className="text-right"><Text.Label className="text-slate-500">Aksi</Text.Label></TableHead>
                     </TableRow>
-                  ) : (
-                    filteredUnits.map((unit) => (
-                      <TableRow key={unit.id} className="hover:bg-muted/50">
-                        <TableCell className="font-mono text-sm">
-                          <Badge variant="secondary" className="text-xs">
-                            {unit.id}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-primary" />
-                            {unit.nama}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground max-w-xs truncate">
-                          {unit.keterangan || '-'}
-                        </TableCell>
-                        <TableCell>
-                          {unit.isActive ? (
-                            <Badge variant="success" className="text-xs">
-                              Aktif
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Nonaktif
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(unit.createdAt).toLocaleDateString('id-ID')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleOpenEdit(unit)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleDelete(unit)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Hapus
-                            </Button>
-                          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-20">
+                          <Building2 className="h-12 w-12 mx-auto text-slate-200 mb-4" />
+                          <Text.H2 className="mb-2">Data tidak tersedia</Text.H2>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      paginatedData.map((unit, index) => (
+                        <TableRow key={unit.id} className="group border-slate-50 hover:bg-slate-50/50 transition-colors">
+                          <TableCell className="text-center font-medium text-slate-400 text-xs">
+                            {startIndex + index + 1}
+                          </TableCell>
+                          <TableCell>
+                            <Text.Caption className="not-italic font-bold text-slate-400">{unit.id}</Text.Caption>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-blue-600/50" />
+                              <Text.Body className="font-bold text-slate-800">{unit.nama}</Text.Body>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Text.Body className="text-xs text-slate-500 truncate max-w-xs">
+                              {unit.keterangan || '-'}
+                            </Text.Body>
+                          </TableCell>
+                          <TableCell>
+                            {unit.isActive ? (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase tracking-wider">
+                                Aktif
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 text-[9px] font-bold uppercase tracking-wider">
+                                Nonaktif
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Text.Caption className="not-italic text-slate-400">
+                              {new Date(unit.createdAt).toLocaleDateString('id-ID')}
+                            </Text.Caption>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-8 w-8 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600"
+                                onClick={() => handleOpenEdit(unit)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-8 w-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"
+                                onClick={() => handleDelete(unit)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <TablePaginationFooter
+                currentPage={currentPage}
+                totalPages={totalPages}
+                rowsPerPage={rowsPerPage}
+                totalRecords={totalRecords}
+                startIndex={startIndex}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                label="unit kerja"
+              />
             </CardContent>
           </Card>
         )}

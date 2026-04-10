@@ -78,8 +78,7 @@ export default function SimpanList() {
 
   return (
     <Layout pageTitle="Daftar Simpanan">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="page-title">Daftar Transaksi Simpanan</h1>
+      <div className="flex justify-end items-center mb-6">
         <Button asChild>
           <Link to="/transaksi/simpan/tambah">
             <Plus className="w-4 h-4 mr-2" />
