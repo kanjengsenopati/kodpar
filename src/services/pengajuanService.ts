@@ -130,7 +130,7 @@ export async function approvePengajuan(id: string): Promise<boolean> {
   if (!pengajuan || pengajuan.status !== "Menunggu") return false;
   
   try {
-    // ── Phase 1: Validation (outside transaction) ────────────────────────────
+    // ── Phase 1: Validation ───────────────────────────────────────────────────
     if (pengajuan.jenis === "Penarikan") {
       const settings = getPengaturan();
       const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
@@ -143,7 +143,6 @@ export async function approvePengajuan(id: string): Promise<boolean> {
           minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
         }
       }
-
       let maxAllowedByRule = availableBalance - minRequired;
       if (settings.penarikan) {
         let maxRule = 0;
@@ -154,13 +153,12 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         }
         maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
       }
-
       if (pengajuan.jumlah > maxAllowedByRule) {
         throw new Error(`Aturan Penarikan Dilanggar: Maksimal yang bisa ditarik adalah ${maxAllowedByRule.toLocaleString('id-ID')}`);
       }
     }
 
-    // Pre-load categories (async, must happen outside Dexie txn)
+    // Pre-load async data BEFORE any DB writes
     if (pengajuan.jenis === "Pinjam") {
       await ensureAutoDeductionCategories();
     }
@@ -174,54 +172,48 @@ export async function approvePengajuan(id: string): Promise<boolean> {
       finalKeterangan = `${finalKeterangan} (Ref Pinjaman: ${pengajuan.referensiPinjamanId})`.trim();
     }
 
-    // ── Phase 2: Core DB writes — minimal table scope, no dynamic imports ────
-    // Only include tables actually touched inside this closure.
-    let createdTransaction: any = null;
-
-    await db.transaction('rw', [db.pengajuan, db.transaksi, db.anggota], async () => {
-      const result = await createTransaksi({
-        tanggal: pengajuan.tanggal,
-        anggotaId: pengajuan.anggotaId,
-        jenis: pengajuan.jenis,
-        jumlah: pengajuan.jumlah,
-        kategori: pengajuan.kategori,
-        keterangan: finalKeterangan,
-        status: "Sukses",
-        referensiPinjamanId: pengajuan.referensiPinjamanId,
-        nominalPokok: pengajuan.nominalPokok,
-        nominalJasa: pengajuan.nominalJasa
-      });
-
-      if (!result.success || !result.data) {
-        throw new Error(result.error || "Gagal membuat transaksi finansial");
-      }
-
-      createdTransaction = result.data;
-
-      // Update pengajuan status inside same transaction
-      await db.pengajuan.update(id, {
-        status: "Disetujui",
-        updatedAt: new Date().toISOString()
-      });
+    // ── Phase 2: Core writes — NO explicit db.transaction() wrapper ───────────
+    // Each Dexie call uses its own implicit auto-commit transaction.
+    // Wrapping with db.transaction() conflicts with createTransactionWithSync
+    // which internally opens its own db.transaction(), causing nested transaction errors.
+    const result = await createTransaksi({
+      tanggal: pengajuan.tanggal,
+      anggotaId: pengajuan.anggotaId,
+      jenis: pengajuan.jenis,
+      jumlah: pengajuan.jumlah,
+      kategori: pengajuan.kategori,
+      keterangan: finalKeterangan,
+      status: "Sukses",
+      referensiPinjamanId: pengajuan.referensiPinjamanId,
+      nominalPokok: pengajuan.nominalPokok,
+      nominalJasa: pengajuan.nominalJasa
     });
 
-    if (!createdTransaction) {
-      console.error("❌ Approval: transaction was not created");
-      return false;
+    if (!result.success || !result.data) {
+      throw new Error(result.error || "Gagal membuat transaksi finansial");
     }
 
-    // ── Phase 3: Post-commit — schedule + events (outside Dexie txn) ─────────
-    // generateInitialSchedule uses db.jadwal_angsuran + dynamic imports;
-    // must run AFTER the main transaction is committed to avoid scope errors.
-    if (pengajuan.jenis === "Pinjam") {
-      const { generateInitialSchedule } = await import("./transaksi/installmentScheduleService");
-      await generateInitialSchedule(createdTransaction);
-    }
+    const createdTransaction = result.data;
 
-    // Link payment to schedule for Angsuran
-    if (pengajuan.jenis === "Angsuran") {
-      const { linkPaymentToSchedule } = await import("./transaksi/installmentScheduleService");
-      await linkPaymentToSchedule(createdTransaction);
+    // Update pengajuan status (independent auto-commit)
+    await db.pengajuan.update(id, {
+      status: "Disetujui",
+      updatedAt: new Date().toISOString()
+    });
+
+    // ── Phase 3: Post-commit side effects (non-fatal, won't block UI success) ─
+    try {
+      if (pengajuan.jenis === "Pinjam") {
+        const { generateInitialSchedule } = await import("./transaksi/installmentScheduleService");
+        await generateInitialSchedule(createdTransaction);
+      }
+      if (pengajuan.jenis === "Angsuran") {
+        const { linkPaymentToSchedule } = await import("./transaksi/installmentScheduleService");
+        await linkPaymentToSchedule(createdTransaction);
+      }
+    } catch (scheduleErr) {
+      // Schedule generation failure is non-fatal: the core approval is done.
+      console.warn("⚠️ Schedule generation warning (non-fatal):", scheduleErr);
     }
 
     window.dispatchEvent(new CustomEvent('pengajuan-approved', {
@@ -233,11 +225,13 @@ export async function approvePengajuan(id: string): Promise<boolean> {
     }));
 
     return true;
+
   } catch (error: any) {
-    console.error("❌ Approval transaction failed:", error);
+    console.error("❌ Approval failed:", error);
     return false;
   }
 }
+
 
 
 /**
