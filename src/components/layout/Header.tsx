@@ -21,7 +21,7 @@ export default function Header({ pageTitle, actions }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b sticky top-14 z-30 py-4 px-4 sm:px-6 lg:px-8">
+    <header className="bg-white/80 backdrop-blur-md border-b sticky top-14 z-30 pt-1.5 pb-5 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1600px] mx-auto flex items-center justify-between">
         <div className="flex flex-col">
           
