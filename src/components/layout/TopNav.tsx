@@ -134,39 +134,39 @@ export function TopNav() {
   ];
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b shadow-sm">
+      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo Section */}
-        <div className="flex items-center gap-3 mr-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-koperasi-blue to-koperasi-green rounded-xl flex items-center justify-center shadow-md">
-            <PiggyBank className="text-white h-6 w-6" />
+        <div className="flex items-center gap-2.5 mr-6">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+            <PiggyBank className="text-white h-5 w-5" />
           </div>
           <div className="hidden lg:block">
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">Koperasi ERP</h1>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Backoffice System</p>
+            <h1 className="text-sm font-bold text-slate-900 leading-none mb-0.5">Koperasi ERP</h1>
+            <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Backoffice System</p>
           </div>
         </div>
 
         {/* Navigation Menu */}
-        <NavigationMenu className="hidden md:flex flex-1 max-w-none justify-start px-4">
-          <NavigationMenuList className="gap-1">
+        <NavigationMenu className="hidden md:flex flex-1 max-w-none justify-start px-2">
+          <NavigationMenuList className="gap-0.5">
             {menuGroups.map((group) => (
               <NavigationMenuItem key={group.title}>
-                <NavigationMenuTrigger className="px-3 h-10 bg-transparent hover:bg-slate-50 data-[state=open]:bg-slate-50">
-                  <div className="flex items-center gap-2">
-                    <group.icon className="h-4 w-4 text-slate-500" />
-                    <span className="font-semibold text-slate-700">{group.title}</span>
+                <NavigationMenuTrigger className="px-2.5 h-9 bg-transparent hover:bg-slate-50 data-[state=open]:bg-slate-50 text-[13px] font-semibold text-slate-700">
+                  <div className="flex items-center gap-1.5">
+                    <group.icon className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{group.title}</span>
                   </div>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                  <ul className="flex flex-col w-[260px] gap-0 p-1 bg-white shadow-2xl border border-slate-200 rounded-xl">
                     {group.items.map((item) => (
                       <ListItem
                         key={item.title}
                         title={item.title}
                         onClick={() => navigate(item.path)}
                         className="cursor-pointer"
-                        icon={<item.icon className="h-4 w-4" />}
+                        icon={<item.icon size={14} />}
                       >
                         {item.description}
                       </ListItem>
@@ -182,11 +182,11 @@ export function TopNav() {
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex mr-2">
              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
                 <input 
                   type="search" 
                   placeholder="Cari fitur..." 
-                  className="pl-9 h-9 w-40 lg:w-60 rounded-full bg-slate-100 border-none text-sm focus:ring-2 focus:ring-koperasi-blue transition-all"
+                  className="pl-8 h-8 w-40 lg:w-48 rounded-full bg-slate-100 border-none text-[12px] focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
                 />
              </div>
           </div>
@@ -195,32 +195,32 @@ export function TopNav() {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden border-2 border-slate-100 hover:border-koperasi-blue transition-all">
-                <div className="h-full w-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                  <User className="h-5 w-5 text-slate-600" />
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden border border-slate-100 hover:border-blue-400 transition-all">
+                <div className="h-full w-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                  <User className="h-4 w-4 text-slate-600" />
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 mt-2">
+            <DropdownMenuContent align="end" className="w-52 mt-2 rounded-xl">
               <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Super Admin</p>
-                  <p className="text-xs leading-none text-muted-foreground">admin@koperasi.com</p>
+                <div className="flex flex-col space-y-0.5">
+                  <p className="text-xs font-bold leading-none">Super Admin</p>
+                  <p className="text-[10px] leading-none text-slate-400">admin@koperasi.com</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+              <DropdownMenuItem onClick={() => navigate('/dashboard')} className="text-xs font-medium">
                 Dashboard Utama
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/pengaturan')}>
+              <DropdownMenuItem onClick={() => navigate('/pengaturan')} className="text-xs font-medium">
                 Profil Koperasi
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
+                className="text-xs font-semibold text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
                 onClick={handleLogout}
               >
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="mr-2 h-3.5 w-3.5" />
                 <span>Keluar</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -241,16 +241,16 @@ const ListItem = React.forwardRef<
         <div
           ref={ref}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-slate-100 hover:text-accent-foreground focus:bg-slate-100 focus:text-accent-foreground",
+            "block select-none space-y-0.5 rounded-lg px-2.5 py-1.5 leading-none no-underline outline-none transition-colors hover:bg-slate-50 hover:text-accent-foreground focus:bg-slate-50 focus:text-accent-foreground text-left",
             className
           )}
           {...props}
         >
-          <div className="flex items-center gap-2 text-sm font-bold leading-none text-slate-900">
-            {icon && <span className="text-koperasi-blue">{icon}</span>}
+          <div className="flex items-center gap-2 text-[13px] font-semibold leading-tight text-slate-900">
+            {icon && <span className="text-blue-600/70">{icon}</span>}
             {title}
           </div>
-          <p className="line-clamp-2 text-xs leading-snug text-slate-500 mt-1">
+          <p className="line-clamp-1 text-[10px] leading-tight text-slate-400 mb-0.5">
             {children}
           </p>
         </div>
