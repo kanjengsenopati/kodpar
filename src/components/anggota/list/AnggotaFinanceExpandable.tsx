@@ -1,12 +1,15 @@
 
-import React, { useState } from "react";
-import { ChevronDown, ChevronRight, Eye, Edit, Trash2, Wallet, CreditCard, PieChart } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ChevronDown, ChevronRight, Edit, Trash2, Wallet, CreditCard, PieChart, User, MapPin, Phone, Calendar, History } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { formatRupiah, cn } from "@/lib/utils";
+import { formatDate } from "@/utils/formatters";
 import * as Text from "@/components/ui/text";
 import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
+import { getTransaksiByAnggotaId } from "@/services/transaksiService";
+import { Transaksi } from "@/types";
 
 interface AnggotaFinanceExpandableProps {
   anggota: any;
@@ -33,8 +36,26 @@ export function AnggotaFinanceExpandable({
   onDelete
 }: AnggotaFinanceExpandableProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [history, setHistory] = useState<Transaksi[]>([]);
 
-  // Mock data for finance tables
+  useEffect(() => {
+    if (isOpen) {
+      const loadHistory = async () => {
+        try {
+          const data = await getTransaksiByAnggotaId(anggota.id);
+          // Only show last 5 transactions for the expandable summary
+          setHistory((data || []).sort((a, b) => 
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+          ).slice(0, 5));
+        } catch (error) {
+          console.error("Error loading history for expandable:", error);
+        }
+      };
+      loadHistory();
+    }
+  }, [isOpen, anggota.id]);
+
+  // Mock data for finance tables (can be replaced by real breakdowns if available)
   const mockSavings = [
     { jenis: "Simpanan Pokok", nominal: getTotalSimpanan(anggota.id) * 0.2, status: "Aktif" },
     { jenis: "Simpanan Wajib", nominal: getTotalSimpanan(anggota.id) * 0.5, status: "Aktif" },
@@ -87,19 +108,11 @@ export function AnggotaFinanceExpandable({
           </TableCell>
         ))}
         <TableCell className="text-right py-2.5" onClick={(e) => e.stopPropagation()}>
-          <div className="flex justify-end gap-1.5">
+          <div className="flex justify-end gap-1.5 transition-opacity">
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-              onClick={() => onViewDetail(anggota.id)}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
               asChild
             >
               <Link to={`/master/anggota/edit/${anggota.id}`}>
@@ -122,62 +135,132 @@ export function AnggotaFinanceExpandable({
         <TableRow className="bg-slate-50/20 hover:bg-slate-50/20">
           <TableCell colSpan={visibleColumns.length + 3} className="p-0 border-none">
             <div className="px-12 py-8 border-l-4 border-slate-100 bg-white shadow-inner animate-in slide-in-from-top-1 duration-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                {/* Savings Summary */}
-                <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+                {/* Biodata Section */}
+                <div className="md:col-span-3 space-y-6">
                   <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-emerald-500" />
-                    <Text.H2 className="text-sm">Ringkasan Simpanan</Text.H2>
+                    <User className="h-4 w-4 text-slate-400" />
+                    <Text.H2 className="text-sm">Biodata Anggota</Text.H2>
                   </div>
-                  <NestedDetailTable 
-                    title="Daftar Rekening Simpanan"
-                    data={mockSavings}
-                    columns={[
-                      { header: "Jenis", accessor: "jenis" },
-                      { 
-                        header: "Saldo", 
-                        accessor: "nominal",
-                        render: (val) => <Text.Amount className="text-xs">{formatRupiah(val)}</Text.Amount>
-                      },
-                      { 
-                        header: "Status", 
-                        accessor: "status",
-                        render: (val) => <div className="text-[10px] font-bold text-emerald-600 uppercase">{val}</div>
-                      }
-                    ]}
-                  />
-                </div>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-slate-50/50 rounded-2xl p-4 space-y-3">
+                      <div className="flex flex-col">
+                        <Text.Label className="text-slate-400 mb-0.5">Alamat Lengkap</Text.Label>
+                        <div className="flex gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-slate-300 shrink-0 mt-0.5" />
+                          <Text.Body className="text-xs leading-relaxed">{anggota.alamat || "Alamat belum dilengkapi"}</Text.Body>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col">
+                        <Text.Label className="text-slate-400 mb-0.5">Kontak</Text.Label>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Phone className="h-3.5 w-3.5 text-slate-300" />
+                          <Text.Body className="text-xs">{anggota.noHp || "-"}</Text.Body>
+                        </div>
+                      </div>
 
-                {/* Loans Summary */}
-                <div className="space-y-4">
-                   <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-blue-500" />
-                    <Text.H2 className="text-sm">Riwayat Pinjaman Aktif</Text.H2>
-                  </div>
-                  <NestedDetailTable 
-                    title="Pinjaman Berjalan"
-                    data={mockLoans}
-                    columns={[
-                      { header: "No. Kontrak", accessor: "kontrak" },
-                      { header: "Tenor", accessor: "tenor" },
-                      { 
-                        header: "Sisa Pinjaman", 
-                        accessor: "sisa",
-                        render: (val) => <Text.Amount className="text-xs text-blue-600">{formatRupiah(val)}</Text.Amount>
-                      }
-                    ]}
-                  />
-                  <div className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col">
+                        <Text.Label className="text-slate-400 mb-0.5">Bergabung Sejak</Text.Label>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Calendar className="h-3.5 w-3.5 text-slate-300" />
+                          <Text.Body className="text-xs">{formatDate(anggota.tanggalBergabung)}</Text.Body>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-purple-50 rounded-2xl flex items-center gap-3">
                       <PieChart className="h-5 w-5 text-purple-500" />
                       <div>
                         <Text.Caption className="not-italic">Estimasi SHU Berjalan</Text.Caption>
                         <Text.Amount className="text-sm text-purple-600">{formatRupiah(getTotalSHU(anggota.id))}</Text.Amount>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-[11px] font-bold text-slate-400" onClick={() => onViewDetail(anggota.id)}>
-                      Lihat Semua Laporan
-                    </Button>
+                  </div>
+                </div>
+
+                {/* Finance Summary */}
+                <div className="md:col-span-9 space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="h-4 w-4 text-emerald-500" />
+                        <Text.H2 className="text-sm">Ringkasan Simpanan</Text.H2>
+                      </div>
+                      <NestedDetailTable 
+                        title="Daftar Rekening Simpanan"
+                        data={mockSavings}
+                        columns={[
+                          { header: "Jenis", accessor: "jenis" },
+                          { 
+                            header: "Saldo", 
+                            accessor: "nominal",
+                            render: (val) => <Text.Amount className="text-xs">{formatRupiah(val)}</Text.Amount>
+                          },
+                          { 
+                            header: "Status", 
+                            accessor: "status",
+                            render: (val) => <div className="text-[10px] font-bold text-emerald-600 uppercase">{val}</div>
+                          }
+                        ]}
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-blue-500" />
+                        <Text.H2 className="text-sm">Riwayat Pinjaman Aktif</Text.H2>
+                      </div>
+                      <NestedDetailTable 
+                        title="Pinjaman Berjalan"
+                        data={mockLoans}
+                        columns={[
+                          { header: "No. Kontrak", accessor: "kontrak" },
+                          { header: "Tenor", accessor: "tenor" },
+                          { 
+                            header: "Sisa Pinjaman", 
+                            accessor: "sisa",
+                            render: (val) => <Text.Amount className="text-xs text-blue-600">{formatRupiah(val)}</Text.Amount>
+                          }
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Transaction History Section */}
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <History className="h-4 w-4 text-slate-400" />
+                      <Text.H2 className="text-sm">5 Transaksi Terakhir</Text.H2>
+                    </div>
+                    <NestedDetailTable 
+                      title="Log Aktivitas Keuangan"
+                      data={history}
+                      emptyMessage="Belum ada riwayat transaksi"
+                      columns={[
+                        { header: "Tanggal", accessor: "tanggal", render: (val) => <Text.Body className="text-xs">{formatDate(val)}</Text.Body> },
+                        { header: "Jenis", accessor: "jenis", render: (val) => <Text.Label className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{val}</Text.Label> },
+                        { header: "Kategori", accessor: "kategori" },
+                        { 
+                          header: "Jumlah", 
+                          accessor: "jumlah", 
+                          render: (val) => <Text.Amount className="text-xs">{formatRupiah(val)}</Text.Amount>
+                        },
+                        { 
+                          header: "Status", 
+                          accessor: "status",
+                          render: (val) => (
+                            <div className={cn(
+                              "text-[10px] font-bold uppercase",
+                              val === "Sukses" ? "text-emerald-600" : "text-amber-500"
+                            )}>
+                              {val}
+                            </div>
+                          )
+                        }
+                      ]}
+                    />
                   </div>
                 </div>
               </div>

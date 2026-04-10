@@ -74,17 +74,20 @@ export default function PinjamEditForm() {
   }
   
   return (
-    <Layout pageTitle="Edit Pinjaman">
-      <div className="flex items-center gap-4 mb-6">
-        <Link to="/transaksi/pinjam">
-          <Button variant="outline" size="icon">
-            <ArrowLeft size={16} />
-          </Button>
-        </Link>
-        <h1 className="page-title">Edit Transaksi Pinjaman</h1>
-      </div>
-      
-      <Card>
+    <Layout 
+      pageTitle="Edit Pinjaman"
+      actions={
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="rounded-full h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50 gap-2"
+          onClick={() => navigate("/transaksi/pinjam")}
+        >
+          <ArrowLeft size={16} /> Kembali
+        </Button>
+      }
+    >
+      <Card className="rounded-[24px] border-none shadow-sm overflow-hidden">
         <CardContent className="p-6">
           {transaksi && (
             <PinjamanForm 

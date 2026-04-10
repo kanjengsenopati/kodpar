@@ -1,4 +1,6 @@
-
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import { PhotoUploadCard } from "@/components/anggota/PhotoUploadCard";
 import { AnggotaDetailsForm } from "@/components/anggota/AnggotaDetailsForm";
@@ -26,13 +28,26 @@ export default function AnggotaForm() {
     handleSubmit,
     id
   } = useAnggotaForm();
-
+  
+  const navigate = useNavigate();
   const dokumenCount = dokumen.length;
   const keluargaCount = keluarga.length;
   const pageTitle = isEditMode ? "Edit Anggota" : "Tambah Anggota Baru";
 
   return (
-    <Layout pageTitle={pageTitle}>
+    <Layout 
+      pageTitle={pageTitle}
+      actions={
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="rounded-full h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50 gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft size={16} /> Kembali
+        </Button>
+      }
+    >
       <FormHeader 
         title={pageTitle} 
         dokumenCount={dokumenCount}

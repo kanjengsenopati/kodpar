@@ -112,16 +112,20 @@ export default function PenarikanEditForm() {
   }
 
   return (
-    <Layout pageTitle="Edit Penarikan">
+    <Layout 
+      pageTitle="Edit Penarikan"
+      actions={
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="rounded-full h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50 gap-2"
+          onClick={() => navigate("/transaksi/penarikan")}
+        >
+          <ArrowLeft size={16} /> Kembali
+        </Button>
+      }
+    >
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/transaksi/penarikan">
-            <Button variant="outline" size="icon">
-              <ArrowLeft size={16} />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Edit Penarikan</h1>
-        </div>
 
         <Card>
           <CardHeader>

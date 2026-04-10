@@ -129,14 +129,21 @@ export default function PengajuanEditForm() {
   };
 
   return (
-    <Layout pageTitle="Edit Pengajuan">
-      <div className="flex items-center gap-4 mb-6">
-        <Link to="/transaksi/pengajuan">
-          <Button variant="outline" size="icon">
-            <ArrowLeft size={16} />
-          </Button>
-        </Link>
-        <h1 className="page-title">Edit Pengajuan #{pengajuan.id}</h1>
+    <Layout 
+      pageTitle="Edit Pengajuan"
+      actions={
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="rounded-full h-9 px-4 border-slate-200 text-slate-600 hover:bg-slate-50 gap-2"
+          onClick={() => navigate("/transaksi/pengajuan")}
+        >
+          <ArrowLeft size={16} /> Kembali
+        </Button>
+      }
+    >
+      <div className="mb-6">
+        <h1 className="page-title text-xl font-bold text-slate-800">Edit Pengajuan #{pengajuan.id}</h1>
       </div>
       
       <PengajuanFormContent
