@@ -89,93 +89,58 @@ export async function seedDemoData(): Promise<void> {
   }));
   await db.anggota.bulkPut(members);
 
-  // 2 — Financial history for MARIYEM (AG0001)
-  const transaksiSeed: Transaksi[] = [
-    {
-      id: "TR_SEED_001",
-      anggotaId: "AG0001",
-      anggotaNama: "MARIYEM",
+  // 2 — Financial history for 4 Members (Programmatic to trigger SAK EP & Schedules)
+  console.log("🌱 Generating fully compliant financial seed data...");
+  const { createTransaksi } = await import("./transaksiService");
+  const { createPengajuan, approvePengajuan } = await import("./pengajuanService");
+  
+  const seedTargets = [
+    { id: "AG0001", pinjaman: 10000000 },
+    { id: "AG0002", pinjaman: 15000000 },
+    { id: "AG0003", pinjaman: 5000000 },
+    { id: "AG0004", pinjaman: 25000000 }
+  ];
+
+  for (const target of seedTargets) {
+    const anggota = await db.anggota.get(target.id);
+    if (!anggota) continue;
+
+    // 1. Simpanan Pokok (Rp 300.000) - directly creates Transaksi & Jurnal
+    await createTransaksi({
+      anggotaId: anggota.id,
+      anggotaNama: anggota.nama,
       jenis: "Simpan",
       kategori: "Simpanan Pokok",
-      jumlah: 500000,
-      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth() - 3, 5)),
-      keterangan: "Simpanan Pokok anggota MARIYEM",
-      status: "Sukses",
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: "TR_SEED_002",
-      anggotaId: "AG0001",
-      anggotaNama: "MARIYEM",
-      jenis: "Simpan",
-      kategori: "Simpanan Wajib",
-      jumlah: 100000,
-      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth() - 2, 1)),
-      keterangan: "Simpanan Wajib bulan lalu",
-      status: "Sukses",
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: "TR_SEED_003",
-      anggotaId: "AG0001",
-      anggotaNama: "MARIYEM",
+      jumlah: 300000,
+      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+      keterangan: `Simpanan Pokok awal ${anggota.nama} (Seed)`,
+      status: "Sukses"
+    });
+
+    // 2. Pinjaman Reguler via Pengajuan Flow 
+    // (Generates Transaksi, Jadwal Angsuran, and SAK EP Jurnal)
+    const pengajuan = await createPengajuan({
+      anggotaId: anggota.id,
       jenis: "Pinjam",
       kategori: "Pinjaman Reguler",
-      jumlah: 10000000,
-      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth() - 2, 10)),
-      keterangan: "Pinjaman Reguler tenor 12 bulan (demo seed)",
-      status: "Sukses",
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: "TR_SEED_004",
-      anggotaId: "AG0001",
-      anggotaNama: "MARIYEM",
-      jenis: "Angsuran",
-      kategori: "Pinjaman Reguler",
-      jumlah: 916667,
-      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth() - 1, 10)),
-      keterangan: "Angsuran ke-1 Pinjaman Reguler",
-      status: "Sukses",
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: "TR_SEED_005",
-      anggotaId: "AG0001",
-      anggotaNama: "MARIYEM",
-      jenis: "Angsuran",
-      kategori: "Pinjaman Reguler",
-      jumlah: 916667,
-      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth(), 10)),
-      keterangan: "Angsuran ke-2 Pinjaman Reguler",
-      status: "Sukses",
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
-  await db.transaksi.bulkPut(transaksiSeed);
+      jumlah: target.pinjaman,
+      tenor: 12,
+      tanggal: formatDate(today),
+      keterangan: `Pinjaman Reguler 12 Bulan (Seed Valid SAK EP)`,
+      status: "Menunggu",
+      nominalPokok: target.pinjaman / 12, // Approximate representation
+      nominalJasa: (target.pinjaman * 0.015) // Approximate standard 1.5% representation
+    });
 
-  // 3 — Pengajuan record so the Applications module has starter data
-  await db.pengajuan.put({
-    id: "PG_SEED_001",
-    anggotaId: "AG0001",
-    anggotaNama: "MARIYEM",
-    jenis: "Pinjam",
-    kategori: "Pinjaman Reguler",
-    jumlah: 10000000,
-    tanggal: formatDate(new Date(today.getFullYear(), today.getMonth() - 2, 10)),
-    status: "Disetujui",
-    keterangan: "Pinjaman Reguler tenor 12 bulan",
-    tenor: 12,
-    createdAt: now,
-    updatedAt: now,
-  });
+    if (pengajuan) {
+      await approvePengajuan(pengajuan.id);
+    }
+  }
 
-  console.log("✅ Core seed complete: 20 members + MARIYEM financial history.");
+  // Allow async centralizedSync event loops to settle so journals are guaranteed populated
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  console.log("✅ Core seed complete: 20 members + Valid Financial Data for Top 4 Members.");
 }
 
 // ─── Public Entry Point ───────────────────────────────────────────────────────
