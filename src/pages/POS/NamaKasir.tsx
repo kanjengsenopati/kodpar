@@ -198,89 +198,90 @@ export default function NamaKasir() {
   };
 
   return (
-    <Layout pageTitle="Nama Kasir">
+    <Layout 
+      pageTitle="Nama Kasir"
+      actions={
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Tambah Kasir
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Tambah Kasir Baru</DialogTitle>
+              <DialogDescription>
+                Isi informasi kasir baru di bawah ini.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="userId" className="text-sm font-medium">Pilih User</label>
+                <Select onValueChange={handleUserSelect} value={formData.userId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih user dari sistem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id}>{user.nama} ({user.username})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="nama" className="text-sm font-medium">Nama Kasir</label>
+                <Input
+                  id="nama"
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan nama kasir"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="noHp" className="text-sm font-medium">Nomor HP</label>
+                <Input
+                  id="noHp"
+                  name="noHp"
+                  value={formData.noHp}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan nomor HP"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="username" className="text-sm font-medium">Username</label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan username"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="role" className="text-sm font-medium">Role</label>
+                <Select onValueChange={handleRoleSelect} defaultValue={formData.role}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="kasir">Kasir</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Simpan</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      }
+    >
       <div className="grid gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Nama Kasir</h2>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Tambah Kasir
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Tambah Kasir Baru</DialogTitle>
-                <DialogDescription>
-                  Isi informasi kasir baru di bawah ini.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="userId" className="text-sm font-medium">Pilih User</label>
-                  <Select onValueChange={handleUserSelect} value={formData.userId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih user dari sistem" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map(user => (
-                        <SelectItem key={user.id} value={user.id}>{user.nama} ({user.username})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="nama" className="text-sm font-medium">Nama Kasir</label>
-                  <Input
-                    id="nama"
-                    name="nama"
-                    value={formData.nama}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan nama kasir"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="noHp" className="text-sm font-medium">Nomor HP</label>
-                  <Input
-                    id="noHp"
-                    name="noHp"
-                    value={formData.noHp}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan nomor HP"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-medium">Username</label>
-                  <Input
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan username"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="role" className="text-sm font-medium">Role</label>
-                  <Select onValueChange={handleRoleSelect} defaultValue={formData.role}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="kasir">Kasir</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Simpan</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
         
         <Card>
           <CardHeader>

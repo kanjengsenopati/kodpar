@@ -215,14 +215,16 @@ export default function LaporanJualBeli() {
   };
 
   return (
-    <Layout pageTitle="Laporan Jual Beli">
+    <Layout 
+      pageTitle="Laporan Jual Beli"
+      actions={
+        <Button onClick={handleExport}>
+          <Download className="mr-2 h-4 w-4" /> Export Data
+        </Button>
+      }
+    >
       <div className="grid gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Laporan Jual Beli</h2>
-          <Button onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" /> Export Data
-          </Button>
-        </div>
+        
         
         {/* Filter Card */}
         <Card>

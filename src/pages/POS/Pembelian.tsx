@@ -9,6 +9,9 @@ import { DeleteConfirmDialog } from "@/components/pembelian/DeleteConfirmDialog"
 import { PembelianFormDialog } from "@/components/pembelian/PembelianFormDialog";
 import { PembelianDetailDialog } from "@/components/pembelian/PembelianDetailDialog";
 
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+
 export default function PembelianPage() {
   const { 
     pembelianList,
@@ -35,11 +38,17 @@ export default function PembelianPage() {
   } = usePembelian();
   
   return (
-    <Layout pageTitle="Pembelian Barang">
+    <Layout 
+      pageTitle="Pembelian Barang"
+      actions={
+        <Button onClick={openNewForm} className="flex items-center gap-1">
+          <Plus className="h-4 w-4" /> Tambah Pembelian
+        </Button>
+      }
+    >
       <PembelianHeader 
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
-        onAddNew={openNewForm}
       />
       
       <PembelianList 
