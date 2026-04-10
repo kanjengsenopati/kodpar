@@ -114,7 +114,11 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           anggotaId: formData.anggotaId,
           jenis: "Angsuran",
           jumlah: jumlahAngsuran,
+          kategori: "Pinjaman Reguler",
           keterangan: enhancedKeterangan,
+          referensiPinjamanId: selectedLoanId,
+          nominalPokok: allocationPreview?.nominalPokok ?? 0,
+          nominalJasa: allocationPreview?.nominalJasa ?? 0,
           status: initialData.status
         });
 
@@ -128,13 +132,17 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           throw new Error(result.error || "Gagal mengupdate transaksi");
         }
       } else {
-        // Create new transaction
+        // Create new transaction with all structured financial fields
         const result = await createTransaksi({
           tanggal: formData.tanggal,
           anggotaId: formData.anggotaId,
           jenis: "Angsuran",
+          kategori: "Pinjaman Reguler",
           jumlah: jumlahAngsuran,
           keterangan: enhancedKeterangan,
+          referensiPinjamanId: selectedLoanId,
+          nominalPokok: allocationPreview?.nominalPokok ?? 0,
+          nominalJasa: allocationPreview?.nominalJasa ?? 0,
           status: "Sukses"
         });
 
@@ -167,6 +175,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
     } finally {
       setIsSubmitting(false);
     }
+
   };
 
   const handleInputChange = (field: string, value: string) => {
