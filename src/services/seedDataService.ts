@@ -30,13 +30,20 @@ export async function clearAllData(): Promise<void> {
   await db.coa.clear();
   await db.jurnal.clear();
   await db.pengajuan.clear();
+  await db.jadwal_angsuran.clear();
 
-  // Clear SHU localStorage caches
+  // Clear ALL relevant localStorage caches
   Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith("shu_result_")) localStorage.removeItem(key);
+    if (
+      key.startsWith("shu_result_") ||
+      key === "centralized_sync_tracker" ||
+      key === "recent_sync_tracker" ||
+      key === "koperasi_seed_v2_indexeddb"
+    ) {
+      localStorage.removeItem(key);
+    }
   });
-  localStorage.removeItem("koperasi_seed_v2_indexeddb");
-  console.log("✅ All tables cleared.");
+  console.log("✅ All tables cleared (including jadwal_angsuran).");
 }
 
 // ─── Member Seed Data ─────────────────────────────────────────────────────────
