@@ -9,7 +9,7 @@ interface TextProps {
 }
 
 export const H1 = ({ children, className, id }: TextProps) => (
-  <h1 id={id} className={cn("text-[22px] font-bold text-slate-900 leading-tight", className)}>
+  <h1 id={id} className={cn("text-[22px] font-bold text-slate-900 leading-tight tracking-tight", className)}>
     {children}
   </h1>
 );
@@ -27,7 +27,7 @@ export const Amount = ({ children, className, id }: TextProps) => (
 );
 
 export const Label = ({ children, className, id }: TextProps) => (
-  <span id={id} className={cn("text-[11px] font-bold uppercase tracking-widest text-slate-400", className)}>
+  <span id={id} className={cn("text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400", className)}>
     {children}
   </span>
 );

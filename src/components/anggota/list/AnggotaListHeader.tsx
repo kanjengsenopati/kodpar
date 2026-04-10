@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import * as Text from "@/components/ui/text";
 
 interface AnggotaListHeaderProps {
   onResetData: () => void;
@@ -23,10 +24,10 @@ export function AnggotaListHeader({ onResetData, onResetSHU, onLoadDemoData }: A
   return (
     <div className="flex justify-between items-start mb-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Data Anggota</h1>
-        <p className="text-muted-foreground">
+        <Text.H1>Data Anggota</Text.H1>
+        <Text.Body>
           Kelola informasi anggota koperasi
-        </p>
+        </Text.Body>
       </div>
       
       <div className="flex gap-3">

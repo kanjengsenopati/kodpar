@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pengajuan, Anggota } from "@/types";
 import { Link } from "react-router-dom";
+import * as Text from "@/components/ui/text";
 
 interface PengajuanDetailCardProps {
   pengajuan: Pengajuan;
@@ -18,27 +19,27 @@ export function PengajuanDetailCard({
 }: PengajuanDetailCardProps) {
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle>Informasi Pengajuan</CardTitle>
+      <CardHeader className="pb-3 px-5 pt-5">
+        <Text.H2>Informasi Pengajuan</Text.H2>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CardContent className="px-5 pb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">ID Pengajuan</p>
-            <p className="font-semibold">{pengajuan.id}</p>
+            <Text.Label className="block mb-1">ID Pengajuan</Text.Label>
+            <Text.Body className="font-semibold text-slate-800">{pengajuan.id}</Text.Body>
           </div>
           
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Tanggal</p>
-            <p>{formatDate(pengajuan.tanggal)}</p>
+            <Text.Label className="block mb-1">Tanggal</Text.Label>
+            <Text.Body>{formatDate(pengajuan.tanggal)}</Text.Body>
           </div>
           
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Jenis Pengajuan</p>
+            <Text.Label className="block mb-1">Jenis Pengajuan</Text.Label>
             <div className="flex items-center">
-              <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                pengajuan.jenis === "Simpan" ? "bg-green-100 text-green-800" : 
-                "bg-amber-100 text-amber-800"
+              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                pengajuan.jenis === "Simpan" ? "bg-emerald-100 text-emerald-600" : 
+                "bg-amber-100 text-amber-600"
               }`}>
                 {pengajuan.jenis}
               </span>
@@ -46,12 +47,12 @@ export function PengajuanDetailCard({
           </div>
           
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Status</p>
+            <Text.Label className="block mb-1">Status</Text.Label>
             <div>
-              <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                pengajuan.status === "Disetujui" ? "bg-green-100 text-green-800" : 
-                pengajuan.status === "Menunggu" ? "bg-yellow-100 text-yellow-800" : 
-                "bg-red-100 text-red-800"
+              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                pengajuan.status === "Disetujui" ? "bg-emerald-100 text-emerald-600" : 
+                pengajuan.status === "Menunggu" ? "bg-amber-100 text-amber-600" : 
+                "bg-red-100 text-red-600"
               }`}>
                 {pengajuan.status}
               </span>
@@ -59,13 +60,13 @@ export function PengajuanDetailCard({
           </div>
           
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Jumlah</p>
-            <p className="text-lg font-bold">{formatCurrency(pengajuan.jumlah)}</p>
+            <Text.Label className="block mb-1">Jumlah</Text.Label>
+            <Text.Amount>{formatCurrency(pengajuan.jumlah)}</Text.Amount>
           </div>
           
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Keterangan</p>
-            <p>{pengajuan.keterangan || "-"}</p>
+            <Text.Label className="block mb-1">Keterangan</Text.Label>
+            <Text.Body>{pengajuan.keterangan || "-"}</Text.Body>
           </div>
         </div>
 
@@ -89,42 +90,42 @@ export function PengajuanDetailCard({
           </div>
         )}
 
-        <div className="mt-6">
-          <p className="text-sm font-medium text-muted-foreground mb-3">Informasi Anggota</p>
+        <div className="mt-8 border-t border-slate-100 pt-6">
+          <Text.H2 className="text-sm mb-4">Informasi Anggota</Text.H2>
           
           {anggota ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">ID Anggota</p>
-                <p className="font-semibold">{anggota.id}</p>
+                <Text.Label className="block mb-1">ID Anggota</Text.Label>
+                <Text.Body className="font-semibold text-slate-800">{anggota.id}</Text.Body>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Nama</p>
-                <p>
+                <Text.Label className="block mb-1">Nama</Text.Label>
+                <Text.Body>
                   <Link 
                     to={`/anggota/${anggota.id}`}
-                    className="text-blue-600 hover:underline font-medium"
+                    className="text-blue-600 hover:underline font-bold"
                   >
                     {anggota.nama}
                   </Link>
-                </p>
+                </Text.Body>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">No. HP</p>
-                <p>{anggota.noHp || "-"}</p>
+                <Text.Label className="block mb-1">No. HP</Text.Label>
+                <Text.Body>{anggota.noHp || "-"}</Text.Body>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Alamat</p>
-                <p>{anggota.alamat || "-"}</p>
+                <Text.Label className="block mb-1">Alamat</Text.Label>
+                <Text.Body>{anggota.alamat || "-"}</Text.Body>
               </div>
             </div>
           ) : (
-            <p className="text-yellow-600">
+            <Text.Body className="text-amber-600 italic">
               Data anggota tidak ditemukan
-            </p>
+            </Text.Body>
           )}
         </div>
       </CardContent>

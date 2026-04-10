@@ -53,8 +53,8 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
       {/* Dynamic Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-5 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">{pageTitle}</h1>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Koperasi Digital</p>
+          <Text.H1 className="text-xl">{pageTitle}</Text.H1>
+          <Text.Label>Koperasi Digital</Text.Label>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -105,7 +105,7 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
                 <div className="w-14 h-14 rounded-full bg-blue-600 shadow-lg shadow-blue-200 flex items-center justify-center text-white mb-1">
                   <item.icon size={28} strokeWidth={2.5} />
                 </div>
-                <span className="text-[10px] font-bold text-blue-600">{item.label}</span>
+                <Text.Label className="text-[10px] text-blue-600 normal-case tracking-normal">{item.label}</Text.Label>
               </Link>
             );
           }
@@ -119,12 +119,12 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
               )}
             >
               <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={cn(
-                "text-[10px] mt-1 font-medium",
-                isActive ? "font-bold" : "text-slate-400"
+              <Text.Label className={cn(
+                "text-[10px] mt-1 normal-case tracking-normal",
+                isActive ? "text-blue-600" : "text-slate-400"
               )}>
                 {item.label}
-              </span>
+              </Text.Label>
             </Link>
           );
         })}

@@ -265,7 +265,7 @@ export function MemberDashboard() {
       {/* Application History */}
       <section>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-slate-800">Riwayat Pengajuan</h2>
+          <Text.H2>Riwayat Pengajuan</Text.H2>
           <Button variant="ghost" size="sm" className="text-blue-600 text-xs font-bold hover:bg-blue-50">Lihat Semua</Button>
         </div>
         
@@ -286,19 +286,19 @@ export function MemberDashboard() {
                     {item.jenis === 'Simpan' ? <PiggyBank size={18} /> : <CreditCard size={18} />}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">{item.jenis} - {item.kategori}</div>
-                    <div className="text-slate-400 text-[11px] font-medium">{new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    <Text.H2 className="text-sm">{item.jenis} - {item.kategori}</Text.H2>
+                    <Text.Caption className="text-[11px] not-italic">{new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</Text.Caption>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <div className="font-bold text-slate-900 text-sm">{formatCurrency(item.jumlah)}</div>
+                  <Text.Amount className="text-sm block">{formatCurrency(item.jumlah)}</Text.Amount>
                   <div className={`flex items-center justify-end gap-1 text-[10px] font-bold uppercase tracking-wider ${
                     item.status === 'Disetujui' ? 'text-emerald-600' : 
                     item.status === 'Menunggu' ? 'text-amber-600' : 'text-red-600'
                   }`}>
-                    {item.status === 'Disetujui' ? <CheckCircle2 size={10} /> : 
-                     item.status === 'Menunggu' ? <Clock size={10} /> : <XCircle size={10} />}
+                    {item.status === 'Disetujui' ? <CheckCircle2 size={10} strokeWidth={2.5} /> : 
+                     item.status === 'Menunggu' ? <Clock size={10} strokeWidth={2.5} /> : <XCircle size={10} strokeWidth={2.5} />}
                     {item.status}
                   </div>
                 </div>

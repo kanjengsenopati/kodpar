@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { logoutUser } from "@/services/authService";
 import { toast } from "sonner";
 import NotificationBadge from "./NotificationBadge";
+import * as Text from "@/components/ui/text";
 
 export function TopNav() {
   const location = useLocation();
@@ -133,8 +134,8 @@ export function TopNav() {
             <PiggyBank className="text-white h-5 w-5" />
           </div>
           <div className="hidden lg:block">
-            <h1 className="text-sm font-bold text-slate-900 leading-none mb-0.5">Koperasi ERP</h1>
-            <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Backoffice System</p>
+            <Text.H1 className="leading-none mb-0.5">Koperasi ERP</Text.H1>
+            <Text.Label>Backoffice System</Text.Label>
           </div>
         </div>
 
@@ -201,8 +202,8 @@ export function TopNav() {
             <DropdownMenuContent align="end" className="w-52 mt-2 rounded-xl">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-xs font-bold leading-none">Super Admin</p>
-                  <p className="text-[10px] leading-none text-slate-400">admin@koperasi.com</p>
+                  <Text.H2 className="text-xs leading-none">Super Admin</Text.H2>
+                  <Text.Caption className="text-[10px] leading-none">admin@koperasi.com</Text.Caption>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
