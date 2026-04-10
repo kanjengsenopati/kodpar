@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { PenjualanItem, Kasir } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Loader2, Save, Printer, CreditCard } from "lucide-react";
 import { PaymentMethodSelector, PaymentMethod } from "./payment-methods/PaymentMethodSelector";
-import { PaymentSummary } from "./payment-methods/PaymentSummary";
 import { CashPaymentFields } from "./payment-methods/CashPaymentFields";
 import { formatRupiah } from "@/lib/utils";
+import { Text } from "@/components/ui/text";
 
 interface CartSummaryProps {
   items: PenjualanItem[];
@@ -86,46 +85,46 @@ export function CartSummary({
     (paymentMethod !== "cash" || amountPaid >= total);
   
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-md p-3 border space-y-2">
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-500">Sub-Total</span>
-          <span className="font-medium">{formatRupiah(subtotal)}</span>
+    <div className="space-y-6">
+      <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-3">
+        <div className="flex justify-between items-center">
+          <Text.Body className="text-slate-400">Sub-Total</Text.Body>
+          <Text.Body className="font-bold text-slate-700">{formatRupiah(subtotal)}</Text.Body>
         </div>
         
         {discount > 0 && (
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-500">Discounts</span>
-            <span className="text-destructive">({formatRupiah(discountAmount)})</span>
+          <div className="flex justify-between items-center">
+            <Text.Body className="text-slate-400">Discounts</Text.Body>
+            <Text.Body className="text-red-600 font-bold">({formatRupiah(discountAmount)})</Text.Body>
           </div>
         )}
         
-        <div className="flex justify-between items-center text-sm text-gray-400">
-          <span>Service Charge ({serviceFee}%)</span>
-          <span>{formatRupiah(serviceFeeAmount)}</span>
+        <div className="flex justify-between items-center">
+          <Text.Caption className="not-italic text-slate-400">Service Charge ({serviceFee}%)</Text.Caption>
+          <Text.Caption className="not-italic text-slate-500 font-medium">{formatRupiah(serviceFeeAmount)}</Text.Caption>
         </div>
         
-        <div className="flex justify-between items-center text-sm text-gray-400">
-          <span>Take Away Fee ({takeawayFee}%)</span>
-          <span>{formatRupiah(takeawayFeeAmount)}</span>
+        <div className="flex justify-between items-center">
+          <Text.Caption className="not-italic text-slate-400">Take Away Fee ({takeawayFee}%)</Text.Caption>
+          <Text.Caption className="not-italic text-slate-500 font-medium">{formatRupiah(takeawayFeeAmount)}</Text.Caption>
         </div>
         
-        <div className="flex justify-between items-center pt-2 border-t">
-          <span className="font-semibold">Total</span>
-          <span className="font-bold text-lg text-primary">{formatRupiah(total)}</span>
+        <div className="flex justify-between items-center pt-4 border-t border-slate-50">
+          <Text.H2>Total Tagihan</Text.H2>
+          <Text.Amount className="text-2xl">{formatRupiah(total)}</Text.Amount>
         </div>
       </div>
 
-      <div className="space-y-4 bg-white p-3 rounded-md border">
+      <div className="space-y-5 bg-white p-5 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         <div>
-          <Label htmlFor="kasir" className="text-sm font-medium">Nama Kasir</Label>
+          <Label htmlFor="kasir" className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">Nama Kasir</Label>
           <Select value={kasirId} onValueChange={setKasirId}>
-            <SelectTrigger id="kasir" className="mt-1.5">
-              <SelectValue placeholder="Pilih kasir" />
+            <SelectTrigger id="kasir" className="h-11 bg-slate-50 border-none rounded-xl focus:ring-blue-600/20 font-medium text-sm">
+              <SelectValue placeholder="Pilih kasir yang bertugas" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border-none shadow-xl">
               {kasirList.filter(k => k.aktif).map((kasir) => (
-                <SelectItem key={kasir.id} value={kasir.id}>
+                <SelectItem key={kasir.id} value={kasir.id} className="rounded-lg mb-1">
                   {kasir.nama}
                 </SelectItem>
               ))}
@@ -133,8 +132,8 @@ export function CartSummary({
           </Select>
         </div>
         
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium">Metode Pembayaran</Label>
+        <div className="space-y-2">
+          <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 block">Metode Pembayaran</Label>
           <PaymentMethodSelector
             selectedMethod={paymentMethod}
             onMethodChange={setPaymentMethod}
@@ -142,57 +141,60 @@ export function CartSummary({
         </div>
         
         {paymentMethod === "cash" && (
-          <CashPaymentFields
-            amountPaid={amountPaid}
-            total={total}
-            onChange={setAmountPaid}
-          />
+          <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50">
+            <CashPaymentFields
+              amountPaid={amountPaid}
+              total={total}
+              onChange={setAmountPaid}
+            />
+          </div>
         )}
         
         <div>
-          <Label htmlFor="notes" className="text-sm font-medium">Catatan</Label>
+          <Label htmlFor="notes" className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 block">Catatan Tambahan</Label>
           <Input
             id="notes"
-            placeholder="Tambahkan catatan (opsional)"
+            placeholder="Ketik catatan di sini..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="mt-1.5"
+            className="h-11 bg-slate-50 border-none rounded-xl focus-visible:ring-blue-600/20 transition-all font-medium text-sm"
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-2 mt-4">
+        <div className="grid grid-cols-2 gap-3 mt-4">
           <Button
             variant="outline"
-            className="py-5 w-full"
+            className="h-12 w-full rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
             disabled={processing}
           >
-            <Save className="mr-2 h-5 w-5" />
+            <Save className="mr-2 h-4 w-4" />
             Save Bill
           </Button>
           
           <Button
             variant="outline"
-            className="py-5 w-full"
+            className="h-12 w-full rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
             disabled={processing}
           >
-            <Printer className="mr-2 h-5 w-5" />
-            Print Bill
+            <Printer className="mr-2 h-4 w-4" />
+            Print
           </Button>
         </div>
         
         <Button
-          className="w-full gap-2 py-6 text-base font-medium bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+          className="w-full h-14 gap-3 rounded-[20px] text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-[0_10px_20px_rgba(37,99,235,0.2)] transition-all active:scale-[0.98] disabled:opacity-50"
           onClick={handleCheckout}
           disabled={!formIsValid || processing}
         >
           {processing ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" /> Memproses...
+              <Loader2 className="h-5 w-5 animate-spin" /> Sedang Memproses...
             </>
           ) : (
             <>
               <CreditCard className="h-5 w-5" />
-              <span>Charge {formatRupiah(total)}</span>
+              <span>Bayar {formatRupiah(total)}</span>
+              <ArrowRight className="h-4 w-4 ml-1" />
             </>
           )}
         </Button>

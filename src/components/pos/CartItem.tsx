@@ -1,10 +1,8 @@
-
+import React, { useState, useEffect } from "react";
 import { ProdukItem, PenjualanItem } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { formatRupiah } from "@/lib/utils";
-import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import { Text } from "@/components/ui/text";
 
 interface CartItemProps {
   item: PenjualanItem;
@@ -19,14 +17,6 @@ export function CartItem({ item, product, onUpdateQuantity, onRemove }: CartItem
   useEffect(() => {
     setQuantity(item.jumlah);
   }, [item.jumlah]);
-
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseInt(e.target.value) || 0;
-    if (newValue >= 0 && newValue <= product.stok) {
-      setQuantity(newValue);
-      onUpdateQuantity(product.id, newValue);
-    }
-  };
 
   const increaseQuantity = () => {
     if (quantity < product.stok) {
@@ -47,32 +37,46 @@ export function CartItem({ item, product, onUpdateQuantity, onRemove }: CartItem
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b last:border-b-0">
-      <div className="flex-1">
-        <h4 className="font-medium text-sm">{product.nama}</h4>
-        <div className="flex items-center text-xs text-gray-500 mt-1">
-          <div className="flex items-center mr-2">
-            <button 
-              onClick={decreaseQuantity}
-              className="w-5 h-5 flex items-center justify-center bg-gray-100 rounded-full"
-            >
-              <Minus className="h-3 w-3" />
-            </button>
-            <span className="mx-2 font-medium">× {quantity}</span>
-            <button 
-              onClick={increaseQuantity}
-              className="w-5 h-5 flex items-center justify-center bg-gray-100 rounded-full"
-              disabled={quantity >= product.stok}
-            >
-              <Plus className="h-3 w-3" />
-            </button>
-          </div>
+    <div className="group relative bg-white p-3 rounded-2xl border border-slate-50 shadow-sm transition-all hover:shadow-md">
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex-1 pr-10">
+          <Text.Body className="font-semibold line-clamp-1">{product.nama}</Text.Body>
+          <Text.Caption className="not-italic text-slate-400">
+            {formatRupiah(item.hargaSatuan)} / unit
+          </Text.Caption>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => onRemove(product.id)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={16} strokeWidth={2} />
+          </button>
         </div>
       </div>
       
-      <div className="text-right">
-        <p className="font-semibold text-primary text-sm">{formatRupiah(item.total)}</p>
-        <p className="text-xs text-gray-500">{formatRupiah(item.hargaSatuan)} / item</p>
+      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
+        <div className="flex items-center bg-slate-100/50 rounded-xl p-0.5">
+          <button 
+            onClick={decreaseQuantity}
+            className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 hover:text-blue-600 disabled:opacity-50 transition-all"
+          >
+            <Minus size={14} strokeWidth={2.5} />
+          </button>
+          <span className="mx-3 text-xs font-bold text-slate-700 w-4 text-center">{quantity}</span>
+          <button 
+            onClick={increaseQuantity}
+            className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 hover:text-blue-600 disabled:opacity-50 transition-all"
+            disabled={quantity >= product.stok}
+          >
+            <Plus size={14} strokeWidth={2.5} />
+          </button>
+        </div>
+        
+        <Text.Amount className="text-[14px]">
+          {formatRupiah(item.total)}
+        </Text.Amount>
       </div>
     </div>
   );
