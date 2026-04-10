@@ -59,8 +59,6 @@ import {
 
 import { SHUManager } from "./transaksi/financialOperations/SHUManager";
 
-// Re-export Constants
-export { KATEGORI_SIMPANAN, KATEGORI_PINJAMAN, KATEGORI_LAINNYA } from './transaksi/categories';
 
 /**
  * Stabilized Transaction Service Entry Point
