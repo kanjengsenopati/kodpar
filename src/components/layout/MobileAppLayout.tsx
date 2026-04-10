@@ -54,7 +54,9 @@ export default function MobileAppLayout({ children, pageTitle }: LayoutProps) {
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-5 py-4 flex items-center justify-between">
         <div>
           <Text.H1 className="text-xl">{pageTitle}</Text.H1>
-          <Text.Label>Koperasi Digital</Text.Label>
+          <Text.Label className="text-[10px] leading-tight opacity-70">
+            Koperasi Pintar Multi Usaha
+          </Text.Label>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

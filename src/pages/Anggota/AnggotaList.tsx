@@ -43,6 +43,12 @@ export default function AnggotaList() {
     isCalculating,
     handleViewDetail,
     handleEdit,
+    currentPage,
+    totalPages,
+    rowsPerPage,
+    totalRecords,
+    onPageChange,
+    onRowsPerPageChange
   } = useAnggotaList();
 
   // Use synced anggota list instead of the original one for better real-time consistency
@@ -83,6 +89,12 @@ export default function AnggotaList() {
               onViewDetail={handleViewDetail}
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              rowsPerPage={rowsPerPage}
+              totalRecords={totalRecords}
+              onPageChange={onPageChange}
+              onRowsPerPageChange={onRowsPerPageChange}
             />
           ) : (
             <div className="p-6">

@@ -27,7 +27,7 @@ export const Amount = ({ children, className, id }: TextProps) => (
 );
 
 export const Label = ({ children, className, id }: TextProps) => (
-  <span id={id} className={cn("text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400", className)}>
+  <span id={id} className={cn("text-[11px] font-bold text-slate-400", className)}>
     {children}
   </span>
 );

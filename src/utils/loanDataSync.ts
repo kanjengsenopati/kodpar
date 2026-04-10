@@ -95,7 +95,7 @@ export const handleTransactionPrint = (transaksi: Transaksi) => {
     </head>
     <body onload="window.print(); window.onafterprint = () => window.close();">
       <div class="header">
-        <h1 style="margin:0; font-size: 24px;">KSP SENOPATI</h1>
+        <h1 style="margin:0; font-size: 24px;">KOPIMU</h1>
         <p style="margin:5px 0 0 0; color: #64748b;">Bukti Transaksi Elektronik SAK EP</p>
       </div>
       

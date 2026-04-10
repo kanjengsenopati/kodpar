@@ -22,15 +22,8 @@ interface AnggotaListHeaderProps {
 
 export function AnggotaListHeader({ onResetData, onResetSHU, onLoadDemoData }: AnggotaListHeaderProps) {
   return (
-    <div className="flex justify-between items-start mb-6">
-      <div>
-        <Text.H1>Data Anggota</Text.H1>
-        <Text.Body>
-          Kelola informasi anggota koperasi
-        </Text.Body>
-      </div>
-      
-      <div className="flex gap-3">
+    <div className="flex justify-end items-center mb-6">
+      <div className="flex gap-2.5">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="outline" size="sm" className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700">

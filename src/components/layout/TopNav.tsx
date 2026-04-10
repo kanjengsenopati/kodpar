@@ -133,9 +133,11 @@ export function TopNav() {
           <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
             <PiggyBank className="text-white h-5 w-5" />
           </div>
-          <div className="hidden lg:block">
-            <Text.H1 className="leading-none mb-0.5">Koperasi ERP</Text.H1>
-            <Text.Label>Backoffice System</Text.Label>
+          <div className="hidden lg:flex flex-col min-w-max">
+            <Text.H1 className="leading-none mb-0.5 tracking-tight">KOPIMU</Text.H1>
+            <Text.Label className="text-[9px] text-slate-400 font-bold whitespace-nowrap">
+              Koperasi Pintar Multi Usaha
+            </Text.Label>
           </div>
         </div>
 

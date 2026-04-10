@@ -69,13 +69,27 @@ export function useAnggotaList() {
     }
   };
 
-  // Get filtered anggota
-  const filteredAnggota = getFilteredAnggota(anggotaList);
+  // Get filtered and paginated anggota
+  const { 
+    paginatedList, 
+    totalRecords, 
+    totalPages, 
+    currentPage, 
+    setCurrentPage, 
+    rowsPerPage, 
+    setRowsPerPage 
+  } = getFilteredAnggota(anggotaList);
 
   return {
     searchQuery,
     setSearchQuery,
-    filteredAnggota,
+    filteredAnggota: paginatedList,
+    totalRecords,
+    totalPages,
+    currentPage,
+    onPageChange: setCurrentPage,
+    rowsPerPage,
+    onRowsPerPageChange: setRowsPerPage,
     viewMode,
     setViewMode,
     columns,
