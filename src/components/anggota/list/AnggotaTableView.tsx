@@ -13,6 +13,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { AnggotaFinanceExpandable } from "./AnggotaFinanceExpandable";
 
 interface Column {
   id: string;

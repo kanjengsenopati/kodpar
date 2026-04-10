@@ -1,3 +1,31 @@
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { RotateCcw, Plus, Database, ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface AnggotaListHeaderProps {
+  onResetData: () => void;
+  onResetSHU: () => void;
+  onLoadDemoData: () => void;
+}
+
 export function AnggotaListHeader({ onResetData, onResetSHU, onLoadDemoData }: AnggotaListHeaderProps) {
   return (
     <div className="flex items-center gap-2">
