@@ -1,6 +1,6 @@
 
 import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
-import { generateId } from "@/lib/utils";
+import { generateUUIDv7, formatReferenceNumber } from "@/utils/idUtils";
 import { subMonths, format } from "date-fns";
 import { initSampleProdukData } from "@/services/produk";
 
@@ -30,20 +30,22 @@ export function seedRetailData(): void {
   const paymentMethods = ["cash", "debit", "qris", "transfer"];
 
   const products = [
-    { id: "PRD001", nama: "Beras Premium", hargaJual: 12000, hargaBeli: 10000, kategori: "Sembako" },
-    { id: "PRD002", nama: "Gula Pasir", hargaJual: 14000, hargaBeli: 12000, kategori: "Sembako" },
-    { id: "PRD003", nama: "Minyak Goreng", hargaJual: 18000, hargaBeli: 15000, kategori: "Sembako" },
-    { id: "PRD004", nama: "Teh Celup", hargaJual: 7500, hargaBeli: 5000, kategori: "Minuman" },
-    { id: "PRD005", nama: "Kopi Bubuk", hargaJual: 25000, hargaBeli: 20000, kategori: "Minuman" },
-    { id: "PRD006", nama: "Sabun Mandi", hargaJual: 4500, hargaBeli: 3000, kategori: "Perlengkapan Mandi" },
-    { id: "PRD007", nama: "Sampo", hargaJual: 22000, hargaBeli: 18000, kategori: "Perlengkapan Mandi" },
-    { id: "PRD008", nama: "Sikat Gigi", hargaJual: 10000, hargaBeli: 7000, kategori: "Perlengkapan Mandi" },
+    { id: generateUUIDv7(), code: "PRD-001", nama: "Beras Premium", hargaJual: 12000, hargaBeli: 10000, kategori: "Sembako" },
+    { id: generateUUIDv7(), code: "PRD-002", nama: "Gula Pasir", hargaJual: 14000, hargaBeli: 12000, kategori: "Sembako" },
+    { id: generateUUIDv7(), code: "PRD-003", nama: "Minyak Goreng", hargaJual: 18000, hargaBeli: 15000, kategori: "Sembako" },
+    { id: generateUUIDv7(), code: "PRD-004", nama: "Teh Celup", hargaJual: 7500, hargaBeli: 5000, kategori: "Minuman" },
+    { id: generateUUIDv7(), code: "PRD-005", nama: "Kopi Bubuk", hargaJual: 25000, hargaBeli: 20000, kategori: "Minuman" },
+    { id: generateUUIDv7(), code: "PRD-006", nama: "Sabun Mandi", hargaJual: 4500, hargaBeli: 3000, kategori: "Perlengkapan Mandi" },
+    { id: generateUUIDv7(), code: "PRD-007", nama: "Sampo", hargaJual: 22000, hargaBeli: 18000, kategori: "Perlengkapan Mandi" },
+    { id: generateUUIDv7(), code: "PRD-008", nama: "Sikat Gigi", hargaJual: 10000, hargaBeli: 7000, kategori: "Perlengkapan Mandi" },
   ];
 
-  const pemasokIds = ["SUP001", "SUP002", "SUP003", "SUP004", "SUP005"];
-  const pemasokNames = [
-    "PT Sembako Utama", "CV Sinar Jaya Distribusi", "UD Berkah Makmur",
-    "PT Maju Bersama Sejahtera", "CV Mulia Sentosa"
+  const suppliers = [
+    { id: generateUUIDv7(), code: "SUP-001", nama: "PT Sembako Utama" },
+    { id: generateUUIDv7(), code: "SUP-002", nama: "CV Sinar Jaya Distribusi" },
+    { id: generateUUIDv7(), code: "SUP-003", nama: "UD Berkah Makmur" },
+    { id: generateUUIDv7(), code: "SUP-004", nama: "PT Maju Bersama Sejahtera" },
+    { id: generateUUIDv7(), code: "SUP-005", nama: "CV Mulia Sentosa" }
   ];
 
   // --- Generate Penjualan (sales) ---
@@ -84,8 +86,13 @@ export function seedRetailData(): void {
       const metode = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
 
       penjualanList.push({
-        id: generateId("POS"),
-        nomorTransaksi: `TRX-${format(txDate, "yyyyMMdd")}-${String(trxCounter++).padStart(4, "0")}`,
+        id: generateUUIDv7(),
+        nomorTransaksi: formatReferenceNumber({
+          prefix: "POS",
+          year: txDate.getFullYear(),
+          month: txDate.getMonth() + 1,
+          sequence: trxCounter++
+        }),
         tanggal: txDate.toISOString(),
         kasirId: kasirIds[Math.floor(Math.random() * kasirIds.length)],
         items,
@@ -118,7 +125,7 @@ export function seedRetailData(): void {
       const day = 1 + Math.floor(Math.random() * 27);
       const txDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), day, 10, 0);
 
-      const pemasokIndex = Math.floor(Math.random() * pemasokIds.length);
+      const supplier = suppliers[Math.floor(Math.random() * suppliers.length)];
       const itemCount = 2 + Math.floor(Math.random() * 3);
       const shuffled = [...products].sort(() => Math.random() - 0.5).slice(0, itemCount);
 
@@ -142,11 +149,16 @@ export function seedRetailData(): void {
       const status = monthOffset === 0 && t === txCount - 1 ? "proses" : statuses[Math.floor(Math.random() * statuses.length)];
 
       pembelianList.push({
-        id: `PB${String(pbCounter++).padStart(4, "0")}`,
-        nomorTransaksi: `PB${format(txDate, "yyMM")}-${String(pbCounter).padStart(3, "0")}`,
+        id: generateUUIDv7(),
+        nomorTransaksi: formatReferenceNumber({
+          prefix: "PB",
+          year: txDate.getFullYear(),
+          month: txDate.getMonth() + 1,
+          sequence: pbCounter++
+        }),
         tanggal: format(txDate, "yyyy-MM-dd"),
-        pemasokId: pemasokIds[pemasokIndex],
-        pemasok: pemasokNames[pemasokIndex],
+        pemasokId: supplier.id,
+        pemasok: supplier.nama,
         items,
         subtotal,
         diskon,

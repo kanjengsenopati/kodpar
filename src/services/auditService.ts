@@ -73,7 +73,7 @@ export const logAuditEntry = async (
   const ipAddress = await getClientIP();
   
   const auditEntry: AuditEntry = {
-    id: `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: generateUUIDv7(),
     timestamp: new Date().toISOString(),
     userId: currentUser.id,
     username: currentUser.username,
@@ -86,7 +86,7 @@ export const logAuditEntry = async (
     device: getDeviceInfo(userAgent),
     browser: getBrowserInfo(userAgent),
     os: getOSInfo(userAgent),
-    sessionId: `session_${Date.now()}`
+    sessionId: generateUUIDv7()
   };
 
   const auditTrail = getAuditTrail();

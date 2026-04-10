@@ -82,7 +82,7 @@ export function AnggotaFinanceExpandable({
         </TableCell>
         {visibleColumns.map((column) => (
           <TableCell key={column.id} className="py-2.5">
-            {column.id === "id" && <Text.Caption className="not-italic font-bold text-slate-400">{anggota.id}</Text.Caption>}
+            {column.id === "id" && <Text.Caption className="not-italic font-bold text-slate-400">{anggota.noAnggota || anggota.id}</Text.Caption>}
             {column.id === "nama" && (
               <div className="flex flex-col">
                 <Text.Body className="font-bold text-slate-800">{anggota.nama}</Text.Body>
@@ -145,6 +145,11 @@ export function AnggotaFinanceExpandable({
                   
                   <div className="space-y-4">
                     <div className="bg-slate-50/50 rounded-2xl p-4 space-y-3">
+                      <div className="flex flex-col">
+                        <Text.Label className="text-slate-400 mb-0.5">ID Record (System)</Text.Label>
+                        <Text.Caption className="not-italic text-[10px] text-slate-400 truncate select-all">{anggota.id}</Text.Caption>
+                      </div>
+                      
                       <div className="flex flex-col">
                         <Text.Label className="text-slate-400 mb-0.5">Alamat Lengkap</Text.Label>
                         <div className="flex gap-2">
@@ -240,6 +245,7 @@ export function AnggotaFinanceExpandable({
                       emptyMessage="Belum ada riwayat transaksi"
                       columns={[
                         { header: "Tanggal", accessor: "tanggal", render: (val) => <Text.Body className="text-xs">{formatDate(val)}</Text.Body> },
+                        { header: "No. Transaksi", accessor: "nomorTransaksi", render: (val, item: any) => <Text.Caption className="not-italic font-bold text-slate-400">{val || (item.id.length > 10 ? item.id.substring(0,8) + "..." : item.id)}</Text.Caption> },
                         { header: "Jenis", accessor: "jenis", render: (val) => <Text.Label className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{val}</Text.Label> },
                         { header: "Kategori", accessor: "kategori" },
                         { 

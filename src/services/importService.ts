@@ -189,7 +189,7 @@ export function generateDemoTransaksiData(): {
 } {
   const demoData = [
     {
-      "ID Anggota": "AG0001",
+      "ID Anggota": "AG/2026/0001",
       "Nama Anggota": "Mariyem",
       "Jenis Transaksi": "SIMPANAN WAJIB",
       "Tanggal": "2023-01-05",
@@ -197,7 +197,7 @@ export function generateDemoTransaksiData(): {
       "Keterangan": "Simpanan wajib bulan Januari 2023"
     },
     {
-      "ID Anggota": "AG0002",
+      "ID Anggota": "AG/2026/0002",
       "Nama Anggota": "Maskun Rozak",
       "Jenis Transaksi": "SIMPANAN POKOK",
       "Tanggal": "2023-01-10",
@@ -205,7 +205,7 @@ export function generateDemoTransaksiData(): {
       "Keterangan": "Simpanan pokok anggota baru"
     },
     {
-      "ID Anggota": "AG0001",
+      "ID Anggota": "AG/2026/0001",
       "Nama Anggota": "Mariyem",
       "Jenis Transaksi": "PINJAMAN",
       "Tanggal": "2023-02-15",
@@ -213,7 +213,7 @@ export function generateDemoTransaksiData(): {
       "Keterangan": "Pinjaman pendidikan anak"
     },
     {
-      "ID Anggota": "AG0003",
+      "ID Anggota": "AG/2026/0003",
       "Nama Anggota": "Ahmad Nuralimin",
       "Jenis Transaksi": "SIMPANAN SUKARELA",
       "Tanggal": "2023-02-20",
@@ -221,7 +221,7 @@ export function generateDemoTransaksiData(): {
       "Keterangan": "Simpanan sukarela"
     },
     {
-      "ID Anggota": "AG0001",
+      "ID Anggota": "AG/2026/0001",
       "Nama Anggota": "Mariyem",
       "Jenis Transaksi": "ANGSURAN",
       "Tanggal": "2023-03-15",
@@ -313,7 +313,7 @@ export function downloadAnggotaTemplate(): void {
 export function downloadTransaksiTemplate(): void {
   const templateData = [
     {
-      "ID Anggota": "AG0001",
+      "ID Anggota": "AG/2026/0001",
       "Nama Anggota": "Contoh Nama",
       "Jenis Transaksi": "SIMPANAN WAJIB",
       "Tanggal": "2024-01-01",

@@ -20,7 +20,7 @@ export function addNotification(notification: Omit<NotificationItem, "id" | "tim
   const notifications = getNotifications();
   const newNotification: NotificationItem = {
     ...notification,
-    id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: generateUUIDv7(),
     timestamp: new Date().toISOString(),
     isRead: false
   };

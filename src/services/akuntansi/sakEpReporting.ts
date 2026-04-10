@@ -49,6 +49,9 @@ export interface SAKEPComprehensiveIncome {
  * Generate SAK EP compliant Statement of Financial Position (Laporan Posisi Keuangan)
  */
 export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialPosition {
+  const journals = getAllJurnalEntries();
+  const accounts = getAllChartOfAccounts();
+  
   // SAK EP: Balance Sheet (Financial Position) is cumulative up to the end of period
   const [year, month] = periode.split('-');
   const endDate = new Date(parseInt(year), parseInt(month), 0); // Last day of month
@@ -70,7 +73,7 @@ export function generateSAKEPFinancialPosition(periode: string): SAKEPFinancialP
     pokok: getCoaIdByCode("3100"),
     wajib: getCoaIdByCode("3200"),
     cadangan: getCoaIdByCode("3300"),
-    shu: getCoaIdByCode("cadangan-shu") // Adjust if needed
+    shu: getCoaIdByCode("3310") // Updated to standardized SHU code
   };
 
   // SAK EP: Piutang disajikan NETTO (Bruto - Cadangan)

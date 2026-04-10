@@ -72,7 +72,7 @@ export function DokumenForm({ dokumen, onUploadSuccess }: DokumenFormProps) {
       const result = event.target?.result as string;
       
       const newDokumen: AnggotaDokumen = {
-        id: `doc-${Date.now()}`,
+        id: generateUUIDv7(),
         jenis: jenisDokumen,
         file: result,
         namaFile: selectedFile.name,

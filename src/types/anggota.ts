@@ -2,6 +2,7 @@
 // Anggota (Member) types
 export interface Anggota {
   id: string;
+  noAnggota?: string; // Human-readable ID (e.g. AG-0001)
   nama: string;
   nip?: string; // Changed from required to optional
   alamat: string;

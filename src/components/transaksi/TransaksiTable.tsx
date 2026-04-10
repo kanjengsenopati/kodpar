@@ -105,7 +105,7 @@ export function TransaksiTable({
                   </TableCell>
                   {visibleColumns.map((column) => (
                     <TableCell key={column.id} className="py-2.5">
-                      {column.id === "id" && <Text.Caption className="not-italic font-bold text-slate-400">{transaksi.id}</Text.Caption>}
+                      {column.id === "id" && <Text.Caption className="not-italic font-bold text-slate-400">{transaksi.nomorTransaksi || (transaksi.id.length > 10 ? transaksi.id.substring(0,8) + "..." : transaksi.id)}</Text.Caption>}
                       {column.id === "tanggal" && <Text.Body className="text-xs">{formatDate(transaksi.tanggal)}</Text.Body>}
                       {column.id === "anggota" && <Text.Body className="font-bold text-slate-800">{transaksi.anggotaNama}</Text.Body>}
                       {column.id === "jenis" && (

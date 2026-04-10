@@ -159,16 +159,22 @@ class CentralizedSyncService {
     }
 
     // Check if journal entry already exists by reference
-    // We check both standard TXN- and potential PG- references
-    const referensiTXN = `TXN-${transaksi.id}`;
+    // Prioritize human-readable nomorTransaksi for better auditability
+    const referensiTXN = transaksi.nomorTransaksi || `TXN-${transaksi.id}`;
     let existingJournal = await getJurnalEntryByReference(referensiTXN);
     
     // If not found, and it looks like it might have come from a Pengajuan
-    if (!existingJournal && transaksi.keterangan && transaksi.keterangan.includes('Pengajuan #')) {
-      const pgMatch = transaksi.keterangan.match(/Pengajuan #([A-Z0-9]+)/);
+    if (!existingJournal && transaksi.keterangan) {
+      // Support NEW slash-based patterns and OLD dash-based legacy
+      const pgMatch = transaksi.keterangan.match(/Pengajuan #([A-Z0-9/]+)/);
       if (pgMatch) {
-        const pgRef = `PG-${pgMatch[1]}`;
+        const pgRef = pgMatch[1]; // NOMOR_PENGAJUAN is enough for reference lookup
         existingJournal = await getJurnalEntryByReference(pgRef);
+        
+        // Fallback to legacy PG- prefix if needed
+        if (!existingJournal) {
+          existingJournal = await getJurnalEntryByReference(`PG-${pgMatch[1]}`);
+        }
       }
     }
 
@@ -287,14 +293,15 @@ class CentralizedSyncService {
       console.log(`🔄 Starting centralized sync for pengajuan ${pengajuan.id}`);
       
       const tempTransaction: Transaksi = {
-        id: `PG-${pengajuan.id}`,
+        id: pengajuan.id, // Keep the same UUID for internal ID
+        nomorTransaksi: pengajuan.nomorPengajuan, // Use nomorPengajuan as nomorTransaksi
         anggotaId: pengajuan.anggotaId,
         anggotaNama: pengajuan.anggotaNama,
         jenis: pengajuan.jenis,
         jumlah: pengajuan.jumlah,
         tanggal: pengajuan.tanggal,
         kategori: pengajuan.kategori,
-        keterangan: `Approved from Application ${pengajuan.id}: ${pengajuan.keterangan}`,
+        keterangan: `Approved from Application ${pengajuan.nomorPengajuan}: ${pengajuan.keterangan}`,
         status: "Sukses",
         createdAt: pengajuan.createdAt,
         updatedAt: pengajuan.updatedAt

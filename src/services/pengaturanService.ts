@@ -54,21 +54,21 @@ const initialPengaturan: Pengaturan = {
     },
     formulaComponents: [
       {
-        id: "default-1",
+        id: "018e6a12-8c1d-7a01-8000-000000000101",
         name: "Rumus Simpanan",
         formula: "simpanan_khusus * 0.03 + simpanan_wajib * 0.05",
         description: "Rumus berdasarkan simpanan anggota",
         formulaType: "shu"
       },
       {
-        id: "default-2",
+        id: "018e6a12-8c1d-7a01-8000-000000000102",
         name: "Rumus Pendapatan",
         formula: "pendapatan * 0.02",
         description: "Rumus berdasarkan pendapatan anggota",
         formulaType: "shu"
       },
       {
-        id: "default-3",
+        id: "018e6a12-8c1d-7a01-8000-000000000103",
         name: "Rumus THR Dasar",
         formula: "lama_keanggotaan * 100000",
         description: "Rumus dasar THR berdasarkan lama keanggotaan",

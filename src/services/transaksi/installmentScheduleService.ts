@@ -1,6 +1,7 @@
 import { db } from "@/db/db";
 import { Transaksi, JadwalAngsuran } from "@/types";
 import { calculateLoanDetails } from "@/utils/loanCalculations";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 /**
  * Generate and persist an initial installment schedule for a new loan.
@@ -28,6 +29,7 @@ export async function generateInitialSchedule(loan: Transaksi): Promise<JadwalAn
     const periode = new Intl.DateTimeFormat('id-ID', periodeOptions).format(dueDate);
 
     const entry: JadwalAngsuran = {
+      id: generateUUIDv7(),
       loanId: loan.id,
       anggotaId: loan.anggotaId,
       angsuranKe: i,

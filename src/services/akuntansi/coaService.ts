@@ -272,7 +272,7 @@ export function createChartOfAccount(account: Omit<ChartOfAccount, "id" | "creat
   
   const newAccount: ChartOfAccount = {
     ...account,
-    id: `coa-${Date.now()}`,
+    id: generateUUIDv7(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };

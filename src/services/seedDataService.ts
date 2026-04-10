@@ -2,8 +2,9 @@ import { db } from "@/db/db";
 import { seedManufakturData } from "./manufaktur/seedManufakturData";
 import { seedRetailData } from "./retail/seedRetailData";
 import { Anggota } from "@/types/anggota";
-import { Transaksi, JadwalAngsuran } from "@/types/transaksi";
+import { Transaksi, JadwalAngsuran, Pengajuan } from "@/types/transaksi";
 import { JurnalEntry } from "@/types/akuntansi";
+import { formatReferenceNumber } from "@/utils/idUtils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -11,19 +12,27 @@ function formatDate(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-function makeId(prefix: string, n: number, pad = 4): string {
-  return `${prefix}${String(n).padStart(pad, "0")}`;
+/**
+ * Deterministic UUID generator for stable seed data
+ * Format: 018e6a12-8c1d-7a01-8000-<prefix_hex><sequence_hex>
+ */
+function makeSeedUUID(prefix: string, n: number): string {
+  const prefixMap: Record<string, string> = {
+    'AG': '0001',
+    'TR': '0002',
+    'JRN': '0003',
+    'PG': '0004',
+    'UK': '0005'
+  };
+  const p = prefixMap[prefix] || '0000';
+  const seq = n.toString(16).padStart(8, '0');
+  return `018e6a12-8c1d-7a01-8000-${p}${seq}`;
 }
 
 // ─── Clear All Data ───────────────────────────────────────────────────────────
 
-/**
- * Wipe all core tables and clear SHU caches from localStorage.
- * Sequential awaits (not a single transaction) avoids TransactionInactiveError
- * that occurs when mixing table.clear() with unrelated async work.
- */
 export async function clearAllData(): Promise<void> {
-  console.log("🧹 Clearing all data from IndexedDB...");
+  console.log("🧹 Clearing all data for Dual-ID Architecture Migration...");
   await db.open();
   await db.anggota.clear();
   await db.transaksi.clear();
@@ -32,23 +41,32 @@ export async function clearAllData(): Promise<void> {
   await db.pengajuan.clear();
   await db.jadwal_angsuran.clear();
 
-  // Clear ALL relevant localStorage caches
   Object.keys(localStorage).forEach((key) => {
     if (
       key.startsWith("shu_result_") ||
+      key.startsWith("manufaktur_") ||
       key === "centralized_sync_tracker" ||
       key === "recent_sync_tracker" ||
-      key === "koperasi_seed_v2_indexeddb"
+      key === "koperasi_seed_v2_indexeddb" ||
+      key === "retail_seed_v1_done" ||
+      key === "penjualanList" ||
+      key === "koperasi_pembelian" ||
+      key === "koperasi_kasir_data" ||
+      key === "retail_produk_data" ||
+      key === "pos_products" ||
+      key === "pos_cart" ||
+      key === "pos_transactions" ||
+      key === "koperasi_pengaturan"
     ) {
       localStorage.removeItem(key);
     }
   });
-  console.log("✅ All tables cleared (including jadwal_angsuran).");
+  console.log("✅ All tables cleared.");
 }
 
 // ─── Member Seed Data ─────────────────────────────────────────────────────────
 
-const MEMBER_TEMPLATES: Omit<Anggota, "id" | "createdAt" | "updatedAt">[] = [
+const MEMBER_TEMPLATES: Omit<Anggota, "id" | "noAnggota" | "createdAt" | "updatedAt">[] = [
   { nama: "MARIYEM",                 nip: "197201011998031001", alamat: "DESA JATILOR",      noHp: "0812345678",   jenisKelamin: "P", agama: "ISLAM",   status: "active", unitKerja: "SDN Jatilor 01",       email: "mariyem@example.com",          keluarga: [] },
   { nama: "MASKUN ROZAK",            nip: "198201011998031002", alamat: "DESA BRINGIN",      noHp: "0823456789",   jenisKelamin: "L", agama: "ISLAM",   status: "active", unitKerja: "SDN Bringin",          email: "maskun.rozak@example.com",     keluarga: [] },
   { nama: "AHMAD NURALIMIN",         nip: "198801011998031003", alamat: "DESA KLAMPOK",      noHp: "08345678912",  jenisKelamin: "L", agama: "ISLAM",   status: "active", unitKerja: "SDN Klampok 01",       email: "ahmad.nuralimin@example.com",  keluarga: [] },
@@ -73,79 +91,67 @@ const MEMBER_TEMPLATES: Omit<Anggota, "id" | "createdAt" | "updatedAt">[] = [
 
 // ─── Core Seed ────────────────────────────────────────────────────────────────
 
-/**
- * Seeds 20 members + MARIYEM's financial history using raw IndexedDB writes.
- *
- * IMPORTANT: we intentionally bypass createTransaksi / centralizedSync here.
- * Those services spawn new async DB operations that violate Dexie's transaction
- * lifecycle, causing TransactionInactiveError. Raw bulkPut is the correct
- * pattern for seeding / migration scripts.
- */
 export async function seedDemoData(): Promise<void> {
   await db.open();
   const now = new Date().toISOString();
   const today = new Date();
 
-  console.log("🌱 Seeding 20 members (raw DB writes)...");
+  console.log("🌱 Seeding 20 members (Dual-ID System)...");
 
-  // 1 — 20 members
   const members: Anggota[] = MEMBER_TEMPLATES.map((m, i) => ({
     ...m,
-    id: makeId("AG", i + 1),
+    id: makeSeedUUID("AG", i + 1),
+    noAnggota: formatReferenceNumber({ prefix: "AG", sequence: i + 1 }),
     createdAt: now,
     updatedAt: now,
   }));
   await db.anggota.bulkPut(members);
 
-  // 2 ─ Programmatic financial data: Simpanan + Pinjaman + Angsuran for 4 members
-  //      RAW bulkPut to avoid Dexie TransactionInactiveError from chained async services
-  console.log("🌱 Generating comprehensive financial seed data (raw DB writes)...");
+  console.log("🌱 Generating comprehensive financial seed data (Dual-ID System)...");
 
-  // Interest rate: 1.5% per month flat, tenor 12 bulan
   const SUKU_BUNGA = 1.5;
   const TENOR = 12;
 
   const seedTargets = [
-    { id: "AG0001", pinjaman: 10_000_000 },
-    { id: "AG0002", pinjaman: 15_000_000 },
-    { id: "AG0003", pinjaman:  5_000_000 },
-    { id: "AG0004", pinjaman: 25_000_000 },
+    { id: makeSeedUUID("AG", 1), pinjaman: 10_000_000 },
+    { id: makeSeedUUID("AG", 2), pinjaman: 15_000_000 },
+    { id: makeSeedUUID("AG", 3), pinjaman:  5_000_000 },
+    { id: makeSeedUUID("AG", 4), pinjaman: 25_000_000 },
   ];
 
   const allTransaksi: Transaksi[] = [];
-  const allPengajuan: Record<string, unknown>[] = [];
+  const allPengajuan: Pengajuan[] = [];
   const allJadwal: Omit<JadwalAngsuran, 'id'>[] = [];
   const allJurnal: JurnalEntry[] = [];
 
-  // Counter for unique IDs (will never collide with live user entries which use timestamp-based IDs)
   let txSeq = 1;
   let jrnSeq = 1;
+  let pgSeq = 1;
 
-  const mkTxId   = () => `TR_SEED_${String(txSeq++).padStart(3, "0")}`;
-  const mkJrnId  = () => `JRN_SEED_${String(jrnSeq++).padStart(3, "0")}`;
-  const mkPgId   = (n: number) => `PG_SEED_${String(n).padStart(3, "0")}`;
+  const mkTxId   = () => makeSeedUUID("TR", txSeq);
+  const mkTxNo   = () => formatReferenceNumber({ prefix: "TR", year: today.getFullYear(), month: today.getMonth() + 1, sequence: txSeq++, padding: 6 });
+  const mkJrnId  = () => makeSeedUUID("JRN", jrnSeq);
+  const mkJrnNo  = () => `JU${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(jrnSeq++).padStart(4, '0')}`;
+  const mkPgId   = () => makeSeedUUID("PG", pgSeq);
+  const mkPgNo   = () => formatReferenceNumber({ prefix: "PG", year: today.getFullYear(), sequence: pgSeq++ });
 
-  // COA IDs from coaService.ts initialChartOfAccounts
   const COA = {
     KAS:                "coa-kas",
     PIUTANG_ANGGOTA:    "coa-piutang-anggota",
-    SIMPANAN_SUKARELA:  "coa-simpanan-sukarela",   // Kewajiban — simpanan anggota
-    SIMPANAN_POKOK:     "coa-simpanan-pokok",       // Modal — simpanan pokok
-    SIMPANAN_WAJIB:     "coa-simpanan-wajib",       // Modal — simpanan wajib
+    SIMPANAN_SUKARELA:  "coa-simpanan-sukarela",
+    SIMPANAN_POKOK:     "coa-simpanan-pokok",
+    SIMPANAN_WAJIB:     "coa-simpanan-wajib",
     PENDAPATAN_JASA:    "coa-pendapatan-jasa-pinjaman",
   };
 
-  const loanApprovalDate = new Date(today.getFullYear(), today.getMonth() - 1, 5); // 1 month ago
-  const angsuranDate     = new Date(today.getFullYear(), today.getMonth(),      5); // this month
+  const loanApprovalDate = new Date(today.getFullYear(), today.getMonth() - 1, 5);
+  const angsuranDate     = new Date(today.getFullYear(), today.getMonth(),      5);
 
   for (let i = 0; i < seedTargets.length; i++) {
     const target = seedTargets[i];
     const anggota = members.find(m => m.id === target.id);
     if (!anggota) continue;
 
-    const pgSeq = i + 1;
-
-    // ── Kalkulasi Pinjaman ─────────────────────────────────────────────────
     const nominalPokok    = target.pinjaman;
     const nominalJasaBulan = Math.round(nominalPokok * SUKU_BUNGA / 100);
     const totalJasa       = nominalJasaBulan * TENOR;
@@ -153,11 +159,13 @@ export async function seedDemoData(): Promise<void> {
     const angsuranPerBulan = Math.ceil(totalKembali / TENOR);
     const pokokPerBulan   = Math.floor(nominalPokok / TENOR);
 
-    // ── 1. Transaksi Simpanan Pokok (Rp 300.000) ──────────────────────────
+    // ── 1. Transaksi Simpanan Pokok ──────────────────────────────────────
     const txSimpananId = mkTxId();
+    const txSimpananNo = mkTxNo();
     const simpananDate = formatDate(new Date(today.getFullYear(), today.getMonth() - 1, 1));
     allTransaksi.push({
       id: txSimpananId,
+      nomorTransaksi: txSimpananNo,
       anggotaId: anggota.id,
       anggotaNama: anggota.nama,
       jenis: "Simpan",
@@ -171,14 +179,13 @@ export async function seedDemoData(): Promise<void> {
       updatedAt: now,
     });
 
-    // Jurnal Simpanan Pokok: Dr Kas / Cr Simpanan Pokok (Modal)
     const jrnSimpananId = mkJrnId();
     allJurnal.push({
       id: jrnSimpananId,
-      nomorJurnal: `JRN-${jrnSimpananId}`,
+      nomorJurnal: mkJrnNo(),
       tanggal: simpananDate,
       deskripsi: `Setoran Simpanan Pokok — ${anggota.nama}`,
-      referensi: `TXN-${txSimpananId}`,
+      referensi: `TXN-${txSimpananNo}`,
       totalDebit: 300_000,
       totalKredit: 300_000,
       status: "POSTED",
@@ -191,11 +198,13 @@ export async function seedDemoData(): Promise<void> {
       ],
     });
 
-    // ── 2. Pengajuan Pinjaman (Disetujui) ─────────────────────────────────
-    const pgId = mkPgId(pgSeq);
+    // ── 2. Pengajuan Pinjaman ─────────────────────────────────────────────
+    const pgId = mkPgId();
+    const pgNo = mkPgNo();
     const pgDate = formatDate(loanApprovalDate);
     allPengajuan.push({
       id: pgId,
+      nomorPengajuan: pgNo,
       anggotaId: anggota.id,
       anggotaNama: anggota.nama,
       jenis: "Pinjam",
@@ -211,17 +220,19 @@ export async function seedDemoData(): Promise<void> {
       updatedAt: now,
     });
 
-    // ── 3. Transaksi Pinjaman (pencairan) ─────────────────────────────────
+    // ── 3. Transaksi Pinjaman ─────────────────────────────────────────────
     const txPinjamanId = mkTxId();
+    const txPinjamanNo = mkTxNo();
     allTransaksi.push({
       id: txPinjamanId,
+      nomorTransaksi: txPinjamanNo,
       anggotaId: anggota.id,
       anggotaNama: anggota.nama,
       jenis: "Pinjam",
       kategori: "Pinjaman Reguler",
       jumlah: nominalPokok,
       tanggal: pgDate,
-      keterangan: `Dari Pengajuan #${pgId}: Pinjaman Reguler 12 bulan (Seed Valid SAK EP)`,
+      keterangan: `Dari Pengajuan #${pgNo}: Pinjaman Reguler 12 bulan (Seed)`,
       status: "Sukses",
       tenor: TENOR,
       sukuBunga: SUKU_BUNGA,
@@ -232,14 +243,13 @@ export async function seedDemoData(): Promise<void> {
       updatedAt: now,
     });
 
-    // Jurnal Pinjaman: Dr Piutang Anggota / Cr Kas
     const jrnPinjamanId = mkJrnId();
     allJurnal.push({
       id: jrnPinjamanId,
-      nomorJurnal: `JRN-${jrnPinjamanId}`,
+      nomorJurnal: mkJrnNo(),
       tanggal: pgDate,
-      deskripsi: `Pencairan Pinjaman Reguler — ${anggota.nama} (Rp ${nominalPokok.toLocaleString("id-ID")})`,
-      referensi: `TXN-${txPinjamanId}`,
+      deskripsi: `Pencairan Pinjaman Reguler — ${anggota.nama}`,
+      referensi: `TXN-${txPinjamanNo}`,
       totalDebit: nominalPokok,
       totalKredit: nominalPokok,
       status: "POSTED",
@@ -252,13 +262,12 @@ export async function seedDemoData(): Promise<void> {
       ],
     });
 
-    // ── 4. Jadwal Angsuran (12 entri, mulai bulan depan setelah approval) ──
+    // ── 4. Jadwal Angsuran ────────────────────────────────────────────────
     const approvalDt = new Date(loanApprovalDate);
     for (let m = 1; m <= TENOR; m++) {
       const dueDate = new Date(approvalDt);
       dueDate.setMonth(approvalDt.getMonth() + m);
-      const periodeOptions: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
-      const periode = new Intl.DateTimeFormat("id-ID", periodeOptions).format(dueDate);
+      const periode = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(dueDate);
 
       allJadwal.push({
         loanId: txPinjamanId,
@@ -269,7 +278,6 @@ export async function seedDemoData(): Promise<void> {
         nominalPokok: pokokPerBulan,
         nominalJasa: nominalJasaBulan,
         totalTagihan: angsuranPerBulan,
-        // First installment is already "DIBAYAR" (seed pays it)
         status: m === 1 ? "DIBAYAR" : "BELUM_BAYAR",
         tanggalBayar: m === 1 ? angsuranDate.toISOString() : undefined,
         createdAt: now,
@@ -277,11 +285,13 @@ export async function seedDemoData(): Promise<void> {
       });
     }
 
-    // ── 5. Transaksi Angsuran Ke-1 ────────────────────────────────────────
+    // ── 5. Transaksi Angsuran ─────────────────────────────────────────────
     const txAngsuranId = mkTxId();
+    const txAngsuranNo = mkTxNo();
     const angsuranDateStr = formatDate(angsuranDate);
     allTransaksi.push({
       id: txAngsuranId,
+      nomorTransaksi: txAngsuranNo,
       anggotaId: anggota.id,
       anggotaNama: anggota.nama,
       jenis: "Angsuran",
@@ -298,14 +308,13 @@ export async function seedDemoData(): Promise<void> {
       updatedAt: now,
     });
 
-    // Jurnal Angsuran: Dr Kas / Cr Piutang Anggota + Cr Pendapatan Jasa Pinjaman
     const jrnAngsuranId = mkJrnId();
     allJurnal.push({
       id: jrnAngsuranId,
-      nomorJurnal: `JRN-${jrnAngsuranId}`,
+      nomorJurnal: mkJrnNo(),
       tanggal: angsuranDateStr,
       deskripsi: `Penerimaan Angsuran ke-1 — ${anggota.nama}`,
-      referensi: `TXN-${txAngsuranId}`,
+      referensi: `TXN-${txAngsuranNo}`,
       totalDebit: angsuranPerBulan,
       totalKredit: angsuranPerBulan,
       status: "POSTED",
@@ -320,28 +329,18 @@ export async function seedDemoData(): Promise<void> {
     });
   }
 
-  // ── Bulk write all records (outside of any Dexie transaction scope) ────────
   await db.transaksi.bulkPut(allTransaksi);
   await db.pengajuan.bulkPut(allPengajuan);
   await db.jadwal_angsuran.bulkPut(allJadwal);
   await db.jurnal.bulkPut(allJurnal);
 
-  console.log(`✅ Seed complete: ${members.length} anggota + ${allTransaksi.length} transaksi + ${allJadwal.length} jadwal angsuran + ${allJurnal.length} jurnal SAK EP.`);
-
+  console.log(`✅ Seed complete: ${members.length} anggota + ${allTransaksi.length} transaksi + ${allPengajuan.length} pengajuan.`);
 }
 
-// ─── Public Entry Point ───────────────────────────────────────────────────────
-
-/**
- * Clear everything, seed fresh demo data, then run module-level seeders.
- * Called by the "Muat Data Demo" button in the UI.
- */
 export async function runLoadDemoDataAction(): Promise<void> {
-  console.log("🚀 runLoadDemoDataAction: starting...");
   await clearAllData();
   await seedDemoData();
 
-  // Module seeders manage their own DB scope — run them outside the main flow
   try { await seedManufakturData(); } catch (e) { console.warn("seedManufakturData skipped:", e); }
   try { await seedRetailData();     } catch (e) { console.warn("seedRetailData skipped:",     e); }
 
