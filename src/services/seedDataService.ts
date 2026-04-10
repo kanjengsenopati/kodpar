@@ -2,7 +2,8 @@ import { db } from "@/db/db";
 import { seedManufakturData } from "./manufaktur/seedManufakturData";
 import { seedRetailData } from "./retail/seedRetailData";
 import { Anggota } from "@/types/anggota";
-import { Transaksi } from "@/types/transaksi";
+import { Transaksi, JadwalAngsuran } from "@/types/transaksi";
+import { JurnalEntry } from "@/types/akuntansi";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -89,91 +90,237 @@ export async function seedDemoData(): Promise<void> {
   }));
   await db.anggota.bulkPut(members);
 
-  // 2 — Financial history for 4 Members (Programmatic to trigger SAK EP & Schedules)
-  console.log("🌱 Generating fully compliant financial seed data...");
-  const { createTransaksi } = await import("./transaksiService");
-  const { createPengajuan, approvePengajuan } = await import("./pengajuanService");
-  
+  // 2 ─ Programmatic financial data: Simpanan + Pinjaman + Angsuran for 4 members
+  //      RAW bulkPut to avoid Dexie TransactionInactiveError from chained async services
+  console.log("🌱 Generating comprehensive financial seed data (raw DB writes)...");
+
+  // Interest rate: 1.5% per month flat, tenor 12 bulan
+  const SUKU_BUNGA = 1.5;
+  const TENOR = 12;
+
   const seedTargets = [
-    { id: "AG0001", pinjaman: 10000000 },
-    { id: "AG0002", pinjaman: 15000000 },
-    { id: "AG0003", pinjaman: 5000000 },
-    { id: "AG0004", pinjaman: 25000000 }
+    { id: "AG0001", pinjaman: 10_000_000 },
+    { id: "AG0002", pinjaman: 15_000_000 },
+    { id: "AG0003", pinjaman:  5_000_000 },
+    { id: "AG0004", pinjaman: 25_000_000 },
   ];
 
-  for (const target of seedTargets) {
-    const anggota = await db.anggota.get(target.id);
+  const allTransaksi: Transaksi[] = [];
+  const allPengajuan: Record<string, unknown>[] = [];
+  const allJadwal: Omit<JadwalAngsuran, 'id'>[] = [];
+  const allJurnal: JurnalEntry[] = [];
+
+  // Counter for unique IDs (will never collide with live user entries which use timestamp-based IDs)
+  let txSeq = 1;
+  let jrnSeq = 1;
+
+  const mkTxId   = () => `TR_SEED_${String(txSeq++).padStart(3, "0")}`;
+  const mkJrnId  = () => `JRN_SEED_${String(jrnSeq++).padStart(3, "0")}`;
+  const mkPgId   = (n: number) => `PG_SEED_${String(n).padStart(3, "0")}`;
+
+  // COA IDs from coaService.ts initialChartOfAccounts
+  const COA = {
+    KAS:                "coa-kas",
+    PIUTANG_ANGGOTA:    "coa-piutang-anggota",
+    SIMPANAN_SUKARELA:  "coa-simpanan-sukarela",   // Kewajiban — simpanan anggota
+    SIMPANAN_POKOK:     "coa-simpanan-pokok",       // Modal — simpanan pokok
+    SIMPANAN_WAJIB:     "coa-simpanan-wajib",       // Modal — simpanan wajib
+    PENDAPATAN_JASA:    "coa-pendapatan-jasa-pinjaman",
+  };
+
+  const loanApprovalDate = new Date(today.getFullYear(), today.getMonth() - 1, 5); // 1 month ago
+  const angsuranDate     = new Date(today.getFullYear(), today.getMonth(),      5); // this month
+
+  for (let i = 0; i < seedTargets.length; i++) {
+    const target = seedTargets[i];
+    const anggota = members.find(m => m.id === target.id);
     if (!anggota) continue;
 
-    // 1. Simpanan Pokok (Rp 300.000) - directly creates Transaksi & Jurnal
-    await createTransaksi({
+    const pgSeq = i + 1;
+
+    // ── Kalkulasi Pinjaman ─────────────────────────────────────────────────
+    const nominalPokok    = target.pinjaman;
+    const nominalJasaBulan = Math.round(nominalPokok * SUKU_BUNGA / 100);
+    const totalJasa       = nominalJasaBulan * TENOR;
+    const totalKembali    = nominalPokok + totalJasa;
+    const angsuranPerBulan = Math.ceil(totalKembali / TENOR);
+    const pokokPerBulan   = Math.floor(nominalPokok / TENOR);
+
+    // ── 1. Transaksi Simpanan Pokok (Rp 300.000) ──────────────────────────
+    const txSimpananId = mkTxId();
+    const simpananDate = formatDate(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+    allTransaksi.push({
+      id: txSimpananId,
       anggotaId: anggota.id,
       anggotaNama: anggota.nama,
       jenis: "Simpan",
       kategori: "Simpanan Pokok",
-      jumlah: 300000,
-      tanggal: formatDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+      jumlah: 300_000,
+      tanggal: simpananDate,
       keterangan: `Simpanan Pokok awal ${anggota.nama} (Seed)`,
-      status: "Sukses"
+      status: "Sukses",
+      accountingSyncStatus: "SUCCESS",
+      createdAt: now,
+      updatedAt: now,
     });
 
-    // 2. Pinjaman Reguler via Pengajuan Flow 
-    // (Generates Transaksi, Jadwal Angsuran, and SAK EP Jurnal)
-    const pengajuan = await createPengajuan({
+    // Jurnal Simpanan Pokok: Dr Kas / Cr Simpanan Pokok (Modal)
+    const jrnSimpananId = mkJrnId();
+    allJurnal.push({
+      id: jrnSimpananId,
+      nomorJurnal: `JRN-${jrnSimpananId}`,
+      tanggal: simpananDate,
+      deskripsi: `Setoran Simpanan Pokok — ${anggota.nama}`,
+      referensi: `TXN-${txSimpananId}`,
+      totalDebit: 300_000,
+      totalKredit: 300_000,
+      status: "POSTED",
+      createdBy: "system-seed",
+      createdAt: now,
+      updatedAt: now,
+      details: [
+        { id: `${jrnSimpananId}-D`, jurnalId: jrnSimpananId, coaId: COA.KAS, debit: 300_000, kredit: 0, keterangan: "Kas masuk simpanan pokok" },
+        { id: `${jrnSimpananId}-K`, jurnalId: jrnSimpananId, coaId: COA.SIMPANAN_POKOK, debit: 0, kredit: 300_000, keterangan: "Simpanan pokok anggota" },
+      ],
+    });
+
+    // ── 2. Pengajuan Pinjaman (Disetujui) ─────────────────────────────────
+    const pgId = mkPgId(pgSeq);
+    const pgDate = formatDate(loanApprovalDate);
+    allPengajuan.push({
+      id: pgId,
       anggotaId: anggota.id,
+      anggotaNama: anggota.nama,
       jenis: "Pinjam",
       kategori: "Pinjaman Reguler",
-      jumlah: target.pinjaman,
-      tenor: 12,
-      tanggal: formatDate(today),
-      keterangan: `Pinjaman Reguler 12 Bulan (Seed Valid SAK EP)`,
-      status: "Menunggu",
-      nominalPokok: target.pinjaman / 12, // Approximate representation
-      nominalJasa: (target.pinjaman * 0.015) // Approximate standard 1.5% representation
+      jumlah: nominalPokok,
+      tanggal: pgDate,
+      status: "Disetujui",
+      keterangan: `Pinjaman Reguler 12 bulan — Disetujui (Seed)`,
+      tenor: TENOR,
+      nominalPokok,
+      nominalJasa: nominalJasaBulan,
+      createdAt: now,
+      updatedAt: now,
     });
 
-    if (pengajuan) {
-      await approvePengajuan(pengajuan.id);
-      
-      // Allow IndexedDB transaction to commit before query
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
-      const { getActiveLoansByAnggotaId } = await import("./transaksiService");
-      const activeLoans = await getActiveLoansByAnggotaId(anggota.id);
-      
-      if (activeLoans && activeLoans.length > 0) {
-        // Grab the most recently created loan
-        const pinjaman = activeLoans[activeLoans.length - 1];
-        
-        const { calculateLoanDetails } = await import("../utils/loanCalculations");
-        const details = calculateLoanDetails(pinjaman.kategori || "Pinjaman Reguler", pinjaman.jumlah, pinjaman.tenor || 12);
-        
-        // 3. Seed exactly 1 Angsuran (Installment) Payment
-        // Set date to 1 month AFTER loan approval date
-        const angsuranDate = new Date(today);
-        angsuranDate.setMonth(angsuranDate.getMonth() + 1);
-        
-        await createTransaksi({
-          anggotaId: anggota.id,
-          anggotaNama: anggota.nama,
-          jenis: "Angsuran",
-          kategori: "Pinjaman Reguler",
-          jumlah: details.angsuranPerBulan,
-          tanggal: formatDate(angsuranDate),
-          keterangan: `Angsuran ke-1 Pinjaman Reguler (Seed)`,
-          status: "Sukses",
-          referensiPinjamanId: pinjaman.id,
-          nominalPokok: details.nominalPokok / (pinjaman.tenor || 12),
-          nominalJasa: details.nominalJasa // nominalJasa calculation is natively per month
-        });
-      }
+    // ── 3. Transaksi Pinjaman (pencairan) ─────────────────────────────────
+    const txPinjamanId = mkTxId();
+    allTransaksi.push({
+      id: txPinjamanId,
+      anggotaId: anggota.id,
+      anggotaNama: anggota.nama,
+      jenis: "Pinjam",
+      kategori: "Pinjaman Reguler",
+      jumlah: nominalPokok,
+      tanggal: pgDate,
+      keterangan: `Dari Pengajuan #${pgId}: Pinjaman Reguler 12 bulan (Seed Valid SAK EP)`,
+      status: "Sukses",
+      tenor: TENOR,
+      sukuBunga: SUKU_BUNGA,
+      nominalPokok,
+      nominalJasa: nominalJasaBulan,
+      accountingSyncStatus: "SUCCESS",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Jurnal Pinjaman: Dr Piutang Anggota / Cr Kas
+    const jrnPinjamanId = mkJrnId();
+    allJurnal.push({
+      id: jrnPinjamanId,
+      nomorJurnal: `JRN-${jrnPinjamanId}`,
+      tanggal: pgDate,
+      deskripsi: `Pencairan Pinjaman Reguler — ${anggota.nama} (Rp ${nominalPokok.toLocaleString("id-ID")})`,
+      referensi: `TXN-${txPinjamanId}`,
+      totalDebit: nominalPokok,
+      totalKredit: nominalPokok,
+      status: "POSTED",
+      createdBy: "system-seed",
+      createdAt: now,
+      updatedAt: now,
+      details: [
+        { id: `${jrnPinjamanId}-D`, jurnalId: jrnPinjamanId, coaId: COA.PIUTANG_ANGGOTA, debit: nominalPokok, kredit: 0, keterangan: "Piutang pokok pinjaman" },
+        { id: `${jrnPinjamanId}-K`, jurnalId: jrnPinjamanId, coaId: COA.KAS, debit: 0, kredit: nominalPokok, keterangan: "Kas keluar pencairan" },
+      ],
+    });
+
+    // ── 4. Jadwal Angsuran (12 entri, mulai bulan depan setelah approval) ──
+    const approvalDt = new Date(loanApprovalDate);
+    for (let m = 1; m <= TENOR; m++) {
+      const dueDate = new Date(approvalDt);
+      dueDate.setMonth(approvalDt.getMonth() + m);
+      const periodeOptions: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
+      const periode = new Intl.DateTimeFormat("id-ID", periodeOptions).format(dueDate);
+
+      allJadwal.push({
+        loanId: txPinjamanId,
+        anggotaId: anggota.id,
+        angsuranKe: m,
+        periode,
+        tanggalJatuhTempo: dueDate.toISOString(),
+        nominalPokok: pokokPerBulan,
+        nominalJasa: nominalJasaBulan,
+        totalTagihan: angsuranPerBulan,
+        // First installment is already "DIBAYAR" (seed pays it)
+        status: m === 1 ? "DIBAYAR" : "BELUM_BAYAR",
+        tanggalBayar: m === 1 ? angsuranDate.toISOString() : undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
+
+    // ── 5. Transaksi Angsuran Ke-1 ────────────────────────────────────────
+    const txAngsuranId = mkTxId();
+    const angsuranDateStr = formatDate(angsuranDate);
+    allTransaksi.push({
+      id: txAngsuranId,
+      anggotaId: anggota.id,
+      anggotaNama: anggota.nama,
+      jenis: "Angsuran",
+      kategori: "Pinjaman Reguler",
+      jumlah: angsuranPerBulan,
+      tanggal: angsuranDateStr,
+      referensiPinjamanId: txPinjamanId,
+      keterangan: `Angsuran ke-1 Pinjaman Reguler (Seed)`,
+      status: "Sukses",
+      nominalPokok: pokokPerBulan,
+      nominalJasa: nominalJasaBulan,
+      accountingSyncStatus: "SUCCESS",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Jurnal Angsuran: Dr Kas / Cr Piutang Anggota + Cr Pendapatan Jasa Pinjaman
+    const jrnAngsuranId = mkJrnId();
+    allJurnal.push({
+      id: jrnAngsuranId,
+      nomorJurnal: `JRN-${jrnAngsuranId}`,
+      tanggal: angsuranDateStr,
+      deskripsi: `Penerimaan Angsuran ke-1 — ${anggota.nama}`,
+      referensi: `TXN-${txAngsuranId}`,
+      totalDebit: angsuranPerBulan,
+      totalKredit: angsuranPerBulan,
+      status: "POSTED",
+      createdBy: "system-seed",
+      createdAt: now,
+      updatedAt: now,
+      details: [
+        { id: `${jrnAngsuranId}-D`,  jurnalId: jrnAngsuranId, coaId: COA.KAS,             debit: angsuranPerBulan, kredit: 0,               keterangan: "Kas masuk angsuran" },
+        { id: `${jrnAngsuranId}-K1`, jurnalId: jrnAngsuranId, coaId: COA.PIUTANG_ANGGOTA, debit: 0,               kredit: pokokPerBulan,   keterangan: "Pelunasan pokok" },
+        { id: `${jrnAngsuranId}-K2`, jurnalId: jrnAngsuranId, coaId: COA.PENDAPATAN_JASA, debit: 0,               kredit: nominalJasaBulan, keterangan: "Pendapatan jasa pinjaman" },
+      ],
+    });
   }
 
-  // Allow async centralizedSync event loops to settle so journals are guaranteed populated
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  console.log("✅ Core seed complete: 20 members + Valid Financial Data for Top 4 Members.");
+  // ── Bulk write all records (outside of any Dexie transaction scope) ────────
+  await db.transaksi.bulkPut(allTransaksi);
+  await db.pengajuan.bulkPut(allPengajuan);
+  await db.jadwal_angsuran.bulkPut(allJadwal);
+  await db.jurnal.bulkPut(allJurnal);
+
+  console.log(`✅ Seed complete: ${members.length} anggota + ${allTransaksi.length} transaksi + ${allJadwal.length} jadwal angsuran + ${allJurnal.length} jurnal SAK EP.`);
+
 }
 
 // ─── Public Entry Point ───────────────────────────────────────────────────────
