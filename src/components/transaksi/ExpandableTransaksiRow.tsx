@@ -58,11 +58,36 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
     }
   };
 
-  const mockBreakdown = [
-    { tipe: "Pokok", jumlah: transaksi.jumlah * 0.4, catatan: "Simpanan awal" },
-    { tipe: "Wajib", jumlah: transaksi.jumlah * 0.3, catatan: "Iuran rutin" },
-    { tipe: "Sukarela", jumlah: transaksi.jumlah * 0.3, catatan: "Tambahan" },
-  ];
+  const getBreakdownData = () => {
+    if (type === "angsuran") {
+      const data = [];
+      if (transaksi.nominalPokok) {
+        data.push({ tipe: "Pokok Pinjaman", jumlah: transaksi.nominalPokok, catatan: "Membayar pokok pinjaman" });
+      }
+      if (transaksi.nominalJasa) {
+        data.push({ tipe: "Jasa Pinjaman", jumlah: transaksi.nominalJasa, catatan: "Membayar jasa bulanan" });
+      }
+      // Fallback if not structurally separated
+      if (data.length === 0) {
+        data.push({ tipe: "Angsuran Total", jumlah: transaksi.jumlah, catatan: `Ref. Pinjaman: ${transaksi.referensiPinjamanId || '-'}` });
+      }
+      return data;
+    }
+    
+    if (type === "simpan") {
+      return [
+        { tipe: `Simpanan ${transaksi.kategori || ''}`, jumlah: transaksi.jumlah, catatan: "Setoran masuk" }
+      ];
+    }
+    
+    if (type === "penarikan") {
+      return [
+        { tipe: `Penarikan ${transaksi.kategori || ''}`, jumlah: transaksi.jumlah, catatan: "Penarikan dana" }
+      ];
+    }
+
+    return [];
+  };
 
   return (
     <>
@@ -171,8 +196,8 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
                     )
                   ) : (
                     <NestedDetailTable 
-                      title="Breakdown Alokasi Dana"
-                      data={mockBreakdown}
+                      title={type === "angsuran" ? "Rincian Pembayaran Angsuran" : "Breakdown Alokasi Dana"}
+                      data={getBreakdownData()}
                       columns={[
                         { header: "Tipe Alokasi", accessor: "tipe" },
                         { 
