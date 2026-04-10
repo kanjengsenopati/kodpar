@@ -1,69 +1,33 @@
-
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { 
+  formatDate, 
+  formatDateTime, 
+  formatTime, 
+  formatNumber, 
+  formatRupiah,
+  parseFormattedNumber
+} from "@/utils/formatters";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+// Re-export common formatters for backward compatibility
+export { 
+  formatDate, 
+  formatDateTime, 
+  formatTime, 
+  formatNumber, 
+  formatRupiah,
+  parseFormattedNumber
+};
 
 // Generate unique ID with prefix
 export function generateId(prefix: string = "ID"): string {
   const timestamp = Date.now().toString(36);
   const randomStr = Math.random().toString(36).substring(2, 8);
   return `${prefix}_${timestamp}_${randomStr}`;
-}
-
-// Format number to Rupiah currency
-export function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
-}
-
-// Format date to Indonesian format
-export function formatDate(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  }).format(dateObj);
-}
-
-// Format date and time to Indonesian format
-export function formatDateTime(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).format(dateObj);
-}
-
-// Format time only
-export function formatTime(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(dateObj);
-}
-
-// Format number with thousand separators
-export function formatNumber(num: number): string {
-  return new Intl.NumberFormat('id-ID').format(num);
-}
-
-// Parse formatted number back to number
-export function parseFormattedNumber(formattedNumber: string): number {
-  const cleanedNumber = formattedNumber.replace(/[^\d,-]/g, '');
-  return parseInt(cleanedNumber.replace(/[.,]/g, '')) || 0;
 }
 
 // Capitalize first letter

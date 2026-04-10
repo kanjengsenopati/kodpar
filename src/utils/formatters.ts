@@ -11,6 +11,9 @@ export function formatCurrency(amount: number | undefined | null): string {
   }).format(safeAmount);
 }
 
+// Alias for formatCurrency to maintain backward compatibility
+export const formatRupiah = formatCurrency;
+
 /**
  * Format number with thousand separators
  */
@@ -29,24 +32,46 @@ export function formatPercentage(value: number, decimals: number = 2): string {
 /**
  * Format date in Indonesian format
  */
-export function formatDate(date: string | Date): string {
-  const dateObj = new Date(date);
-  return new Intl.DateTimeFormat('id-ID', {
+export function formatDate(date: string | Date | undefined | null, options?: Intl.DateTimeFormatOptions): string {
+  if (!date) return "-";
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return "-";
+  
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
-  }).format(dateObj);
+  };
+
+  return new Intl.DateTimeFormat('id-ID', options || defaultOptions).format(dateObj);
 }
 
 /**
  * Format datetime in Indonesian format
  */
-export function formatDateTime(date: string | Date): string {
-  const dateObj = new Date(date);
+export function formatDateTime(date: string | Date | undefined | null): string {
+  if (!date) return "-";
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return "-";
+
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(dateObj);
+}
+
+/**
+ * Format time in Indonesian format
+ */
+export function formatTime(date: string | Date | undefined | null): string {
+  if (!date) return "-";
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return "-";
+
+  return new Intl.DateTimeFormat('id-ID', {
     hour: '2-digit',
     minute: '2-digit'
   }).format(dateObj);

@@ -106,6 +106,8 @@ export function RealTimeSyncStatus() {
     if (!timeString) return 'Belum pernah';
     
     const time = new Date(timeString);
+    if (isNaN(time.getTime())) return 'Format tidak valid';
+
     const now = new Date();
     const diffMs = now.getTime() - time.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -116,13 +118,13 @@ export function RealTimeSyncStatus() {
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours} jam yang lalu`;
     
-    return time.toLocaleDateString('id-ID', {
+    return formatDate(time, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    });
+    } as any);
   };
 
   return (

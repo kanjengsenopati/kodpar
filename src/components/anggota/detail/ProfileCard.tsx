@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { User, Phone, MapPin, Calendar, Edit } from "lucide-react";
 import { Anggota } from "@/types";
 import { Link } from "react-router-dom";
+import { formatDate } from "@/lib/utils";
 
 interface ProfileCardProps {
   anggota: Anggota;
@@ -42,7 +43,7 @@ export function ProfileCard({ anggota }: ProfileCardProps) {
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">Bergabung: {new Date(anggota.createdAt).toLocaleDateString("id-ID")}</span>
+              <span className="text-sm">Bergabung: {formatDate(anggota.createdAt)}</span>
             </div>
           </div>
           

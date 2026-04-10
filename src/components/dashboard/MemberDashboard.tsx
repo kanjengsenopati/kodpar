@@ -25,7 +25,7 @@ import { getPengajuanByAnggotaId, createPengajuan } from '@/services/pengajuanSe
 import { calculateTotalSimpanan, calculateTotalPinjaman } from "@/services/transaksiService";
 import { getActiveLoansByAnggotaId } from '@/services/transaksiService';
 import { getActiveJenisByType } from '@/services/jenisService';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import * as Text from "@/components/ui/text";
 import { toast } from 'sonner';
@@ -287,7 +287,7 @@ export function MemberDashboard() {
                   </div>
                   <div>
                     <Text.H2 className="text-sm">{item.jenis} - {item.kategori}</Text.H2>
-                    <Text.Caption className="text-[11px] not-italic">{new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</Text.Caption>
+                    <Text.Caption className="text-[11px] not-italic">{formatDate(item.createdAt, { day: 'numeric', month: 'short', year: 'numeric' })}</Text.Caption>
                   </div>
                 </div>
                 

@@ -1,11 +1,10 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Eye, Edit, Trash2, Phone, MapPin, Calendar, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { formatRupiah } from "@/lib/utils";
+import { formatRupiah, formatDate } from "@/utils/formatters";
 
 interface AnggotaGridViewProps {
   anggota: any[];
@@ -74,7 +73,7 @@ export function AnggotaGridView({
               )}
               <div className="flex items-center text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4 mr-2" />
-                {new Date(member.tanggalBergabung).toLocaleDateString('id-ID')}
+                {formatDate(member.tanggalBergabung)}
               </div>
             </div>
 

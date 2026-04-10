@@ -4,8 +4,8 @@ import { ChevronDown, ChevronRight, Edit, Trash2, Wallet, CreditCard, PieChart, 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { formatRupiah, cn } from "@/lib/utils";
-import { formatDate } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
+import { formatDate, formatRupiah } from "@/utils/formatters";
 import * as Text from "@/components/ui/text";
 import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 import { getTransaksiByAnggotaId } from "@/services/transaksiService";
@@ -104,7 +104,7 @@ export function AnggotaFinanceExpandable({
             {column.id === "totalPinjaman" && <Text.Amount className="text-sm text-blue-600">{formatRupiah(getTotalPinjaman(anggota.id))}</Text.Amount>}
             {column.id === "totalSHU" && <Text.Amount className="text-sm text-purple-600">{formatRupiah(getTotalSHU(anggota.id))}</Text.Amount>}
             {column.id === "petugas" && <Text.Body className="text-xs">{getPetugas(anggota.id)}</Text.Body>}
-            {column.id === "tanggalBergabung" && <Text.Body className="text-xs">{anggota.tanggalBergabung && new Date(anggota.tanggalBergabung).toLocaleDateString('id-ID')}</Text.Body>}
+            {column.id === "tanggalBergabung" && <Text.Body className="text-xs">{formatDate(anggota.tanggalBergabung)}</Text.Body>}
           </TableCell>
         ))}
         <TableCell className="text-right py-2.5" onClick={(e) => e.stopPropagation()}>

@@ -1,5 +1,4 @@
-
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Transaksi } from "@/types";
 
@@ -24,7 +23,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
         {transactions.map((transaksi) => (
           <TableRow key={transaksi.id}>
             <TableCell className="font-medium">{transaksi.id}</TableCell>
-            <TableCell>{new Date(transaksi.tanggal).toLocaleDateString("id-ID")}</TableCell>
+            <TableCell>{formatDate(transaksi.tanggal)}</TableCell>
             <TableCell>{transaksi.anggotaNama}</TableCell>
             <TableCell>
               <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
