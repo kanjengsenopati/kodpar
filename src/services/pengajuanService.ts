@@ -7,6 +7,7 @@ import { calculateLoanDetails, generateLoanDescription } from "../utils/loanCalc
 import { ensureAutoDeductionCategories } from "./keuangan/baseService";
 import { centralizedSync } from "./sync/centralizedSyncService";
 import { getCurrentUser } from "./auth/sessionManagement";
+import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "../utils/idUtils";
 
 /**
  * Get all pengajuan from IndexedDB
@@ -48,31 +49,42 @@ export async function getPengajuanByAnggotaId(anggotaId: string): Promise<Pengaj
 }
 
 /**
- * Generate a new pengajuan ID
+ * Generate a new human-readable pengajuan reference number
  */
-export async function generatePengajuanId(): Promise<string> {
-  const pengajuanList = await getPengajuanList();
-  const lastId = pengajuanList.length > 0 
-    ? parseInt(pengajuanList[pengajuanList.length - 1].id.replace("PG", "")) 
-    : 0;
-  return `PG${String(lastId + 1).padStart(4, "0")}`;
+export async function generatePengajuanNumber(): Promise<string> {
+  const pengajuanList = await db.table('pengajuan').toArray();
+  const today = new Date();
+  
+  const existingNumbers = pengajuanList
+    .map(p => extractNumericSuffix(p.nomorPengajuan || p.id))
+    .filter(n => !isNaN(n));
+    
+  const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+  
+  return formatReferenceNumber({
+    prefix: "PG",
+    year: today.getFullYear(),
+    sequence: lastSeq + 1
+  });
 }
 
 /**
  * Create a new pengajuan
  */
 export async function createPengajuan(
-  pengajuan: Omit<Pengajuan, "id" | "anggotaNama" | "createdAt" | "updatedAt"> & { dokumen?: PersyaratanDokumen[] }
+  pengajuan: Omit<Pengajuan, "id" | "nomorPengajuan" | "anggotaNama" | "createdAt" | "updatedAt"> & { dokumen?: PersyaratanDokumen[] }
 ): Promise<Pengajuan | null> {
   const anggota = await getAnggotaById(pengajuan.anggotaId);
   if (!anggota) return null;
   
-  const id = await generatePengajuanId();
+  const id = generateUUIDv7();
+  const nomorPengajuan = await generatePengajuanNumber();
   const now = new Date().toISOString();
   
   const newPengajuan: Pengajuan = {
     ...pengajuan,
     id,
+    nomorPengajuan,
     anggotaNama: anggota.nama,
     createdAt: now,
     updatedAt: now,

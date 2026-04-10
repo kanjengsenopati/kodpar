@@ -1,5 +1,6 @@
 import { JurnalEntry, JurnalDetail } from "@/types/akuntansi";
 import { db } from "@/db/db";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 // Export the type
 export type { JurnalEntry, JurnalDetail };
@@ -79,8 +80,7 @@ export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "created
     
     const newEntry: JurnalEntry = {
       ...entry,
-      // Add random suffix to timestamp ID to prevent millisecond collisions in batch runs
-      id: `je-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: generateUUIDv7(),
       nomorJurnal,
       status: 'POSTED', // Auto-post journal entries for immediate sync
       createdAt: new Date().toISOString(),

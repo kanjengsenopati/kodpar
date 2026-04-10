@@ -100,7 +100,7 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
             ? <ChevronDown className="h-4 w-4 text-slate-400" />
             : <ChevronRight className="h-4 w-4 text-slate-400" />}
         </TableCell>
-        <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{transaksi.id}</Text.Caption></TableCell>
+        <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{transaksi.nomorTransaksi || (transaksi.id.length > 10 ? transaksi.id.substring(0,8) + "..." : transaksi.id)}</Text.Caption></TableCell>
         <TableCell><Text.Body className="text-xs">{formatDate(transaksi.tanggal)}</Text.Body></TableCell>
         <TableCell><Text.Body className="font-bold text-slate-800">{transaksi.anggotaNama}</Text.Body></TableCell>
         <TableCell><Text.Label className="bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 text-[10px]">{transaksi.kategori || "-"}</Text.Label></TableCell>
@@ -139,13 +139,17 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
                   <div className="bg-slate-50/50 rounded-[20px] p-5 space-y-3">
                     <Text.Label className="text-slate-400">Rincian Transaksi</Text.Label>
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 overflow-hidden">
+                        <span className="shrink-0 mr-2">ID Record:</span>
+                        <span className="truncate select-all">{transaksi.id}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-t border-slate-100 pt-2">
                         <Text.Caption className="not-italic">ID Anggota</Text.Caption>
-                        <Text.Body className="font-bold">{transaksi.anggotaId}</Text.Body>
+                        <Text.Body className="font-bold text-xs">{transaksi.anggotaId}</Text.Body>
                       </div>
                       <div className="flex justify-between items-center">
                         <Text.Caption className="not-italic">Dicek Pada</Text.Caption>
-                        <Text.Body className="text-xs">{formatDate(transaksi.createdAt)}</Text.Body>
+                        <Text.Body className="text-[10px]">{formatDate(transaksi.createdAt)}</Text.Body>
                       </div>
                       <div className="pt-2 border-t border-slate-100">
                         <Text.Caption className="not-italic mb-1 block">Keterangan</Text.Caption>

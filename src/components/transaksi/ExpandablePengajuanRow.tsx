@@ -64,7 +64,7 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index }: Expan
             ? <ChevronDown className="h-4 w-4 text-slate-400" />
             : <ChevronRight className="h-4 w-4 text-slate-400" />}
         </TableCell>
-        <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{item.id}</Text.Caption></TableCell>
+        <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{item.nomorPengajuan || item.id}</Text.Caption></TableCell>
         <TableCell><Text.Body className="text-xs">{formatDate(item.tanggal)}</Text.Body></TableCell>
         <TableCell><Text.Body className="font-bold text-slate-800">{item.anggotaNama}</Text.Body></TableCell>
         <TableCell>{getJenisBadge(item.jenis)}</TableCell>
@@ -110,8 +110,12 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index }: Expan
                         <Text.Body className="text-xs font-bold">{item.kategori || "Umum"}</Text.Body>
                       </div>
                       <div className="flex justify-between items-center">
-                        <Text.Caption className="not-italic">ID Anggota</Text.Caption>
-                        <Text.Body className="text-xs font-bold">{item.anggotaId}</Text.Body>
+                        <Text.Caption className="not-italic">ID Record</Text.Caption>
+                        <Text.Body className="text-[10px] text-slate-400 truncate max-w-[150px]">{item.id}</Text.Body>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Text.Caption className="not-italic text-xs">No Anggota</Text.Caption>
+                        <Text.Body className="text-xs font-bold text-slate-700">{item.anggotaId}</Text.Body>
                       </div>
                       <div className="pt-2 border-t border-slate-100">
                         <Text.Caption className="not-italic mb-1 block">Catatan Tambahan</Text.Caption>

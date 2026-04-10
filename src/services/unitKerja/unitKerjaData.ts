@@ -2,6 +2,7 @@
 import { UnitKerja } from "@/types/unitKerja";
 import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
 import { initializeUnitKerjaData } from "./unitKerjaInitializer";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 const UNIT_KERJA_KEY = "koperasi_unit_kerja";
 
@@ -48,19 +49,10 @@ export function getUnitKerjaById(id: string): UnitKerja | undefined {
 }
 
 /**
- * Generate a new unit kerja ID
+ * Generate a new unit kerja ID (UUID v7)
  */
 export function generateUnitKerjaId(): string {
-  try {
-    const unitKerjaList = getAllUnitKerja();
-    const existingIds = unitKerjaList.map(uk => parseInt(uk.id.replace("UK", ""))).filter(id => !isNaN(id));
-    const lastId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
-    const newId = `UK${String(lastId + 1).padStart(3, "0")}`;
-    return newId;
-  } catch (error) {
-    console.error("Error generating unit kerja ID:", error);
-    return `UK${String(Date.now()).slice(-3)}`;
-  }
+  return generateUUIDv7();
 }
 
 /**

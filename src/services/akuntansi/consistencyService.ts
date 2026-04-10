@@ -31,7 +31,7 @@ export const consistencyService = {
     let failed = 0;
     
     for (const tx of successfulTx) {
-      const referensi = `TXN-${tx.id}`;
+      const referensi = tx.nomorTransaksi || `TXN-${tx.id}`;
       const journalEntry = await getJurnalEntryByReference(referensi);
       
       if (journalEntry) {

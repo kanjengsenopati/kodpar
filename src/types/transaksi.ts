@@ -2,6 +2,7 @@
 // Transaksi (Transaction) types
 export interface Transaksi {
   id: string;
+  nomorTransaksi?: string; // Human-readable ID (e.g. TR/2026/0001)
   anggotaId: string;
   anggotaNama: string;
   jenis: "Simpan" | "Pinjam" | "Angsuran" | "Penarikan";
@@ -35,6 +36,7 @@ export interface SubmissionResult<T> {
 
 export interface Pengajuan {
   id: string;
+  nomorPengajuan?: string; // Human-readable ID (e.g. PG/2026/0001)
   anggotaId: string;
   anggotaNama: string;
   jenis: "Simpan" | "Pinjam" | "Penarikan" | "Angsuran";

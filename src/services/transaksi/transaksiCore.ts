@@ -1,10 +1,11 @@
 import { Transaksi, SubmissionResult } from "@/types";
 import { db } from "@/db/db";
 import { initialTransaksi } from "./initialData";
-import { generateTransaksiId } from "./idGenerator";
+import { generateTransaksiId, generateTransaksiNumber } from "./idGenerator";
 import { getAnggotaById } from "@/services/anggotaService";
 import { getJenisByType } from "@/services/jenisService";
 import { getCurrentUser } from "@/services/auth/sessionManagement";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 /**
  * Get all transaksi from IndexedDB
@@ -115,7 +116,8 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): b
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
-    const newId = await generateTransaksiId();
+    const newId = generateUUIDv7();
+    const nomorTransaksi = await generateTransaksiNumber();
     const now = new Date().toISOString();
     
     // VALIDATION: Ensure required fields are present
@@ -144,6 +146,7 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
     
     const newTransaksi: Transaksi = {
       id: newId,
+      nomorTransaksi,
       tanggal: data.tanggal || new Date().toISOString().split('T')[0],
       anggotaId: data.anggotaId || "",
       anggotaNama: anggotaNama,

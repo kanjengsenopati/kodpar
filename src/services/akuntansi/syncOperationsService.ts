@@ -1,8 +1,8 @@
-
 import { JurnalEntry } from "@/types/akuntansi";
 import { getAllPemasukanPengeluaran } from "@/services/keuangan/transaksiService";
 import { createJurnalEntry } from "./jurnalService";
 import { getAllChartOfAccounts } from "./coaService";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 /**
  * Sync single transaction to accounting
@@ -22,14 +22,14 @@ export async function syncTransactionToAccounting(transaksi: any): Promise<Jurna
       nomorJurnal: "",
       tanggal: transaksi.tanggal,
       deskripsi: `${transaksi.jenis}: ${transaksi.keterangan}`,
-      referensi: `KEUANGAN-${transaksi.id}`,
+      referensi: transaksi.nomorTransaksi || `TXN-${transaksi.id}`,
       totalDebit: transaksi.jumlah,
       totalKredit: transaksi.jumlah,
       status: 'POSTED',
       createdBy: 'system_auto_sync',
       details: [
         {
-          id: `detail-${Date.now()}-1`,
+          id: generateUUIDv7(),
           jurnalId: '',
           coaId: kasAccount.id,
           debit: transaksi.jenis === 'Pemasukan' ? transaksi.jumlah : 0,

@@ -3,11 +3,13 @@ import { db } from "@/db/db";
 import { getAllUnitKerja, syncUnitKerjaWithAnggota } from "./unitKerjaService";
 import { logAuditEntry } from "./auditService";
 import { getCurrentUser } from "./auth/sessionManagement";
+import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "../utils/idUtils";
 
-// Initial sample data with the specified dummy data
+// Initial sample data with deterministic UUIDv7 for stable demo reset
 const initialAnggota: Anggota[] = [
   { 
-    id: "AG0001", 
+    id: "018e6a12-8c1d-7a01-8000-000000000001", 
+    noAnggota: "AG/2026/0001",
     nama: "MARIYEM", 
     nip: "197201011998031001",
     alamat: "DESA JATILOR",
@@ -26,7 +28,8 @@ const initialAnggota: Anggota[] = [
     updatedAt: new Date().toISOString(),
   },
   { 
-    id: "AG0002", 
+    id: "018e6a12-8c1d-7a01-8000-000000000002", 
+    noAnggota: "AG/2026/0002",
     nama: "MASKUN ROZAK", 
     nip: "198201011998031001",
     alamat: "DESA BRINGIN",
@@ -45,7 +48,8 @@ const initialAnggota: Anggota[] = [
     updatedAt: new Date().toISOString(),
   },
   { 
-    id: "AG0003", 
+    id: "018e6a12-8c1d-7a01-8000-000000000003", 
+    noAnggota: "AG/2026/0003",
     nama: "AHMAD NURALIMIN", 
     nip: "198801011998031001",
     alamat: "DESA KLAMPOK",
@@ -64,7 +68,8 @@ const initialAnggota: Anggota[] = [
     updatedAt: new Date().toISOString(),
   },
   { 
-    id: "AG0004", 
+    id: "018e6a12-8c1d-7a01-8000-000000000004", 
+    noAnggota: "AG/2026/0004",
     nama: "DJAKA KUMALATARTO, S.Pd, M.Pd", 
     nip: "197002161210012345",
     alamat: "Desa Ketitang, Kecamatan Godong, Kab Grobogan",
@@ -139,27 +144,33 @@ export async function getAnggotaById(id: string): Promise<Anggota | undefined> {
   return await db.anggota.get(id);
 }
 
-/**
- * Generate a new anggota ID
- */
-export async function generateAnggotaId(): Promise<string> {
-  const anggotaList = await getAllAnggota();
-  const lastId = anggotaList.length > 0 
-    ? parseInt(anggotaList[anggotaList.length - 1].id.replace("AG", "")) 
-    : 0;
-  const newId = `AG${String(lastId + 1).padStart(4, "0")}`;
-  return newId;
+export async function generateAnggotaNumber(): Promise<string> {
+  const anggotaList = await db.anggota.toArray();
+  
+  const existingNumbers = anggotaList
+    .map(a => extractNumericSuffix(a.noAnggota || a.id))
+    .filter(n => !isNaN(n));
+    
+  const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+  
+  return formatReferenceNumber({
+    prefix: "AG",
+    year: new Date().getFullYear(),
+    sequence: lastSeq + 1
+  });
 }
 
 /**
  * Create a new anggota
  */
-export async function createAnggota(anggota: Omit<Anggota, 'id' | 'createdAt' | 'updatedAt'>): Promise<Anggota> {
-  const id = await generateAnggotaId();
+export async function createAnggota(anggota: Omit<Anggota, 'id' | 'noAnggota' | 'createdAt' | 'updatedAt'>): Promise<Anggota> {
+  const id = generateUUIDv7();
+  const noAnggota = await generateAnggotaNumber();
   
   const newAnggota: Anggota = {
     ...anggota,
     id,
+    noAnggota,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
