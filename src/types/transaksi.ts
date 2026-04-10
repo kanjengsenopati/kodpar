@@ -61,3 +61,21 @@ export interface PersyaratanDokumen {
   required: boolean;
   kategori: "Reguler" | "Sertifikasi" | "Musiman" | "All";
 }
+
+// Persisted Installment Schedule (Database Driven)
+export interface JadwalAngsuran {
+  id?: number;
+  loanId: string;
+  anggotaId: string;
+  angsuranKe: number;
+  periode: string;        // e.g. "Mei 2026"
+  tanggalJatuhTempo: string; // ISO String
+  nominalPokok: number;
+  nominalJasa: number;
+  totalTagihan: number;
+  status: "BELUM_BAYAR" | "DIBAYAR" | "TERLAMBAT";
+  tanggalBayar?: string;  // ISO String when paid
+  transaksiId?: string;   // Link to the payment transaction
+  createdAt: string;
+  updatedAt: string;
+}

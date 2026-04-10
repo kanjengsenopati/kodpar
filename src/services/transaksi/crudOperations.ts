@@ -42,6 +42,12 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       if (result.data.jenis === "Pinjam") {
         await processLoanAutoDeductions(result.data);
       }
+      
+      // Link payment to installment schedule for Angsuran transactions
+      if (result.data.jenis === "Angsuran") {
+        const { linkPaymentToSchedule } = await import("./installmentScheduleService");
+        await linkPaymentToSchedule(result.data);
+      }
     } else if (result.success && result.data) {
       handleTransactionPending(result.data);
     }

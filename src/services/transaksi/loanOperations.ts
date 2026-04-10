@@ -174,9 +174,27 @@ export async function getAnggotaWithActiveLoans(): Promise<string[]> {
 }
 
 /**
- * Generate installment schedule for a loan - PURE DATABASE DRIVEN
+ * Generate installment schedule for a loan - PERSISTENT DATABASE DRIVEN
+ * Prioritizes the saved schedule from 'jadwal_angsuran' table.
  */
 export async function generateInstallmentSchedule(loanId: string): Promise<any[]> {
+  const { getScheduleByLoanId } = await import("./installmentScheduleService");
+  const storedSchedule = await getScheduleByLoanId(loanId);
+  
+  if (storedSchedule && storedSchedule.length > 0) {
+    return storedSchedule.map(s => ({
+      angsuranKe: s.angsuranKe,
+      jatuhTempo: s.tanggalJatuhTempo,
+      jumlah: s.totalTagihan,
+      status: s.status === "DIBAYAR" ? "lunas" : (new Date() > new Date(s.tanggalJatuhTempo) ? "terlambat" : "belum-bayar"),
+      tanggalBayar: s.tanggalBayar,
+      nominalPokok: s.nominalPokok,
+      nominalJasa: s.nominalJasa,
+      periode: s.periode
+    }));
+  }
+
+  // Fallback for legacy loans without a persisted schedule
   const allTransaksi = await getAllTransaksi();
   const loan = allTransaksi.find(t => t.id === loanId && t.jenis === "Pinjam" && t.status === "Sukses");
   if (!loan) return [];
@@ -190,15 +208,13 @@ export async function generateInstallmentSchedule(loanId: string): Promise<any[]
   const schedule = [];
   const startDate = new Date(loan.tanggal);
   const tenor = loan.tenor || 12;
-  const angsuranPerBulan = Math.floor(loan.jumlah / tenor); // Estimation for UI only if matching doesn't exist
+  const angsuranPerBulan = Math.floor(loan.jumlah / tenor);
 
   for (let i = 1; i <= tenor; i++) {
     const dueDate = new Date(startDate);
     dueDate.setMonth(dueDate.getMonth() + i);
 
-    // Find payment for this installment
     const payment = payments.find(p => {
-      // In a real system, we'd have a specific installment index link
       const paymentDate = new Date(p.tanggal);
       const dueDateEnd = new Date(dueDate);
       dueDateEnd.setDate(dueDateEnd.getDate() + 30);
@@ -207,7 +223,7 @@ export async function generateInstallmentSchedule(loanId: string): Promise<any[]
 
     schedule.push({
       angsuranKe: i,
-      jatuhTempo: dueDate.toISOString().split('T')[0],
+      jatuhTempo: dueDate.toISOString(),
       jumlah: payment ? payment.jumlah : angsuranPerBulan,
       status: payment ? "lunas" : (new Date() > dueDate ? "terlambat" : "belum-bayar"),
       tanggalBayar: payment?.tanggal,

@@ -3,6 +3,7 @@ import Dexie, { type Table } from 'dexie';
 import { Anggota } from '@/types/anggota';
 import { Transaksi } from '@/types/transaksi';
 import { ChartOfAccount, JurnalEntry } from '@/types/akuntansi';
+import { JadwalAngsuran } from '@/types/transaksi';
 
 export class KoperasiDB extends Dexie {
   anggota!: Table<Anggota>;
@@ -10,6 +11,7 @@ export class KoperasiDB extends Dexie {
   coa!: Table<ChartOfAccount>;
   jurnal!: Table<JurnalEntry>;
   pengajuan!: Table;
+  jadwal_angsuran!: Table<JadwalAngsuran>;
 
   constructor() {
     super('KoperasiDB');
@@ -27,6 +29,15 @@ export class KoperasiDB extends Dexie {
       coa: '++id, kode, nama, jenis, kategori',
       jurnal: 'id, nomorJurnal, tanggal, status, referensi',
       pengajuan: '++id, anggotaId, jenis, status, tanggal, loanId'
+    });
+    // v4: Persistent Installment Schedule
+    this.version(4).stores({
+      anggota: '++id, nama, nip, noHp, status, unitKerja',
+      transaksi: 'id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
+      coa: '++id, kode, nama, jenis, kategori',
+      jurnal: 'id, nomorJurnal, tanggal, status, referensi',
+      pengajuan: '++id, anggotaId, jenis, status, tanggal, loanId',
+      jadwal_angsuran: '++id, loanId, anggotaId, status, tanggalJatuhTempo'
     });
   }
 }

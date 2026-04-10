@@ -200,7 +200,13 @@ export async function approvePengajuan(id: string): Promise<boolean> {
       
       const transaction = result.data;
       
-      // 4. Update Application Status only after transaction is ready
+      // 5. Generate persistent installment schedule for Pinjam transactions
+      if (pengajuan.jenis === "Pinjam") {
+        const { generateInitialSchedule } = await import("./transaksi/installmentScheduleService");
+        await generateInitialSchedule(transaction);
+      }
+      
+      // 6. Update Application Status only after transaction is ready
       const updatedPengajuan = await updatePengajuan(id, { status: "Disetujui" });
       if (!updatedPengajuan) {
         throw new Error("Gagal memperbarui status pengajuan");

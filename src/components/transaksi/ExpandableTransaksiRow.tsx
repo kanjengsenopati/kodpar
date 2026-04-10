@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { ChevronDown, ChevronRight, Edit, Trash2, Calendar, DollarSign, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronRight, Edit, Trash2, Calendar, DollarSign, Clock, Loader2 } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatCurrency } from "@/utils/formatters";
-import { Transaksi } from "@/types";
+import { Transaksi, JadwalAngsuran } from "@/types";
 import { Link } from "react-router-dom";
 import * as Text from "@/components/ui/text";
 import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 import { cn } from "@/lib/utils";
+import { getScheduleByLoanId } from "@/services/transaksi/installmentScheduleService";
 
 interface ExpandableTransaksiRowProps {
   transaksi: Transaksi;
@@ -18,6 +19,25 @@ interface ExpandableTransaksiRowProps {
 
 export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: ExpandableTransaksiRowProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [schedule, setSchedule] = useState<JadwalAngsuran[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && type === "pinjam") {
+      const loadSchedule = async () => {
+        setIsLoading(true);
+        try {
+          const data = await getScheduleByLoanId(transaksi.id);
+          setSchedule(data);
+        } catch (error) {
+          console.error("Failed to load schedule:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadSchedule();
+    }
+  }, [isOpen, transaksi.id, type]);
 
   const getStatusBadge = (status: string) => {
     const cls = status === "Sukses" ? "bg-emerald-50 text-emerald-600" :
@@ -30,12 +50,13 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
     );
   };
 
-  // Mock data for nested tables
-  const mockSchedules = [
-    { bulan: "Januari 2026", jumlah: transaksi.jumlah / 10, status: "Dibayar", tgl: "10 Jan 2026" },
-    { bulan: "Februari 2026", jumlah: transaksi.jumlah / 10, status: "Dibayar", tgl: "12 Feb 2026" },
-    { bulan: "Maret 2026", jumlah: transaksi.jumlah / 10, status: "Menunggu", tgl: "-" },
-  ];
+  const getInstallmentStatusCls = (status: string) => {
+    switch (status) {
+      case "DIBAYAR": return "text-emerald-600";
+      case "TERLAMBAT": return "text-red-600";
+      default: return "text-amber-500";
+    }
+  };
 
   const mockBreakdown = [
     { tipe: "Pokok", jumlah: transaksi.jumlah * 0.4, catatan: "Simpanan awal" },
@@ -114,28 +135,40 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
                 {/* Nested Table Section */}
                 <div className="md:col-span-8">
                   {type === "pinjam" ? (
-                    <NestedDetailTable 
-                      title="Jadwal Angsuran & Tagihan"
-                      data={mockSchedules}
-                      columns={[
-                        { header: "Periode", accessor: "bulan" },
-                        { header: "Rencana Bayar", accessor: "tgl" },
-                        { 
-                          header: "Besaran", 
-                          accessor: "jumlah",
-                          render: (val) => <Text.Amount className="text-xs">{formatCurrency(val)}</Text.Amount>
-                        },
-                        { 
-                          header: "Status", 
-                          accessor: "status",
-                          render: (val) => (
-                            <div className={cn("text-[10px] font-bold uppercase", val === "Dibayar" ? "text-emerald-600" : "text-amber-500")}>
-                              {val}
-                            </div>
-                          )
-                        }
-                      ]}
-                    />
+                    isLoading ? (
+                      <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-[24px] bg-slate-50/50">
+                        <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-3" />
+                        <Text.Body className="text-slate-400">Memuat jadwal angsuran...</Text.Body>
+                      </div>
+                    ) : (
+                      <NestedDetailTable 
+                        title="Jadwal Angsuran & Tagihan"
+                        data={schedule}
+                        emptyMessage="Jadwal angsuran belum digenerate atau tidak ditemukan."
+                        columns={[
+                          { header: "Periode", accessor: "periode" },
+                          { 
+                            header: "Rencana Bayar", 
+                            accessor: "tanggalJatuhTempo",
+                            render: (val) => <Text.Body className="text-xs">{formatDate(val)}</Text.Body>
+                          },
+                          { 
+                            header: "Besaran", 
+                            accessor: "totalTagihan",
+                            render: (val) => <Text.Amount className="text-xs">{formatCurrency(val)}</Text.Amount>
+                          },
+                          { 
+                            header: "Status", 
+                            accessor: "status",
+                            render: (val) => (
+                              <div className={cn("text-[10px] font-bold uppercase", getInstallmentStatusCls(val))}>
+                                {val === "BELUM_BAYAR" ? "MENUNGGU" : val}
+                              </div>
+                            )
+                          }
+                        ]}
+                      />
+                    )
                   ) : (
                     <NestedDetailTable 
                       title="Breakdown Alokasi Dana"
