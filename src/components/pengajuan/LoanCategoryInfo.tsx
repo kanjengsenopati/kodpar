@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Info, Percent, Calendar, FileText } from "lucide-react";
 import { getPengaturan } from "@/services/pengaturanService";
+import { Text } from "@/components/ui/text";
+import { formatCurrency } from "@/utils/formatters";
 
 interface LoanCategoryInfoProps {
   kategori: string;
@@ -109,80 +111,96 @@ export function LoanCategoryInfo({ kategori, jumlah, tenor }: LoanCategoryInfoPr
   const loanPreview = calculateLoanPreview();
   
   return (
-    <Card className="border-blue-200 bg-blue-50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Info size={20} className="text-blue-600" />
-          Informasi Pinjaman {kategori}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Basic Info */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-2">
-            <Percent size={16} className="text-blue-600" />
-            <div>
-              <p className="text-sm text-muted-foreground">Suku Bunga</p>
-              <p className="font-semibold text-blue-700">{categoryInfo.interestRate}% per bulan</p>
+    <div className="bg-white/80 backdrop-blur-md rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 border border-slate-100 flex flex-col gap-4">
+      <div className="flex items-center gap-2 px-1">
+         <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+            <Info size={16} className="text-blue-600" />
+         </div>
+         <Text.H2>Informasi Pinjaman {kategori}</Text.H2>
+      </div>
+
+      <div className="space-y-3 px-1">
+        {/* Basic Info - STACKED FOR NO OVERFLOW */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-100">
+            <Percent size={14} className="text-blue-600 shrink-0" />
+            <div className="flex flex-col">
+              <Text.Label className="text-[10px]">Suku Bunga</Text.Label>
+              <Text.Body className="font-bold text-blue-700 leading-none">{categoryInfo.interestRate}% per bulan</Text.Body>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Calendar size={16} className="text-blue-600" />
-            <div>
-              <p className="text-sm text-muted-foreground">Tenor</p>
-              <p className="font-semibold">{categoryInfo.minTenor} - {categoryInfo.maxTenor} bulan</p>
+          <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-100">
+            <Calendar size={14} className="text-blue-600 shrink-0" />
+            <div className="flex flex-col">
+              <Text.Label className="text-[10px]">Tenor Tersedia</Text.Label>
+              <Text.Body className="font-bold text-slate-700 leading-none">{categoryInfo.minTenor} - {categoryInfo.maxTenor} bulan</Text.Body>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <FileText size={16} className="text-blue-600" />
-            <div>
-              <p className="text-sm text-muted-foreground">Maksimal Pinjaman</p>
-              <p className="font-semibold">Rp {(categoryInfo.maxAmount || 0).toLocaleString('id-ID')}</p>
+          <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-100">
+            <FileText size={14} className="text-blue-600 shrink-0" />
+            <div className="flex flex-col">
+              <Text.Label className="text-[10px]">Maksimal Pinjaman</Text.Label>
+              <Text.Body className="font-bold text-slate-700 leading-none">{formatCurrency(categoryInfo.maxAmount || 0)}</Text.Body>
             </div>
           </div>
         </div>
         
         {/* Description */}
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Deskripsi:</p>
-          <p className="text-sm">{categoryInfo.description}</p>
+        <div className="pt-1">
+          <Text.Label className="block mb-1">Deskripsi:</Text.Label>
+          <Text.Body className="text-[12.5px] leading-relaxed italic opacity-80">{categoryInfo.description}</Text.Body>
         </div>
         
         {/* Requirements */}
         <div>
-          <p className="text-sm text-muted-foreground mb-2">Persyaratan Dokumen:</p>
-          <div className="flex flex-wrap gap-1">
+          <Text.Label className="block mb-2">Persyaratan Dokumen:</Text.Label>
+          <div className="flex flex-wrap gap-1.5">
             {categoryInfo.requirements.map((req, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
+              <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-600 border-none text-[10px] py-0 px-2 rounded-full font-bold">
                 {req}
               </Badge>
             ))}
           </div>
         </div>
         
-        {/* Loan Preview */}
+        {/* Loan Preview - STACKED FOR NO OVERFLOW */}
         {loanPreview && (
-          <div className="border-t pt-4">
-            <p className="text-sm text-muted-foreground mb-3">Simulasi Perhitungan:</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-              <div className="bg-white p-3 rounded-lg border">
-                <p className="text-muted-foreground">Angsuran per Bulan</p>
-                <p className="font-semibold text-lg">Rp {(loanPreview.monthlyPayment || 0).toLocaleString('id-ID')}</p>
+          <div className="border-t border-slate-100 pt-3 space-y-2">
+            <Text.Label className="block mb-1">Simulasi Perhitungan:</Text.Label>
+            <div className="flex flex-col gap-2">
+              <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center transition-all hover:border-blue-200">
+                <div className="flex flex-col">
+                  <Text.Label className="text-[10px] text-slate-400">ANGSURAN / BLN</Text.Label>
+                  <Text.Amount className="text-blue-600">{formatCurrency(loanPreview.monthlyPayment || 0)}</Text.Amount>
+                </div>
+                <div className="bg-blue-50 p-2 rounded-full">
+                  <Calendar size={14} className="text-blue-600" />
+                </div>
               </div>
-              <div className="bg-white p-3 rounded-lg border">
-                <p className="text-muted-foreground">Total Bunga</p>
-                <p className="font-semibold text-lg">Rp {(loanPreview.totalInterest || 0).toLocaleString('id-ID')}</p>
+
+              <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center opacity-90">
+                <div className="flex flex-col">
+                  <Text.Label className="text-[10px] text-slate-400">TOTAL BUNGA</Text.Label>
+                  <Text.Body className="font-bold text-slate-700">{formatCurrency(loanPreview.totalInterest || 0)}</Text.Body>
+                </div>
+                <Percent size={14} className="text-slate-300" />
               </div>
-              <div className="bg-white p-3 rounded-lg border">
-                <p className="text-muted-foreground">Total Pembayaran</p>
-                <p className="font-semibold text-lg">Rp {(loanPreview.totalPayment || 0).toLocaleString('id-ID')}</p>
+
+              <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center">
+                <div className="flex flex-col">
+                  <Text.Label className="text-[10px] text-slate-400">TOTAL PEMBAYARAN</Text.Label>
+                  <Text.Body className="font-bold text-slate-700">{formatCurrency(loanPreview.totalPayment || 0)}</Text.Body>
+                </div>
+                <div className="bg-slate-50 p-2 rounded-full">
+                  <FileText size={14} className="text-slate-400" />
+                </div>
               </div>
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -30,7 +30,7 @@ export function AnggotaField({ value, onChange, anggotaList }: AnggotaFieldProps
         <SelectContent>
           {anggotaList.map((anggota) => (
             <SelectItem key={anggota.id} value={anggota.id}>
-              {anggota.nama} ({anggota.id})
+              {anggota.nama} ({anggota.noAnggota || anggota.id})
             </SelectItem>
           ))}
         </SelectContent>
