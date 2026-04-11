@@ -305,17 +305,6 @@ export function TransaksiDashboard({
           </CardContent>
         </Card>
       </div>
-            <div className="mt-4 text-right">
-              <Link 
-                to="/transaksi/pengajuan"
-                className="text-sm text-blue-600 hover:underline flex items-center justify-end gap-1"
-              >
-                Lihat semua pengajuan <ArrowRight size={14} />
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
       
       <div className="space-y-4">
         <Card>
