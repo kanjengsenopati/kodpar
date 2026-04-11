@@ -19,11 +19,11 @@ export default function DesktopLayout({ children, pageTitle, actions }: LayoutPr
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <TopNav />
       
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 pt-14 overflow-hidden">
         {/* We keep the Header for now as it contains pageTitle and potentially breadcrumbs */}
         <Header pageTitle={pageTitle} actions={actions} />
         
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5">
           <div className="max-w-[1600px] mx-auto min-h-full">
             {children}
           </div>
