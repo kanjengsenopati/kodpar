@@ -86,6 +86,16 @@ export function PengajuanFormContent({
               onChange={(value) => handleSelectChange("jenis", value)}
             />
           </div>
+
+          {formData.jenis === "Pinjam" && formData.kategori && (
+            <div className="bg-white/50 p-4 rounded-[24px] border border-slate-100 shadow-sm">
+              <DokumenPersyaratanUpload
+                selectedKategori={formData.kategori}
+                dokumenList={formData.dokumen || []}
+                onChange={handleDokumenChange}
+              />
+            </div>
+          )}
         </div>
 
         {/* Kolom 2: Form & Input Area (4 cols) */}
@@ -110,30 +120,32 @@ export function PengajuanFormContent({
         {/* Kolom 3: Preview Info & Dokumen (4 cols) */}
         <div className="lg:col-span-4 space-y-4">
           {formData.jenis === "Pinjam" && formData.kategori && formData.jumlah > 0 && (
-            <PinjamanPreview 
-              kategori={formData.kategori}
-              jumlah={formData.jumlah}
-              tenor={formData.tenor}
-            />
-          )}
-
-          {formData.jenis === "Pinjam" && formData.kategori && (
-            <div className="bg-white/50 p-4 rounded-[24px] border border-slate-100 shadow-sm">
-              <DokumenPersyaratanUpload
-                selectedKategori={formData.kategori}
-                dokumenList={formData.dokumen || []}
-                onChange={handleDokumenChange}
+            <div className="space-y-4">
+              <PinjamanPreview 
+                kategori={formData.kategori}
+                jumlah={formData.jumlah}
+                tenor={formData.tenor}
               />
+              <div className="pt-2">
+                <FormActions 
+                  isSubmitting={isSubmitting} 
+                  isEditMode={isEditMode}
+                  cancelHref="/transaksi/pengajuan"
+                />
+              </div>
             </div>
           )}
 
-          <div className="pt-2 flex justify-end">
-            <FormActions 
-              isSubmitting={isSubmitting} 
-              isEditMode={isEditMode}
-              cancelHref="/transaksi/pengajuan"
-            />
-          </div>
+          {/* Menampilkan FormActions meskipun simulasi belum muncul (untuk non-pinjaman atau data belum lengkap) */}
+          {!(formData.jenis === "Pinjam" && formData.kategori && formData.jumlah > 0) && (
+            <div className="pt-2 flex justify-end">
+              <FormActions 
+                isSubmitting={isSubmitting} 
+                isEditMode={isEditMode}
+                cancelHref="/transaksi/pengajuan"
+              />
+            </div>
+          )}
         </div>
 
       </div>
