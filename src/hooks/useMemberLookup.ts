@@ -56,7 +56,13 @@ export function useMemberLookup(memberId?: string) {
     };
   }, [memberId]);
 
-  return { member, memberName: member?.nama || "Unknown", loading, error };
+  return { 
+    member, 
+    memberName: member?.nama || "Unknown", 
+    memberNo: member?.noAnggota || "-",
+    loading, 
+    error 
+  };
 }
 
 /**

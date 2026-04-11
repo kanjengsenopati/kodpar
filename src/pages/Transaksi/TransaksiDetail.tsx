@@ -118,7 +118,7 @@ export default function TransaksiDetail() {
           <Card>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>Transaksi #{transaksi.id}</span>
+                <span>Transaksi #{transaksi.nomorTransaksi || (transaksi.id.length > 8 ? transaksi.id.substring(0, 8) + "..." : transaksi.id)}</span>
                 <span
                   className={`inline-block px-3 py-1 rounded text-sm font-medium ${
                     transaksi.status === "Sukses"
@@ -174,7 +174,7 @@ export default function TransaksiDetail() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">ID Anggota</p>
-                      <p className="font-medium">{anggota.id}</p>
+                      <p className="font-medium">{anggota.noAnggota || "-"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">No. Telepon</p>
@@ -210,8 +210,8 @@ export default function TransaksiDetail() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-2">
                 <div>
-                  <p className="text-sm text-muted-foreground">ID Transaksi</p>
-                  <p className="font-medium">{transaksi.id}</p>
+                  <p className="text-sm text-muted-foreground">ID Sistem (UUID)</p>
+                  <p className="text-xs text-slate-400 font-mono break-all">{transaksi.id}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Tanggal Dibuat</p>

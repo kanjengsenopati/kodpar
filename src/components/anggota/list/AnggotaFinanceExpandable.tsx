@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatRupiah } from "@/utils/formatters";
 import * as Text from "@/components/ui/text";
 import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTransaksiByAnggotaId } from "@/services/transaksiService";
 import { Transaksi } from "@/types";
 
@@ -144,10 +145,11 @@ export function AnggotaFinanceExpandable({
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="bg-slate-50/50 rounded-2xl p-4 space-y-3">
+                    <div className="bg-slate-50/50 rounded-2xl p-4 space-y-3 border border-slate-100/50">
                       <div className="flex flex-col">
-                        <Text.Label className="text-slate-400 mb-0.5">ID Record (System)</Text.Label>
-                        <Text.Caption className="not-italic text-[10px] text-slate-400 truncate select-all">{anggota.id}</Text.Caption>
+                        <Text.Label className="text-slate-400 mb-0.5">ID Anggota (Clean)</Text.Label>
+                        <Text.Body className="font-bold text-slate-800">{anggota.noAnggota || "-"}</Text.Body>
+                        <Text.Caption className="not-italic text-[9px] text-slate-300 mt-1 uppercase tracking-tighter">ID Sistem (UUID): {anggota.id}</Text.Caption>
                       </div>
                       
                       <div className="flex flex-col">
@@ -185,14 +187,25 @@ export function AnggotaFinanceExpandable({
                   </div>
                 </div>
 
-                {/* Finance Summary */}
-                <div className="md:col-span-9 space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="h-4 w-4 text-emerald-500" />
-                        <Text.H2 className="text-sm">Ringkasan Simpanan</Text.H2>
-                      </div>
+                {/* Finance Summary Tabs */}
+                <div className="md:col-span-9">
+                  <Tabs defaultValue="simpanan" className="w-full">
+                    <TabsList className="bg-slate-100/50 p-1 rounded-2xl mb-6">
+                      <TabsTrigger value="simpanan" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-xs font-bold">
+                        <Wallet className="h-3.5 w-3.5 mr-2 text-emerald-500" />
+                        Ringkasan Simpanan
+                      </TabsTrigger>
+                      <TabsTrigger value="pinjaman" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-xs font-bold">
+                        <CreditCard className="h-3.5 w-3.5 mr-2 text-blue-500" />
+                        Riwayat Pinjaman
+                      </TabsTrigger>
+                      <TabsTrigger value="transaksi" className="rounded-xl px-6 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-xs font-bold">
+                        <History className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                        5 Transaksi Terakhir
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="simpanan" className="animate-in fade-in-50 duration-300">
                       <NestedDetailTable 
                         title="Daftar Rekening Simpanan"
                         data={mockSavings}
@@ -210,13 +223,9 @@ export function AnggotaFinanceExpandable({
                           }
                         ]}
                       />
-                    </div>
+                    </TabsContent>
 
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-blue-500" />
-                        <Text.H2 className="text-sm">Riwayat Pinjaman Aktif</Text.H2>
-                      </div>
+                    <TabsContent value="pinjaman" className="animate-in fade-in-50 duration-300">
                       <NestedDetailTable 
                         title="Pinjaman Berjalan"
                         data={mockLoans}
@@ -230,44 +239,39 @@ export function AnggotaFinanceExpandable({
                           }
                         ]}
                       />
-                    </div>
-                  </div>
+                    </TabsContent>
 
-                  {/* Transaction History Section */}
-                  <div className="space-y-4 pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <History className="h-4 w-4 text-slate-400" />
-                      <Text.H2 className="text-sm">5 Transaksi Terakhir</Text.H2>
-                    </div>
-                    <NestedDetailTable 
-                      title="Log Aktivitas Keuangan"
-                      data={history}
-                      emptyMessage="Belum ada riwayat transaksi"
-                      columns={[
-                        { header: "Tanggal", accessor: "tanggal", render: (val) => <Text.Body className="text-xs">{formatDate(val)}</Text.Body> },
-                        { header: "No. Transaksi", accessor: "nomorTransaksi", render: (val, item: any) => <Text.Caption className="not-italic font-bold text-slate-400">{val || (item.id.length > 10 ? item.id.substring(0,8) + "..." : item.id)}</Text.Caption> },
-                        { header: "Jenis", accessor: "jenis", render: (val) => <Text.Label className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{val}</Text.Label> },
-                        { header: "Kategori", accessor: "kategori" },
-                        { 
-                          header: "Jumlah", 
-                          accessor: "jumlah", 
-                          render: (val) => <Text.Amount className="text-xs">{formatRupiah(val)}</Text.Amount>
-                        },
-                        { 
-                          header: "Status", 
-                          accessor: "status",
-                          render: (val) => (
-                            <div className={cn(
-                              "text-[10px] font-bold uppercase",
-                              val === "Sukses" ? "text-emerald-600" : "text-amber-500"
-                            )}>
-                              {val}
-                            </div>
-                          )
-                        }
-                      ]}
-                    />
-                  </div>
+                    <TabsContent value="transaksi" className="animate-in fade-in-50 duration-300">
+                      <NestedDetailTable 
+                        title="Log Aktivitas Keuangan"
+                        data={history}
+                        emptyMessage="Belum ada riwayat transaksi"
+                        columns={[
+                          { header: "Tanggal", accessor: "tanggal", render: (val) => <Text.Body className="text-xs">{formatDate(val)}</Text.Body> },
+                          { header: "No. Transaksi", accessor: "nomorTransaksi", render: (val, item: any) => <Text.Caption className="not-italic font-bold text-slate-400">{val || (item.id.length > 10 ? item.id.substring(0,8) + "..." : item.id)}</Text.Caption> },
+                          { header: "Jenis", accessor: "jenis", render: (val) => <Text.Label className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[10px]">{val}</Text.Label> },
+                          { header: "Kategori", accessor: "kategori" },
+                          { 
+                            header: "Jumlah", 
+                            accessor: "jumlah", 
+                            render: (val) => <Text.Amount className="text-xs">{formatRupiah(val)}</Text.Amount>
+                          },
+                          { 
+                            header: "Status", 
+                            accessor: "status",
+                            render: (val) => (
+                              <div className={cn(
+                                "text-[10px] font-bold uppercase",
+                                val === "Sukses" ? "text-emerald-600" : "text-amber-500"
+                              )}>
+                                {val}
+                              </div>
+                            )
+                          }
+                        ]}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
             </div>

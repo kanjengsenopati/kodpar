@@ -143,7 +143,7 @@ export default function PenarikanEditForm() {
                     <SelectContent>
                       {anggotaList.map((anggota) => (
                         <SelectItem key={anggota.id} value={anggota.id}>
-                          {anggota.nama} - {anggota.id}
+                          {anggota.nama} - {anggota.noAnggota || (anggota.id.length > 8 ? anggota.id.substring(0,8) : anggota.id)}
                         </SelectItem>
                       ))}
                     </SelectContent>
