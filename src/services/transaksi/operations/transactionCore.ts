@@ -1,6 +1,11 @@
 import { db } from "@/db/db";
 import { generateSakEpDetails, validateSakEpBalance } from "../../akuntansi/sakEpIntegrity";
 import { prepareJurnalEntry } from "../../akuntansi/jurnalService";
+import { Transaksi, SubmissionResult } from "@/types";
+import { getAnggotaById } from "@/services/anggotaService";
+import { logAuditEntry } from "@/services/auditService";
+import { syncTransactionToKeuangan } from "@/services/sync/comprehensiveSyncService";
+import { createTransaksi as createTransaksiCore } from "../transaksiCore";
 
 /**
  * STRICTLY ATOMIC: Create transaksi with immediate SAK EP Journal Entry
@@ -8,7 +13,7 @@ import { prepareJurnalEntry } from "../../akuntansi/jurnalService";
 export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
     // 1. EXECUTE STRICT ATOMIC DB TRANSACTION
-    const result = await db.transaction('rw', [db.transaksi, db.anggota, db.jurnal, db.auditLog], async () => {
+    const result = await db.transaction('rw', [db.transaksi, db.anggota, db.jurnal, db.audit_log], async () => {
       // A. Create Core Transaction Record
       const txResult = await createTransaksiCore(data);
       if (!txResult.success || !txResult.data) {

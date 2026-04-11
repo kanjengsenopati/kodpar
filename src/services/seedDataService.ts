@@ -33,13 +33,22 @@ function makeSeedUUID(prefix: string, n: number): string {
 
 export async function clearAllData(): Promise<void> {
   console.log("🧹 Clearing all data for Dual-ID Architecture Migration...");
-  await db.open();
-  await db.anggota.clear();
-  await db.transaksi.clear();
-  await db.coa.clear();
-  await db.jurnal.clear();
-  await db.pengajuan.clear();
-  await db.jadwal_angsuran.clear();
+  
+  try {
+    await db.open();
+    await Promise.all([
+      db.anggota.clear(),
+      db.transaksi.clear(),
+      db.coa.clear(),
+      db.jurnal.clear(),
+      db.pengajuan.clear(),
+      db.jadwal_angsuran.clear(),
+      db.audit_log.clear(),
+    ]);
+  } catch (error) {
+    console.warn("⚠️ Failed to clear tables gracefully, forcing safe reset:", error);
+    await db.safeReset();
+  }
 
   Object.keys(localStorage).forEach((key) => {
     if (
@@ -56,12 +65,13 @@ export async function clearAllData(): Promise<void> {
       key === "pos_products" ||
       key === "pos_cart" ||
       key === "pos_transactions" ||
-      key === "koperasi_pengaturan"
+      key === "koperasi_pengaturan" ||
+      key === "shu_formula_updated"
     ) {
       localStorage.removeItem(key);
     }
   });
-  console.log("✅ All tables cleared.");
+  console.log("✅ All tables and caches cleared.");
 }
 
 // ─── Member Seed Data ─────────────────────────────────────────────────────────

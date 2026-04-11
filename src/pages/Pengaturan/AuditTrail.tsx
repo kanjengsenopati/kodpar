@@ -40,8 +40,8 @@ export default function AuditTrail() {
     filterEntries();
   }, [auditEntries, searchTerm, selectedUser, selectedResource, selectedAction, startDate, endDate]);
 
-  const loadAuditEntries = () => {
-    const entries = getAuditTrail();
+  const loadAuditEntries = async () => {
+    const entries = await getAuditTrail();
     setAuditEntries(entries);
   };
 
@@ -74,16 +74,19 @@ export default function AuditTrail() {
 
     // Date range filter
     if (startDate && endDate) {
-      filtered = getAuditTrailByDateRange(startDate, endDate);
+      getAuditTrailByDateRange(startDate, endDate).then(result => {
+        setFilteredEntries(result);
+      });
+      return; // Handled by promise
     }
 
     setFilteredEntries(filtered);
   };
 
-  const handleClearAudit = () => {
+  const handleClearAudit = async () => {
     if (confirm("Apakah Anda yakin ingin menghapus semua log audit? Tindakan ini tidak dapat dibatalkan.")) {
-      clearAuditTrail();
-      loadAuditEntries();
+      await clearAuditTrail();
+      await loadAuditEntries();
       toast({
         title: "Log Audit Dibersihkan",
         description: "Semua log audit telah dihapus dari sistem",

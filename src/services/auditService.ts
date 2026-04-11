@@ -1,6 +1,7 @@
 import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
 import { getCurrentUser } from "@/services/authService";
 import { generateUUIDv7 } from "@/utils/idUtils";
+import { db } from "@/db/db";
 
 export interface AuditEntry {
   id: string;
@@ -90,39 +91,37 @@ export const logAuditEntry = async (
     sessionId: generateUUIDv7()
   };
 
-  const auditTrail = getAuditTrail();
-  auditTrail.unshift(auditEntry);
-
-  // Keep only last 1000 entries
-  if (auditTrail.length > 1000) {
-    auditTrail.splice(1000);
+  try {
+    await db.audit_log.add(auditEntry);
+    console.log("✅ Audit logged to IndexedDB:", auditEntry.action);
+  } catch (error) {
+    console.error("❌ Failed to log audit entry to IndexedDB:", error);
+    // Silent fallback to console for logging failures to prevent app crash
   }
-
-  saveToLocalStorage(AUDIT_KEY, auditTrail);
-  console.log("Audit logged:", auditEntry);
 };
 
-export const getAuditTrail = (): AuditEntry[] => {
-  return getFromLocalStorage<AuditEntry[]>(AUDIT_KEY, []);
+export const getAuditTrail = async (): Promise<AuditEntry[]> => {
+  return await db.audit_log.orderBy('timestamp').reverse().toArray();
 };
 
-export const getAuditTrailByUser = (userId: string): AuditEntry[] => {
-  return getAuditTrail().filter(entry => entry.userId === userId);
+export const getAuditTrailByUser = async (userId: string): Promise<AuditEntry[]> => {
+  return await db.audit_log.where('userId').equals(userId).reverse().toArray();
 };
 
-export const getAuditTrailByResource = (resource: string): AuditEntry[] => {
-  return getAuditTrail().filter(entry => entry.resource === resource);
+export const getAuditTrailByResource = async (resource: string): Promise<AuditEntry[]> => {
+  return await db.audit_log.where('resource').equals(resource).reverse().toArray();
 };
 
-export const getAuditTrailByDateRange = (startDate: string, endDate: string): AuditEntry[] => {
-  return getAuditTrail().filter(entry => {
-    const entryDate = new Date(entry.timestamp);
-    return entryDate >= new Date(startDate) && entryDate <= new Date(endDate);
-  });
+export const getAuditTrailByDateRange = async (startDate: string, endDate: string): Promise<AuditEntry[]> => {
+  return await db.audit_log
+    .where('timestamp')
+    .between(new Date(startDate).toISOString(), new Date(endDate).toISOString())
+    .reverse()
+    .toArray();
 };
 
-export const clearAuditTrail = (): void => {
-  saveToLocalStorage(AUDIT_KEY, []);
+export const clearAuditTrail = async (): Promise<void> => {
+  await db.audit_log.clear();
 };
 
 // Helper function to format action descriptions

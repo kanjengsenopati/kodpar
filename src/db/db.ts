@@ -47,8 +47,16 @@ export class KoperasiDB extends Dexie {
       coa: 'id, kode, nama, jenis, kategori',
       jurnal: 'id, nomorJurnal, tanggal, status, referensi',
       pengajuan: 'id, nomorPengajuan, anggotaId, jenis, status, tanggal, loanId',
-      jadwal_angsuran: 'id, loanId, anggotaId, status, tanggalJatuhTempo'
+      jadwal_angsuran: 'id, loanId, anggotaId, status, tanggalJatuhTempo',
+      audit_log: 'id, timestamp, action, resource, userId'
     });
+  }
+
+  // Helper to safely reset only if critical migration fails (dev-only stability)
+  async safeReset() {
+    console.warn("⚠️ Critical Schema Mismatch Detected. Performing atomic reset...");
+    await this.delete();
+    return this.open();
   }
 }
 
