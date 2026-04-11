@@ -1,13 +1,11 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Check, FileText, Upload, X, Info } from "lucide-react";
+import { Check, FileText, Upload, Info, X } from "lucide-react";
+import { Text } from "@/components/ui/text";
 
 // Define document types required for loan applications
 export interface PersyaratanDokumen {
@@ -43,7 +41,7 @@ export function DokumenPersyaratanUpload({ selectedKategori, dokumenList, onChan
     doc => doc.kategori === "All" || doc.kategori === selectedKategori
   );
 
-  // Calculate completion percentage (optional feature)
+  // Calculate completion percentage
   const calculateCompletionPercentage = () => {
     if (relevantDocuments.length === 0) return 100;
     const uploadedDocs = dokumenList.filter(
@@ -67,11 +65,9 @@ export function DokumenPersyaratanUpload({ selectedKategori, dokumenList, onChan
     
     const reader = new FileReader();
     reader.onloadend = () => {
-      // Check if document already exists
       const existingDocIndex = dokumenList.findIndex(doc => doc.jenis === jenis);
       
       if (existingDocIndex >= 0) {
-        // Update existing document
         const updatedDokumenList = [...dokumenList];
         updatedDokumenList[existingDocIndex] = {
           ...updatedDokumenList[existingDocIndex],
@@ -80,7 +76,6 @@ export function DokumenPersyaratanUpload({ selectedKategori, dokumenList, onChan
         };
         onChange(updatedDokumenList);
       } else {
-        // Add new document
         const requiredDoc = relevantDocuments.find(doc => doc.jenis === jenis);
         const newDokumen: PersyaratanDokumen = {
           id: generateId(),
@@ -104,122 +99,82 @@ export function DokumenPersyaratanUpload({ selectedKategori, dokumenList, onChan
   };
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>Dokumen Persyaratan Pinjaman (Opsional)</span>
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Info size={14} />
-            {completionPercentage}% Terunggah
-          </Badge>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Unggah dokumen pendukung untuk mempercepat proses persetujuan pinjaman
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <Progress value={completionPercentage} className="h-2" />
-        </div>
-        
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {relevantDocuments.map((doc) => {
-              const uploadedDoc = dokumenList.find(d => d.jenis === doc.jenis);
-              const isUploaded = !!uploadedDoc;
-              
-              return (
-                <div key={doc.jenis} className="border rounded-md p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <Label className="flex items-center gap-2">
-                      <span>{doc.jenis}</span>
-                    </Label>
-                    {isUploaded ? (
-                      <Badge variant="default" className="flex gap-1 bg-green-500">
-                        <Check size={14} /> Terunggah
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="flex gap-1">
-                        Opsional
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="mt-2">
-                    {isUploaded ? (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm flex items-center gap-1 text-muted-foreground">
-                          <FileText size={14} />
-                          {uploadedDoc.namaFile}
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDelete(uploadedDoc.id)}
-                          className="text-destructive"
-                        >
-                          Hapus
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Input
-                          id={`upload-${doc.jenis}`}
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          className="hidden"
-                          onChange={handleFileUpload(doc.jenis)}
-                          disabled={uploading !== null}
-                        />
-                        <label
-                          htmlFor={`upload-${doc.jenis}`}
-                          className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        >
-                          <Upload size={14} />
-                          {uploading === doc.jenis ? "Mengunggah..." : "Unggah Dokumen"}
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          {dokumenList.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium mb-2">Dokumen Terunggah</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Jenis Dokumen</TableHead>
-                    <TableHead>Nama File</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {dokumenList.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell>{doc.jenis}</TableCell>
-                      <TableCell>{doc.namaFile}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDelete(doc.id)}
-                          className="text-destructive"
-                        >
-                          Hapus
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <Text.H2 className="text-[15px]">Dokumen Persyaratan</Text.H2>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 border border-slate-100 rounded-full">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></div>
             </div>
-          )}
+            <Text.Caption className="text-[10px] font-bold not-italic text-blue-600">{completionPercentage}%</Text.Caption>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+        <Text.Caption className="text-[11px] leading-tight opacity-70">
+          Unggah bukti pendukung untuk mempercepat proses.
+        </Text.Caption>
+      </div>
+
+      <Progress value={completionPercentage} className="h-1 bg-slate-100" />
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {relevantDocuments.map((doc) => {
+          const uploadedDoc = dokumenList.find(d => d.jenis === doc.jenis);
+          const isUploaded = !!uploadedDoc;
+          
+          return (
+            <div key={doc.jenis} className="bg-white/50 border border-slate-100 rounded-xl p-2.5 transition-all hover:bg-white hover:shadow-sm group">
+              <div className="flex justify-between items-center mb-1.5">
+                <Text.Label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{doc.jenis}</Text.Label>
+                {isUploaded ? (
+                  <div className="bg-emerald-50 text-emerald-600 p-0.5 rounded-full">
+                    <Check size={10} strokeWidth={3} />
+                  </div>
+                ) : (
+                  <span className="text-[9px] font-bold text-slate-300 uppercase">Opsional</span>
+                )}
+              </div>
+              
+              <div className="">
+                {isUploaded ? (
+                  <div className="flex items-center justify-between bg-slate-50/50 rounded-lg px-2 py-1 border border-slate-100/50">
+                    <span className="text-[10px] flex items-center gap-1.5 text-slate-600 truncate max-w-[100px]">
+                      <FileText size={12} className="text-blue-500 shrink-0" />
+                      <span className="truncate">{uploadedDoc.namaFile}</span>
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDelete(uploadedDoc.id)}
+                      className="h-6 w-6 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                    >
+                      <X size={12} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      id={`upload-${doc.jenis}`}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={handleFileUpload(doc.jenis)}
+                      disabled={uploading !== null}
+                    />
+                    <label
+                      htmlFor={`upload-${doc.jenis}`}
+                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 bg-white/30 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition-all hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
+                    >
+                      <Upload size={12} className={uploading === doc.jenis ? "animate-bounce" : ""} />
+                      {uploading === doc.jenis ? "..." : "Unggah"}
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
