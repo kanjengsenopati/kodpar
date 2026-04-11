@@ -1,19 +1,7 @@
 
-import { useState, useMemo } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Transaksi } from "@/types";
-import { formatCurrency } from "@/utils/formatters";
-import { getJenisOptions } from "@/services/jenisService";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
+import { cn } from "@/lib/utils";
+import * as Text from "@/components/ui/text";
 
 interface SimpananTransactionTableProps {
   transaksi: Transaksi[];
@@ -44,7 +32,7 @@ export function SimpananTransactionTable({ transaksi }: SimpananTransactionTable
     
     // Calculate totals
     transaksi.forEach(t => {
-      const kategori = t.kategori || "Umum";
+      const kategori = t.kategori ? getCategoryNameSync(t.kategori) : "Umum";
       if (!totals[kategori]) {
         totals[kategori] = { simpan: 0, penarikan: 0, net: 0 };
       }
@@ -94,15 +82,15 @@ export function SimpananTransactionTable({ transaksi }: SimpananTransactionTable
       {/* Filter Section */}
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Label htmlFor="kategoriFilter">Filter Kategori Simpanan</Label>
+          <Text.Label className="text-slate-400 mb-1.5 block">Filter Kategori Simpanan</Text.Label>
           <Select value={selectedKategori} onValueChange={setSelectedKategori}>
-            <SelectTrigger id="kategoriFilter">
+            <SelectTrigger id="kategoriFilter" className="rounded-xl border-slate-200 shadow-sm transition-all focus:ring-emerald-500/20">
               <SelectValue placeholder="Pilih kategori simpanan" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl shadow-xl border-slate-100">
               <SelectItem value="all">Semua Kategori</SelectItem>
               {simpananCategories.map((kategori) => (
-                <SelectItem key={kategori.id} value={kategori.nama}>
+                <SelectItem key={kategori.id} value={kategori.id}>
                   {kategori.nama}
                 </SelectItem>
               ))}
@@ -113,29 +101,29 @@ export function SimpananTransactionTable({ transaksi }: SimpananTransactionTable
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-4">
+        <Card className="rounded-[24px] border-none bg-slate-50/50 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+          <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Total Simpanan</p>
-              <p className="text-lg font-bold text-green-600">{formatCurrency(filteredTotals.simpan)}</p>
+              <Text.Label className="text-slate-400 block mb-1">Total Simpanan</Text.Label>
+              <Text.Amount className="text-xl text-emerald-600 font-bold">{formatCurrency(filteredTotals.simpan)}</Text.Amount>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4">
+        <Card className="rounded-[24px] border-none bg-slate-50/50 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+          <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Total Penarikan</p>
-              <p className="text-lg font-bold text-red-600">{formatCurrency(filteredTotals.penarikan)}</p>
+              <Text.Label className="text-slate-400 block mb-1">Total Penarikan</Text.Label>
+              <Text.Amount className="text-xl text-red-600 font-bold">{formatCurrency(filteredTotals.penarikan)}</Text.Amount>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-4">
+        <Card className="rounded-[24px] border-none bg-slate-50/50 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+          <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground">Saldo Bersih</p>
-              <p className={`text-lg font-bold ${filteredTotals.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <Text.Label className="text-slate-400 block mb-1">Saldo Bersih</Text.Label>
+              <Text.Amount className={cn("text-xl font-bold", filteredTotals.net >= 0 ? 'text-emerald-600' : 'text-red-600')}>
                 {formatCurrency(filteredTotals.net)}
-              </p>
+              </Text.Amount>
             </div>
           </CardContent>
         </Card>
@@ -143,21 +131,27 @@ export function SimpananTransactionTable({ transaksi }: SimpananTransactionTable
 
       {/* Breakdown by Category (when showing all) */}
       {selectedKategori === "all" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Breakdown per Kategori Simpanan</CardTitle>
+        <Card className="rounded-[24px] border-none bg-slate-50/50 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
+          <CardHeader className="bg-white/40 pb-3 border-b border-slate-100">
+            <CardTitle className="text-sm font-bold text-slate-700">Breakdown per Kategori Simpanan</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(totalsById).map(([kategori, totals]) => (
-                <div key={kategori} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <span className="font-medium">{kategori}</span>
-                  <div className="text-right">
-                    <div className="text-sm text-green-600">+{formatCurrency(totals.simpan)}</div>
-                    <div className="text-sm text-red-600">-{formatCurrency(totals.penarikan)}</div>
-                    <div className={`font-bold ${totals.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(totals.net)}
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {Object.entries(totalsById).map(([kategori, totals], idx) => (
+                <div key={kategori} className={cn(
+                  "flex justify-between items-center p-5 bg-transparent",
+                  idx % 2 === 0 && "md:border-r border-slate-100",
+                  idx > 1 && "border-t border-slate-100"
+                )}>
+                  <Text.Body className="font-bold text-slate-800">{kategori}</Text.Body>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="flex gap-2 text-[10px] font-bold">
+                      <span className="text-emerald-600">IN: {formatCurrency(totals.simpan)}</span>
+                      <span className="text-red-400">OUT: {formatCurrency(totals.penarikan)}</span>
                     </div>
+                    <Text.Amount className={cn("text-sm font-bold mt-0.5", totals.net >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                      {formatCurrency(totals.net)}
+                    </Text.Amount>
                   </div>
                 </div>
               ))}
@@ -167,58 +161,76 @@ export function SimpananTransactionTable({ transaksi }: SimpananTransactionTable
       )}
 
       {/* Transaction Table */}
-      <Card>
+      <Card className="rounded-[24px] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden bg-white">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Jenis</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Jumlah</TableHead>
-                  <TableHead>Keterangan</TableHead>
-                  <TableHead>Status</TableHead>
+              <TableHeader className="bg-slate-50/50">
+                <TableRow className="border-slate-50">
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">ID</TableHead>
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Tanggal</TableHead>
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Jenis</TableHead>
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Kategori</TableHead>
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Jumlah</TableHead>
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Keterangan</TableHead>
+                  <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTransaksi.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      {selectedKategori === "all" 
-                        ? "Tidak ada data transaksi simpanan yang ditemukan"
-                        : `Tidak ada transaksi untuk kategori "${selectedKategori}"`
-                      }
+                    <TableCell colSpan={7} className="text-center py-12">
+                      <Text.Caption className="not-italic">
+                        {selectedKategori === "all" 
+                          ? "Tidak ada data transaksi simpanan yang ditemukan"
+                          : `Tidak ada transaksi untuk kategori "${selectedKategori}"`
+                        }
+                      </Text.Caption>
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredTransaksi.map((tr) => (
-                    <TableRow key={tr.id}>
-                      <TableCell className="font-medium">{tr.id}</TableCell>
-                      <TableCell>{formatDate(tr.tanggal)}</TableCell>
-                      <TableCell>
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          tr.jenis === "Simpan" 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-red-100 text-red-800"
-                        }`}>
+                    <TableRow key={tr.id} className="border-slate-50 hover:bg-slate-50/30 transition-colors">
+                      <TableCell className="px-6 py-4">
+                        <Text.Caption className="not-italic font-mono text-[9px] text-slate-400 opacity-60">
+                          SYS: {tr.id.substring(0, 8)}...
+                        </Text.Caption>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <Text.Body className="text-xs text-nowrap">{formatDate(tr.tanggal)}</Text.Body>
+                      </TableCell>
+                      <TableCell className="px-6 py-4 text-center">
+                        <div className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                          tr.jenis === "Simpan" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                        )}>
                           {tr.jenis}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-6 py-4">
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-100 text-slate-500 bg-slate-50/50">
+                          {getCategoryNameSync(tr.kategori)}
                         </span>
                       </TableCell>
-                      <TableCell>{tr.kategori || "Umum"}</TableCell>
-                      <TableCell className={tr.jenis === "Simpan" ? "text-green-600" : "text-red-600"}>
-                        {tr.jenis === "Simpan" ? "+" : "-"}{formatCurrency(tr.jumlah)}
+                      <TableCell className="px-6 py-4">
+                        <Text.Amount className={cn("text-xs font-bold", tr.jenis === "Simpan" ? "text-emerald-600" : "text-red-600")}>
+                          {tr.jenis === "Simpan" ? "+" : "-"}{formatCurrency(tr.jumlah)}
+                        </Text.Amount>
                       </TableCell>
-                      <TableCell>{tr.keterangan || "-"}</TableCell>
-                      <TableCell>
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          tr.status === "Sukses" ? "bg-green-100 text-green-800" : 
-                          tr.status === "Pending" ? "bg-yellow-100 text-yellow-800" : 
-                          "bg-red-100 text-red-800"
-                        }`}>
+                      <TableCell className="px-6 py-4 max-w-[200px]">
+                        <Text.Caption className="not-italic text-slate-500 line-clamp-2 leading-relaxed">
+                          {tr.keterangan || "-"}
+                        </Text.Caption>
+                      </TableCell>
+                      <TableCell className="px-6 py-4 text-right">
+                        <div className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                          tr.status === "Sukses" ? "bg-emerald-50 text-emerald-600" : 
+                          tr.status === "Pending" ? "bg-yellow-50 text-yellow-600" : 
+                          "bg-red-50 text-red-600"
+                        )}>
                           {tr.status}
-                        </span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

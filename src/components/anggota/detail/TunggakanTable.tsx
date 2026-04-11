@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import * as Text from "@/components/ui/text";
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Transaksi } from "@/types";
 import { AlertTriangle, Eye, Edit } from "lucide-react";
+import { formatCurrency } from "@/utils/formatters";
 
 interface TunggakanTableProps {
   tunggakan: {
@@ -29,62 +32,64 @@ export function TunggakanTable({ tunggakan }: TunggakanTableProps) {
   };
   
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-[24px] border border-slate-100 bg-white shadow-sm overflow-hidden">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Tanggal Pinjam</TableHead>
-            <TableHead>Jumlah</TableHead>
-            <TableHead>Jatuh Tempo</TableHead>
-            <TableHead>Keterlambatan</TableHead>
-            <TableHead>Denda</TableHead>
-            <TableHead className="text-center w-[80px]">Aksi</TableHead>
+        <TableHeader className="bg-slate-50/50">
+          <TableRow className="border-slate-50">
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">ID</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Tanggal Pinjam</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Jumlah</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Jatuh Tempo</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Keterlambatan</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Denda</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center w-[100px]">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tunggakan.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-10">
+              <TableCell colSpan={7} className="text-center py-12">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <AlertTriangle className="h-8 w-8 text-gray-400" />
-                  <p>Tidak ada pinjaman yang menunggak</p>
+                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-slate-300" />
+                  </div>
+                  <Text.Caption className="not-italic">Tidak ada pinjaman yang menunggak</Text.Caption>
                 </div>
               </TableCell>
             </TableRow>
           ) : (
             tunggakan.map((item) => (
-              <TableRow key={item.transaksi.id}>
-                <TableCell className="font-medium">{item.transaksi.id}</TableCell>
-                <TableCell>{formatDate(item.transaksi.tanggal)}</TableCell>
-                <TableCell>Rp {item.transaksi.jumlah.toLocaleString("id-ID")}</TableCell>
-                <TableCell>{formatDate(item.jatuhTempo)}</TableCell>
-                <TableCell>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800`}>
-                    {item.daysOverdue} hari
-                  </span>
+              <TableRow key={item.transaksi.id} className="border-slate-50 hover:bg-slate-50/30 transition-colors">
+                <TableCell className="px-6 py-4">
+                  <Text.Caption className="not-italic font-mono text-[9px] text-slate-400 opacity-60">
+                    SYS: {item.transaksi.id.substring(0, 8)}...
+                  </Text.Caption>
                 </TableCell>
-                <TableCell>Rp {item.penalty.toLocaleString("id-ID")}</TableCell>
-                <TableCell className="text-center">
-                  <div className="flex justify-center">
-                    <div className="grid grid-cols-2 gap-1 w-fit">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={() => {/* Handle view action */}}
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={() => {/* Handle edit action */}}
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                    </div>
+                <TableCell className="px-6 py-4">
+                  <Text.Body className="text-xs">{formatDate(item.transaksi.tanggal)}</Text.Body>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Text.Amount className="text-sm font-bold">{formatCurrency(item.transaksi.jumlah)}</Text.Amount>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Text.Body className="text-xs font-semibold text-slate-700">{formatDate(item.jatuhTempo)}</Text.Body>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600">
+                    {item.daysOverdue} hari
+                  </div>
+                </TableCell>
+                <TableCell className="px-6 py-4 text-red-600 font-bold">
+                  {formatCurrency(item.penalty)}
+                </TableCell>
+                <TableCell className="px-6 py-4 text-center">
+                  <div className="flex justify-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50">
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

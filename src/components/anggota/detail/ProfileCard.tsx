@@ -29,8 +29,15 @@ export function ProfileCard({ anggota }: ProfileCardProps) {
             </div>
           </div>
           
-          <h2 className="text-xl font-semibold text-center">{anggota.nama}</h2>
-          <p className="text-gray-500 text-center mb-4">{anggota.id}</p>
+          <h2 className="text-xl font-bold text-center text-slate-800">{anggota.nama}</h2>
+          <div className="flex flex-col items-center gap-1 mb-4">
+            <span className="text-emerald-600 font-bold text-sm tracking-wide">
+              {anggota.noAnggota || "ID-PENDING"}
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 opacity-60 uppercase tracking-tighter">
+              SYS: {anggota.id.substring(0, 8)}...
+            </span>
+          </div>
           
           <div className="w-full space-y-3 mt-2">
             <div className="flex items-center gap-2">

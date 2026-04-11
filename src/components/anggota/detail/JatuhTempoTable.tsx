@@ -1,4 +1,6 @@
 
+import { cn } from "@/lib/utils";
+import * as Text from "@/components/ui/text";
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Transaksi } from "@/types";
 import { Clock } from "lucide-react";
+import { formatCurrency } from "@/utils/formatters";
 
 interface JatuhTempoTableProps {
   jatuhTempo: {
@@ -28,48 +31,61 @@ export function JatuhTempoTable({ jatuhTempo }: JatuhTempoTableProps) {
   };
   
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-[24px] border border-slate-100 bg-white shadow-sm overflow-hidden">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Tanggal Pinjam</TableHead>
-            <TableHead>Jumlah</TableHead>
-            <TableHead>Jatuh Tempo</TableHead>
-            <TableHead>Sisa Hari</TableHead>
-            <TableHead>Status</TableHead>
+        <TableHeader className="bg-slate-50/50">
+          <TableRow className="border-slate-50">
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">ID</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Tanggal Pinjam</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Jumlah</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Jatuh Tempo</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Sisa Hari</TableHead>
+            <TableHead className="py-4 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {jatuhTempo.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-10">
+              <TableCell colSpan={6} className="text-center py-12">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Clock className="h-8 w-8 text-gray-400" />
-                  <p>Tidak ada pinjaman yang akan jatuh tempo</p>
+                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-slate-300" />
+                  </div>
+                  <Text.Caption className="not-italic">Tidak ada pinjaman yang akan jatuh tempo</Text.Caption>
                 </div>
               </TableCell>
             </TableRow>
           ) : (
             jatuhTempo.map((item) => (
-              <TableRow key={item.transaksi.id}>
-                <TableCell className="font-medium">{item.transaksi.id}</TableCell>
-                <TableCell>{formatDate(item.transaksi.tanggal)}</TableCell>
-                <TableCell>Rp {item.transaksi.jumlah.toLocaleString("id-ID")}</TableCell>
-                <TableCell>{formatDate(item.jatuhTempo)}</TableCell>
-                <TableCell>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                    item.daysUntilDue <= 7 ? "bg-red-100 text-red-800" : 
-                    item.daysUntilDue <= 14 ? "bg-amber-100 text-amber-800" : 
-                    "bg-blue-100 text-blue-800"
-                  }`}>
-                    {item.daysUntilDue} hari
-                  </span>
+              <TableRow key={item.transaksi.id} className="border-slate-50 hover:bg-slate-50/30 transition-colors">
+                <TableCell className="px-6 py-4">
+                  <Text.Caption className="not-italic font-mono text-[9px] text-slate-400 opacity-60">
+                    SYS: {item.transaksi.id.substring(0, 8)}...
+                  </Text.Caption>
                 </TableCell>
-                <TableCell>
-                  <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                    Akan Jatuh Tempo
-                  </span>
+                <TableCell className="px-6 py-4">
+                  <Text.Body className="text-xs">{formatDate(item.transaksi.tanggal)}</Text.Body>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Text.Amount className="text-sm font-bold">{formatCurrency(item.transaksi.jumlah)}</Text.Amount>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <Text.Body className="text-xs font-semibold text-slate-700">{formatDate(item.jatuhTempo)}</Text.Body>
+                </TableCell>
+                <TableCell className="px-6 py-4">
+                  <div className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    item.daysUntilDue <= 7 ? "bg-red-50 text-red-600" : 
+                    item.daysUntilDue <= 14 ? "bg-yellow-50 text-yellow-600" : 
+                    "bg-blue-50 text-blue-600"
+                  )}>
+                    {item.daysUntilDue} hari
+                  </div>
+                </TableCell>
+                <TableCell className="px-6 py-4 text-right">
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600">
+                    Akan Datang
+                  </div>
                 </TableCell>
               </TableRow>
             ))

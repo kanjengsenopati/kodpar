@@ -1,15 +1,18 @@
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+import { cn } from "@/lib/utils";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
 import { Transaksi } from "@/types";
 import { formatCurrency } from "@/utils/formatters";
 import { extractLoanInfo, formatLoanDisplay } from "@/utils/loanDataSync";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
+import * as Text from "@/components/ui/text";
 
 interface TransactionTableProps {
   transaksi: Transaksi[];
@@ -27,26 +30,21 @@ export function TransactionTable({ transaksi }: TransactionTableProps) {
   // Function to determine transaction type display with loan details
   const renderTransactionType = (tr: Transaksi) => {
     if (tr.jenis === "Simpan") {
-      const jenisSimpanan = tr.kategori || 
-                          (tr.keterangan?.includes("Pokok") ? "Simpanan Pokok" :
-                           tr.keterangan?.includes("Wajib") ? "Simpanan Wajib" : "Simpanan Sukarela");
-      
       return (
-        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-          {jenisSimpanan}
+        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100/50">
+          {getCategoryNameSync(tr.kategori)}
         </span>
       );
     } else if (tr.jenis === "Pinjam") {
-      const jenisPinjaman = tr.kategori || "Pinjaman Reguler";
-      
       return (
-        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-800">
-          {jenisPinjaman}
+        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-100/50">
+          {getCategoryNameSync(tr.kategori)}
         </span>
       );
     } else {
+      const cls = tr.jenis === "Angsuran" ? "bg-purple-50 text-purple-600 border-purple-100/50" : "bg-slate-50 text-slate-600 border-slate-100/50";
       return (
-        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+        <span className={cn("inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border", cls)}>
           {tr.jenis}
         </span>
       );
@@ -109,31 +107,48 @@ export function TransactionTable({ transaksi }: TransactionTableProps) {
           {transaksi.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center py-10">
-                Tidak ada data transaksi yang ditemukan
+                <Text.Caption className="not-italic">Tidak ada data transaksi yang ditemukan</Text.Caption>
               </TableCell>
             </TableRow>
           ) : (
             transaksi.map((tr) => (
-              <TableRow key={tr.id}>
-                <TableCell className="font-medium">{tr.id}</TableCell>
-                <TableCell>{formatDate(tr.tanggal)}</TableCell>
-                <TableCell>
-                  <div>
+              <TableRow key={tr.id} className="hover:bg-slate-50/50 transition-colors">
+                <TableCell className="py-3">
+                  <div className="flex flex-col">
+                    <Text.Caption className="not-italic font-bold text-slate-400 font-mono text-[9px] uppercase tracking-tighter">
+                      SYS: {tr.id.substring(0, 8)}...
+                    </Text.Caption>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3">
+                  <Text.Body className="text-xs text-nowrap">{formatDate(tr.tanggal)}</Text.Body>
+                </TableCell>
+                <TableCell className="py-3">
+                  <div className="flex flex-col gap-1">
                     {renderTransactionType(tr)}
                     {renderLoanInfo(tr)}
                     {renderInstallmentInfo(tr)}
                   </div>
                 </TableCell>
-                <TableCell>{formatCurrency(tr.jumlah)}</TableCell>
-                <TableCell>{tr.keterangan || "-"}</TableCell>
-                <TableCell>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                    tr.status === "Sukses" ? "bg-green-100 text-green-800" : 
-                    tr.status === "Pending" ? "bg-yellow-100 text-yellow-800" : 
-                    "bg-red-100 text-red-800"
-                  }`}>
+                <TableCell className="py-3">
+                  <Text.Amount className="text-xs font-bold leading-none">
+                    {formatCurrency(tr.jumlah)}
+                  </Text.Amount>
+                </TableCell>
+                <TableCell className="py-3 max-w-[200px]">
+                  <Text.Caption className="not-italic text-slate-500 line-clamp-2 leading-relaxed">
+                    {tr.keterangan || "-"}
+                  </Text.Caption>
+                </TableCell>
+                <TableCell className="py-3 text-right">
+                  <div className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    tr.status === "Sukses" ? "bg-emerald-50 text-emerald-600" : 
+                    tr.status === "Pending" ? "bg-yellow-50 text-yellow-600" : 
+                    "bg-red-50 text-red-600"
+                  )}>
                     {tr.status}
-                  </span>
+                  </div>
                 </TableCell>
               </TableRow>
             ))

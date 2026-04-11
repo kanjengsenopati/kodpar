@@ -14,7 +14,14 @@ export default function Header({ pageTitle, actions }: HeaderProps) {
   const location = useLocation();
   const paths = location.pathname.split('/').filter(Boolean);
 
+  const isUuid = (str: string) => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str) || 
+           /^[0-9A-F]{8}[0-9A-F]{4}[0-9A-F]{4}[0-9A-F]{4}[0-9A-F]{12}$/i.test(str);
+  };
+
   const formatPathName = (path: string) => {
+    if (isUuid(path)) return "Detail";
+    
     return path.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
