@@ -1,10 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Info, Percent, Calendar, FileText } from "lucide-react";
 import { getPengaturan } from "@/services/pengaturanService";
 import { Text } from "@/components/ui/text";
-import { formatCurrency } from "@/utils/formatters";
 
 interface LoanCategoryInfoProps {
   kategori: string;
@@ -147,59 +145,6 @@ export function LoanCategoryInfo({ kategori, jumlah, tenor }: LoanCategoryInfoPr
           </div>
         </div>
         
-        {/* Description */}
-        <div className="pt-1">
-          <Text.Label className="block mb-1">Deskripsi:</Text.Label>
-          <Text.Body className="text-[12.5px] leading-relaxed italic opacity-80">{categoryInfo.description}</Text.Body>
-        </div>
-        
-        {/* Requirements */}
-        <div>
-          <Text.Label className="block mb-2">Persyaratan Dokumen:</Text.Label>
-          <div className="flex flex-wrap gap-1.5">
-            {categoryInfo.requirements.map((req, index) => (
-              <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-600 border-none text-[10px] py-0 px-2 rounded-full font-bold">
-                {req}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        
-        {/* Loan Preview - STACKED FOR NO OVERFLOW */}
-        {loanPreview && (
-          <div className="border-t border-slate-100 pt-3 space-y-2">
-            <Text.Label className="block mb-1">Simulasi Perhitungan:</Text.Label>
-            <div className="flex flex-col gap-2">
-              <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center transition-all hover:border-blue-200">
-                <div className="flex flex-col">
-                  <Text.Label className="text-[10px] text-slate-400">ANGSURAN / BLN</Text.Label>
-                  <Text.Amount className="text-blue-600">{formatCurrency(loanPreview.monthlyPayment || 0)}</Text.Amount>
-                </div>
-                <div className="bg-blue-50 p-2 rounded-full">
-                  <Calendar size={14} className="text-blue-600" />
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center opacity-90">
-                <div className="flex flex-col">
-                  <Text.Label className="text-[10px] text-slate-400">TOTAL BUNGA</Text.Label>
-                  <Text.Body className="font-bold text-slate-700">{formatCurrency(loanPreview.totalInterest || 0)}</Text.Body>
-                </div>
-                <Percent size={14} className="text-slate-300" />
-              </div>
-
-              <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center">
-                <div className="flex flex-col">
-                  <Text.Label className="text-[10px] text-slate-400">TOTAL PEMBAYARAN</Text.Label>
-                  <Text.Body className="font-bold text-slate-700">{formatCurrency(loanPreview.totalPayment || 0)}</Text.Body>
-                </div>
-                <div className="bg-slate-50 p-2 rounded-full">
-                  <FileText size={14} className="text-slate-400" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
