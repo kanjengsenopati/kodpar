@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTransaksiByAnggotaId } from "@/services/transaksiService";
 import { Transaksi } from "@/types";
 import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
+import { Badge } from "@/components/ui/badge";
 
 interface AnggotaFinanceExpandableProps {
   anggota: any;
