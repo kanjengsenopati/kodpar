@@ -1,6 +1,7 @@
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Transaksi } from "@/types";
+import { MemberName } from "@/components/anggota/MemberName";
 
 interface RecentTransactionsTableProps {
   transactions: Transaksi[];
@@ -24,7 +25,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
           <TableRow key={transaksi.id}>
             <TableCell className="font-medium">{transaksi.id}</TableCell>
             <TableCell>{formatDate(transaksi.tanggal)}</TableCell>
-            <TableCell>{transaksi.anggotaNama}</TableCell>
+            <TableCell><MemberName memberId={transaksi.anggotaId} /></TableCell>
             <TableCell>
               <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                 transaksi.jenis === "Simpan" ? "bg-green-100 text-green-800" : 

@@ -4,7 +4,6 @@ export interface Transaksi {
   id: string;
   nomorTransaksi?: string; // Human-readable ID (e.g. TR/2026/0001)
   anggotaId: string;
-  anggotaNama: string;
   jenis: "Simpan" | "Pinjam" | "Angsuran" | "Penarikan";
   jumlah: number;
   tanggal: string;
@@ -46,8 +45,6 @@ export interface Pengajuan {
   id: string;
   nomorPengajuan?: string; // Human-readable ID (e.g. PG/2026/0001)
   anggotaId: string;
-  anggotaNo?: string;      // Human-readable Member ID (e.g. AG-0001)
-  anggotaNama: string;
   jenis: "Simpan" | "Pinjam" | "Penarikan" | "Angsuran";
   jumlah: number;
   tanggal: string;

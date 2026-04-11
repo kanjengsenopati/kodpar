@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getPinjamanCategories } from "@/services/transaksi/categories";
+import { getAllJenis } from "@/services/jenisService";
 import { getPengaturan } from "@/services/pengaturanService";
 import { NominalInputField } from "@/components/ui/NominalInputField";
 import { PinjamanFormSummary } from "./PinjamanFormSummary";
@@ -29,7 +29,7 @@ export function PinjamanFormFields({
   formattedJumlah,
   setFormattedJumlah
 }: PinjamanFormFieldsProps) {
-  const pinjamanCategories = getPinjamanCategories();
+  const pinjamanJenis = getAllJenis().filter(j => j.jenisTransaksi === "Pinjaman" && j.isActive);
   const pengaturan = getPengaturan();
   
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -47,27 +47,24 @@ export function PinjamanFormFields({
     }
   };
 
-  const handleCategoryChange = (kategori: string) => {
-    setFormData(prev => ({ ...prev, kategori }));
+  const handleCategoryChange = (jenisId: string) => {
+    setFormData(prev => ({ ...prev, jenisId }));
   };
 
   // Helper function to display interest rate for pinjaman categories
-  const getInterestRateForCategory = (category: string): number => {
-    if (pengaturan.sukuBunga.pinjamanByCategory && 
-        category in pengaturan.sukuBunga.pinjamanByCategory) {
-      return pengaturan.sukuBunga.pinjamanByCategory[category];
-    }
-    return pengaturan.sukuBunga.pinjaman;
+  const getInterestRateForCategory = (jenisId: string): number => {
+    const jenis = pinjamanJenis.find(j => j.id === jenisId);
+    return (jenis as any)?.bungaPersen || pengaturan.sukuBunga.pinjaman;
   };
 
-  const currentInterestRate = getInterestRateForCategory(formData.kategori);
+  const currentInterestRate = getInterestRateForCategory(formData.jenisId);
 
   return (
     <>
       <div className="grid w-full items-center gap-2">
         <Label htmlFor="kategori" className="required">Kategori Pinjaman</Label>
         <Select
-          value={formData.kategori}
+          value={formData.jenisId}
           onValueChange={handleCategoryChange}
           required
         >
@@ -75,9 +72,9 @@ export function PinjamanFormFields({
             <SelectValue placeholder="Pilih kategori pinjaman" />
           </SelectTrigger>
           <SelectContent>
-            {pinjamanCategories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat} - Bunga {getInterestRateForCategory(cat)}% per bulan
+            {pinjamanJenis.map((jenis) => (
+              <SelectItem key={jenis.id} value={jenis.id}>
+                {jenis.nama} - Bunga {getInterestRateForCategory(jenis.id)}% per bulan
               </SelectItem>
             ))}
           </SelectContent>
@@ -113,11 +110,10 @@ export function PinjamanFormFields({
         />
       </div>
       
-      {formData.jumlah && formData.kategori && (
+      {formData.jumlah && formData.jenisId && (
         <PinjamanFormSummary 
-          kategori={formData.kategori} 
+          jenisId={formData.jenisId} 
           jumlah={formData.jumlah} 
-          bunga={currentInterestRate}
         />
       )}
     </>

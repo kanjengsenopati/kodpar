@@ -146,6 +146,10 @@ export async function seedDemoData(): Promise<void> {
     PENDAPATAN_JASA:    "coa-pendapatan-jasa-pinjaman",
   };
 
+  // Resolve Jenis IDs for Seeding
+  const ID_SIMPANAN_POKOK = "018e6a12-8c1d-7a01-8000-000000000501";
+  const ID_PINJAMAN_REGULER = "018e6a12-8c1d-7a01-8000-000000000601";
+
   const loanApprovalDate = new Date(today.getFullYear(), today.getMonth() - 1, 5);
   const angsuranDate     = new Date(today.getFullYear(), today.getMonth(),      5);
 
@@ -169,9 +173,8 @@ export async function seedDemoData(): Promise<void> {
       id: txSimpananId,
       nomorTransaksi: txSimpananNo,
       anggotaId: anggota.id,
-      anggotaNama: anggota.nama,
       jenis: "Simpan",
-      kategori: "Simpanan Pokok",
+      kategori: ID_SIMPANAN_POKOK,
       jumlah: 300_000,
       tanggal: simpananDate,
       keterangan: `Simpanan Pokok awal ${anggota.nama} (Seed)`,
@@ -208,9 +211,8 @@ export async function seedDemoData(): Promise<void> {
       id: pgId,
       nomorPengajuan: pgNo,
       anggotaId: anggota.id,
-      anggotaNama: anggota.nama,
       jenis: "Pinjam",
-      kategori: "Pinjaman Reguler",
+      kategori: ID_PINJAMAN_REGULER,
       jumlah: nominalPokok,
       tanggal: pgDate,
       status: "Disetujui",
@@ -229,9 +231,8 @@ export async function seedDemoData(): Promise<void> {
       id: txPinjamanId,
       nomorTransaksi: txPinjamanNo,
       anggotaId: anggota.id,
-      anggotaNama: anggota.nama,
       jenis: "Pinjam",
-      kategori: "Pinjaman Reguler",
+      kategori: ID_PINJAMAN_REGULER,
       jumlah: nominalPokok,
       tanggal: pgDate,
       keterangan: `Dari Pengajuan #${pgNo}: Pinjaman Reguler 12 bulan (Seed)`,
@@ -296,9 +297,8 @@ export async function seedDemoData(): Promise<void> {
       id: txAngsuranId,
       nomorTransaksi: txAngsuranNo,
       anggotaId: anggota.id,
-      anggotaNama: anggota.nama,
       jenis: "Angsuran",
-      kategori: "Pinjaman Reguler",
+      kategori: ID_PINJAMAN_REGULER,
       jumlah: angsuranPerBulan,
       tanggal: angsuranDateStr,
       referensiPinjamanId: txPinjamanId,

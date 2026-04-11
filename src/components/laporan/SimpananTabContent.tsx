@@ -35,6 +35,7 @@ import { formatDate } from "@/utils/formatters";
 import { useEffect, useState } from "react";
 import { getJenisByType } from "@/services/jenisService";
 import { JenisSimpanan } from "@/types/jenis";
+import { MemberName } from "@/components/anggota/MemberName";
 
 // Define chart data interface for better type checking
 interface ChartDataItem {
@@ -275,7 +276,7 @@ export function SimpananTabContent({
                     <TableRow key={transaksi.id}>
                       <TableCell>{transaksi.id}</TableCell>
                       <TableCell>{formatDate(transaksi.tanggal)}</TableCell>
-                      <TableCell>{transaksi.anggotaNama}</TableCell>
+                      <TableCell><MemberName memberId={transaksi.anggotaId} /></TableCell>
                       <TableCell>{transaksi.kategori || "Simpanan"}</TableCell>
                       <TableCell>{formatCurrency(transaksi.jumlah)}</TableCell>
                       <TableCell>

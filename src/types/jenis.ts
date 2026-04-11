@@ -2,7 +2,8 @@
 // Type definitions for Jenis (Types) data
 
 export interface JenisBase {
-  id: string;
+  id: string; // Internal UUID
+  kode: string; // Human-readable ID (e.g. PJ/REG)
   nama: string;
   keterangan?: string;
   createdAt: string;

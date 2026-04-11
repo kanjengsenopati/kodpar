@@ -32,6 +32,7 @@ import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Transaksi } from "@/types";
 import { TransactionStatusBadge } from "@/components/transaksi/TransactionStatusBadge";
 import { extractLoanInfo } from "@/utils/loanDataSync";
+import { MemberName } from "@/components/anggota/MemberName";
 
 // Define chart data interface for better type checking
 interface ChartDataItem {
@@ -202,7 +203,7 @@ export function AngsuranTabContent({
                   <TableRow key={transaksi.id}>
                     <TableCell className="font-medium">{transaksi.id}</TableCell>
                     <TableCell>{formatDate(transaksi.tanggal)}</TableCell>
-                    <TableCell>{transaksi.anggotaNama}</TableCell>
+                    <TableCell><MemberName memberId={transaksi.anggotaId} /></TableCell>
                     <TableCell>
                       {renderInstallmentDetails(transaksi)}
                     </TableCell>

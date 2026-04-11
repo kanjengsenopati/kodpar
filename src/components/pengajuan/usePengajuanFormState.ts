@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { PersyaratanDokumen } from "@/types";
-import { getSimpananCategories, getPinjamanCategories } from "@/services/transaksi/categories";
+import { getAllJenis } from "@/services/jenisService";
 import { getPengaturan } from "@/services/pengaturanService";
 
 interface PengajuanFormData {
@@ -21,12 +21,13 @@ export function usePengajuanFormState(initialFormData: PengajuanFormData) {
   
   // Set default category based on jenis
   const getDefaultCategory = (jenis: "Simpan" | "Pinjam" | "Penarikan") => {
+    const all = getAllJenis();
     if (jenis === "Pinjam") {
-      return getPinjamanCategories()[0] || "Reguler";
+      return all.find(j => j.jenisTransaksi === "Pinjaman" && j.isActive)?.id || "";
     } else if (jenis === "Penarikan") {
-      return "Reguler"; // Default category for withdrawals
+      return ""; // No standard ID for generic withdrawal yet
     }
-    return getSimpananCategories()[0] || "Wajib";
+    return all.find(j => j.jenisTransaksi === "Simpanan" && j.isActive)?.id || "";
   };
 
   const [formData, setFormData] = useState<PengajuanFormData>({
@@ -47,11 +48,12 @@ export function usePengajuanFormState(initialFormData: PengajuanFormData) {
   const handleSelectChange = (name: string, value: string) => {
     if (name === "jenis") {
       // When jenis changes, we need to reset kategori and set it to a valid default based on the new type
-      let defaultCategory = "Reguler";
+      let defaultCategory = "";
+      const all = getAllJenis();
       if (value === "Simpan") {
-        defaultCategory = getSimpananCategories()[0];
+        defaultCategory = all.find(j => j.jenisTransaksi === "Simpanan" && j.isActive)?.id || "";
       } else if (value === "Pinjam") {
-        defaultCategory = getPinjamanCategories()[0];
+        defaultCategory = all.find(j => j.jenisTransaksi === "Pinjaman" && j.isActive)?.id || "";
       }
       
       setFormData(prev => ({ 

@@ -4,48 +4,37 @@ import { getPengaturan } from "../../pengaturanService";
 import { getAnggotaList } from "../../anggotaService";
 
 /**
- * Calculate SHU (Sisa Hasil Usaha) for an anggota using the formula from settings
- * 
- * @param anggotaId The anggota ID as a string or number
- * @returns The SHU amount
+ * Calculate SHU (Sisa Hasil Usaha) for an anggota for a specific period (Fiscal Year)
  */
-/**
- * Calculate SHU (Sisa Hasil Usaha) for an anggota using the formula from settings
- * 
- * @param anggotaId The anggota ID as a string or number
- * @returns The SHU amount
- */
-export async function calculateSHU(anggotaId: string | number): Promise<number> {
+export async function calculateSHU(anggotaId: string | number, periode?: string): Promise<number> {
   const idAsString = String(anggotaId);
+  const currentYear = periode || new Date().getFullYear().toString();
+  
   const formulaUpdated = localStorage.getItem('shu_formula_updated');
-  const cachedResult = localStorage.getItem(`shu_result_${idAsString}`);
+  const cacheKey = `shu_result_${idAsString}_${currentYear}`;
+  const cachedResult = localStorage.getItem(cacheKey);
   const currentTime = Date.now();
   
-  // If formula was recently updated or no cached result exists, force recalculation
-  if (
-    formulaUpdated &&
-    currentTime - parseInt(formulaUpdated) < 60000 || // Within last minute 
-    !cachedResult
-  ) {
-    return await SHUCalculator.calculate(idAsString);
+  // Force recalculation if formula was recently updated
+  if (formulaUpdated && currentTime - parseInt(formulaUpdated) < 60000) {
+    return await SHUCalculator.calculate(idAsString, currentYear);
   }
   
-  // Otherwise use cached result if available and recent (within last 24 hours)
   if (cachedResult) {
-    const cacheTimestamp = localStorage.getItem(`shu_result_timestamp_${idAsString}`);
+    const cacheTimestamp = localStorage.getItem(`shu_result_timestamp_${idAsString}_${currentYear}`);
     const cacheTime = cacheTimestamp ? parseInt(cacheTimestamp) : 0;
     
-    // Check if cache is still fresh (less than 24 hours old) - expanded from 1 hour for better persistence
+    // Cache fresh for 24 hours
     if (currentTime - cacheTime < 86400000) {
       return parseInt(cachedResult);
     }
-    
-    // Otherwise calculate fresh
-    return await SHUCalculator.calculate(idAsString);
   }
   
-  // Default case: calculate fresh
-  return await SHUCalculator.calculate(idAsString);
+  const result = await SHUCalculator.calculate(idAsString, currentYear);
+  localStorage.setItem(cacheKey, result.toString());
+  localStorage.setItem(`shu_result_timestamp_${idAsString}_${currentYear}`, currentTime.toString());
+  
+  return result;
 }
 
 /**
@@ -160,33 +149,22 @@ export function refreshAllSHUCalculations(): void {
 }
 
 /**
- * Reset SHU values for all members and recalculate based on current formula
- * @returns Number of members whose SHU values were reset
+ * Reset SHU values for all members for a specific period
  */
-export async function resetAllSHUValues(): Promise<number> {
-  console.log("Resetting all SHU values for all members...");
+export async function resetAllSHUValues(periode?: string): Promise<number> {
+  const currentYear = periode || new Date().getFullYear().toString();
+  console.log(`Resetting SHU values for period ${currentYear}...`);
   
-  // Get all members
   const anggotaList = await getAnggotaList();
   let resetCount = 0;
   
-  // Clear all cached SHU results first
-  Object.keys(localStorage).forEach(key => {
-    if (key.startsWith('shu_result_')) {
-      localStorage.removeItem(key);
-      localStorage.removeItem(`shu_result_timestamp_${key.replace('shu_result_', '')}`);
-    }
-  });
-  
-  // Force recalculation for each member
   for (const anggota of anggotaList) {
     try {
-      // Calculate fresh SHU value
-      const newSHUValue = await SHUCalculator.calculate(anggota.id);
+      const newSHUValue = await SHUCalculator.calculate(anggota.id, currentYear);
       
-      // Store the result in localStorage with timestamp
-      localStorage.setItem(`shu_result_${anggota.id}`, newSHUValue.toString());
-      localStorage.setItem(`shu_result_timestamp_${anggota.id}`, Date.now().toString());
+      const cacheKey = `shu_result_${anggota.id}_${currentYear}`;
+      localStorage.setItem(cacheKey, newSHUValue.toString());
+      localStorage.setItem(`shu_result_timestamp_${anggota.id}_${currentYear}`, Date.now().toString());
       
       resetCount++;
     } catch (error) {
@@ -194,15 +172,8 @@ export async function resetAllSHUValues(): Promise<number> {
     }
   }
   
-  // Set a trigger to notify components of reset
-  localStorage.setItem('shu_reset_timestamp', Date.now().toString());
-  
-  // Dispatch event for immediate notification
   const resetEvent = new CustomEvent('shu-values-reset', {
-    detail: { 
-      timestamp: Date.now(),
-      count: resetCount
-    }
+    detail: { timestamp: Date.now(), count: resetCount, periode: currentYear }
   });
   window.dispatchEvent(resetEvent);
   

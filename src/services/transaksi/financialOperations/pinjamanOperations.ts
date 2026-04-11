@@ -52,7 +52,7 @@ export async function getAllLoansDetailedSummary() {
     summary.push({
       id: pinjaman.id,
       anggotaId: pinjaman.anggotaId,
-      anggotaNama: pinjaman.anggotaNama,
+      anggotaId: pinjaman.anggotaId,
       jumlahPinjaman: pinjaman.jumlah,
       sisaPinjaman: sisa,
       status: sisa > 0 ? "Aktif" : "Lunas",

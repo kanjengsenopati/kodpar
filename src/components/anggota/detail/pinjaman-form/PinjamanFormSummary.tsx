@@ -1,68 +1,61 @@
-
 import { useEffect, useState } from "react";
-import { getPengaturan } from "@/services/pengaturanService";
 import { formatCurrency } from "@/utils/formatters";
+import { calculateLoanDetails, LoanCalculation } from "@/utils/loanCalculations";
 import { PinjamanFormSummaryProps } from "./types";
+import { JenisName } from "@/components/common/JenisName";
 
-export function PinjamanFormSummary({ kategori, jumlah, bunga }: PinjamanFormSummaryProps) {
-  const pengaturan = getPengaturan();
-  const tenorDefault = pengaturan?.tenor?.tenorOptions?.[1] || 12; // Default to 12 if not available
-  const [calculatedValues, setCalculatedValues] = useState({
-    angsuran: 0,
-    totalPembayaran: 0,
-    totalBunga: 0
-  });
+export function PinjamanFormSummary({ jenisId, jumlah }: PinjamanFormSummaryProps) {
+  const [calc, setCalc] = useState<LoanCalculation | null>(null);
   
-  // Calculate loan values when props change
   useEffect(() => {
     const numericJumlah = Number(jumlah);
-    if (isNaN(numericJumlah) || numericJumlah <= 0) return;
+    if (isNaN(numericJumlah) || numericJumlah <= 0 || !jenisId) {
+      setCalc(null);
+      return;
+    }
     
-    // Simple flat rate calculation
-    const bungaPerBulan = (numericJumlah * bunga / 100);
-    const totalBunga = bungaPerBulan * tenorDefault;
-    const totalBayar = numericJumlah + totalBunga;
-    const angsuranPerBulan = Math.ceil(totalBayar / tenorDefault);
-    
-    setCalculatedValues({
-      angsuran: angsuranPerBulan,
-      totalPembayaran: totalBayar,
-      totalBunga: totalBunga
-    });
-  }, [kategori, jumlah, bunga, tenorDefault]);
+    // Use modularized logic (SSOT)
+    const result = calculateLoanDetails(jenisId, numericJumlah);
+    setCalc(result);
+  }, [jenisId, jumlah]);
+
+  if (!calc) return null;
   
   return (
-    <div className="bg-amber-50 p-4 rounded-md">
-      <div className="mb-2 font-semibold">Ringkasan Pinjaman</div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-[24px]">
+      <div className="mb-3 font-semibold text-emerald-900 text-sm">Pratinjau Pinjaman (Database Driven)</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
         <div>
-          <p className="text-sm text-muted-foreground">Kategori Pinjaman:</p>
-          <p className="font-medium">{kategori}</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600/60">Kategori</p>
+          <p className="font-medium text-slate-700 text-sm">
+            <JenisName jenisId={jenisId} />
+          </p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">Pokok Pinjaman:</p>
-          <p className="font-medium">{formatCurrency(Number(jumlah))}</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600/60">Pokok</p>
+          <p className="font-medium text-slate-700 text-sm">{formatCurrency(calc.nominalPokok)}</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">Bunga:</p>
-          <p className="font-medium">{bunga}% (Flat)</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600/60">Bunga ({calc.metodeBunga.toUpperCase()})</p>
+          <p className="font-medium text-slate-700 text-sm">{calc.sukuBunga}% / bln</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">Tenor:</p>
-          <p className="font-medium">{tenorDefault} bulan</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600/60">Tenor</p>
+          <p className="font-medium text-slate-700 text-sm">{calc.tenor} bulan</p>
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Angsuran per Bulan:</p>
-          <p className="font-medium">{formatCurrency(calculatedValues.angsuran)}</p>
+        <div className="bg-white/60 p-2 rounded-xl">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600">Angsuran / Bln</p>
+          <p className="font-bold text-emerald-600 text-base">{formatCurrency(calc.angsuranPerBulan)}</p>
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Total Pembayaran:</p>
-          <p className="font-medium">{formatCurrency(calculatedValues.totalPembayaran)}</p>
+        <div className="bg-white/60 p-2 rounded-xl">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600/60">Admin Fee</p>
+          <p className="font-medium text-slate-700 text-sm">{formatCurrency(calc.biayaAdmin)}</p>
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Total Bunga:</p>
-          <p className="font-medium">{formatCurrency(calculatedValues.totalBunga)}</p>
-        </div>
+      </div>
+      
+      <div className="mt-4 pt-3 border-t border-emerald-100 flex justify-between items-center">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-600/60">Total Pengembalian</span>
+        <span className="font-bold text-slate-800 text-sm">{formatCurrency(calc.totalPengembalian)}</span>
       </div>
     </div>
   );

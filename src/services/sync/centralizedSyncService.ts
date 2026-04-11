@@ -296,7 +296,7 @@ class CentralizedSyncService {
         id: pengajuan.id, // Keep the same UUID for internal ID
         nomorTransaksi: pengajuan.nomorPengajuan, // Use nomorPengajuan as nomorTransaksi
         anggotaId: pengajuan.anggotaId,
-        anggotaNama: pengajuan.anggotaNama,
+        anggotaId: pengajuan.anggotaId,
         jenis: pengajuan.jenis,
         jumlah: pengajuan.jumlah,
         tanggal: pengajuan.tanggal,

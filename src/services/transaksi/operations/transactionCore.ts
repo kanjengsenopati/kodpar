@@ -1,54 +1,75 @@
-import { Transaksi, SubmissionResult } from "@/types";
-import { createTransaksi as createTransaksiCore } from "../transaksiCore";
-import { syncTransactionToKeuangan } from "../../sync/comprehensiveSyncService";
-import { logAuditEntry } from "../../auditService";
-// refreshFinancialCalculations removed (Decommissioned Legacy Logic)
 import { db } from "@/db/db";
+import { generateSakEpDetails, validateSakEpBalance } from "../../akuntansi/sakEpIntegrity";
+import { prepareJurnalEntry } from "../../akuntansi/jurnalService";
 
 /**
- * Enhanced create transaksi with controlled accounting sync to prevent duplicates
+ * STRICTLY ATOMIC: Create transaksi with immediate SAK EP Journal Entry
  */
 export async function createTransactionWithSync(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
-    // Create the transaction using core service inside a Dexie transaction for atomicity
-    const result = await db.transaction('rw', [db.transaksi, db.anggota], async () => {
-      return await createTransaksiCore(data);
-    });
-    
-    if (result.success && result.data && result.data.status === "Sukses") {
-      const newTransaksi = result.data;
-      console.log(`✅ Transaction ${newTransaksi.id} created successfully`);
-      
-      // Note: Accounting sync will be handled by the calling function to prevent duplicates
-      
-      // Additional Keuangan sync for comprehensive coverage (non-accounting)
-      const keuanganSync = await syncTransactionToKeuangan(newTransaksi);
-      if (keuanganSync.success && keuanganSync.syncedItems.length > 0) {
-        console.log(`Comprehensive sync completed: ${keuanganSync.syncedItems.length} items synced to Keuangan`);
+    // 1. EXECUTE STRICT ATOMIC DB TRANSACTION
+    const result = await db.transaction('rw', [db.transaksi, db.anggota, db.jurnal, db.auditLog], async () => {
+      // A. Create Core Transaction Record
+      const txResult = await createTransaksiCore(data);
+      if (!txResult.success || !txResult.data) {
+        throw new Error(txResult.error || "Gagal membuat record transaksi");
       }
+      const newTransaksi = txResult.data;
+
+      // B. GENERATE SAK EP DOUBLE-ENTRY (DEBIT/KREDIT)
+      const journalDetails = generateSakEpDetails(newTransaksi);
       
-      // Emit transaction created event for real-time listeners
-      window.dispatchEvent(new CustomEvent('transaction-created', {
-        detail: { 
-          transaction: newTransaksi,
-          timestamp: new Date().toISOString()
-        }
-      }));
-      
-      // Log audit entry
+      // C. VALIDATE BALANCE (DEBIT == KREDIT)
+      if (!validateSakEpBalance(journalDetails)) {
+        throw new Error(`Audit SAK EP Gagal: Jurnal tidak seimbang untuk transaksi ${newTransaksi.jenis}`);
+      }
+
+      // D. PREPARE & SAVE JOURNAL RECORD
+      const journalEntry = await prepareJurnalEntry({
+        tanggal: newTransaksi.tanggal,
+        deskripsi: newTransaksi.keterangan || `Transaksi ${newTransaksi.jenis} #${newTransaksi.nomorTransaksi}`,
+        referensi: `TXN-${newTransaksi.id}`,
+        details: journalDetails,
+        status: 'POSTED'
+      });
+
+      await db.jurnal.add(journalEntry);
+
+      // E. UPDATE TRANSACTION STATUS TO SUCCESSFUL SYNC
+      await db.transaksi.update(newTransaksi.id, { 
+        accountingSyncStatus: 'SUCCESS' 
+      });
+
+      // F. AUDIT LOG (Internal to Transaction)
+      const anggota = await getAnggotaById(newTransaksi.anggotaId);
       await logAuditEntry(
         "CREATE",
         "TRANSAKSI",
-        `Membuat transaksi ${newTransaksi.jenis} sebesar Rp ${newTransaksi.jumlah.toLocaleString('id-ID')} untuk anggota ${newTransaksi.anggotaNama} dengan controlled sync`,
+        `[SAK-EP ATOMIC] ${newTransaksi.jenis} Rp ${newTransaksi.jumlah.toLocaleString('id-ID')} - ${anggota?.nama || "Unknown"}`,
         newTransaksi.id
       );
+
+      return { success: true, data: { ...newTransaksi, accountingSyncStatus: 'SUCCESS' as const } };
+    });
+    
+    // 2. TRIGGER NON-FATAL SIDE EFFECTS (AFTER COMMIT)
+    if (result.success && result.data) {
+      const syncedTx = result.data;
       
-      // Financial data updates are now managed via 'transaction-created' events.
+      // Emit event for UI updates
+      window.dispatchEvent(new CustomEvent('transaction-created', {
+        detail: { transaction: syncedTx, timestamp: new Date().toISOString() }
+      }));
+      
+      // Comprehensive sync for non-accounting modules (e.g., specific reports)
+      syncTransactionToKeuangan(syncedTx).catch(err => 
+        console.warn("⚠️ Non-fatal sync warning:", err)
+      );
     }
     
     return result;
   } catch (error: any) {
-    console.error("Error creating transaksi in sync wrapper:", error);
-    return { success: false, error: `Sync Wrapper Error: ${error.message || 'Kesalahan sinkronisasi transaksi'}` };
+    console.error("❌ ATOMIC TRANSACTION FAILED (ROLLBACK EXECUTED):", error);
+    return { success: false, error: `Audit SAK EP Gagal: ${error.message || 'Kesalahan sistem'}` };
   }
 }

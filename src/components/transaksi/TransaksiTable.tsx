@@ -14,6 +14,7 @@ import { ActionGrid } from "@/components/ui/action-grid";
 import * as Text from "@/components/ui/text";
 import { TablePaginationFooter } from "@/components/ui/TablePaginationFooter";
 import { usePagination } from "@/hooks/ui/usePagination";
+import { MemberName } from "@/components/anggota/MemberName";
 
 interface TransaksiTableProps {
   data: Transaksi[];
@@ -107,7 +108,7 @@ export function TransaksiTable({
                     <TableCell key={column.id} className="py-2.5">
                       {column.id === "id" && <Text.Caption className="not-italic font-bold text-slate-400">{transaksi.nomorTransaksi || (transaksi.id.length > 10 ? transaksi.id.substring(0,8) + "..." : transaksi.id)}</Text.Caption>}
                       {column.id === "tanggal" && <Text.Body className="text-xs">{formatDate(transaksi.tanggal)}</Text.Body>}
-                      {column.id === "anggota" && <Text.Body className="font-bold text-slate-800">{transaksi.anggotaNama}</Text.Body>}
+                      {column.id === "anggota" && <MemberName memberId={transaksi.anggotaId} className="font-bold text-slate-800" />}
                       {column.id === "jenis" && (
                         <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getJenisBadgeColor(transaksi.jenis)}`}>
                           {transaksi.jenis}

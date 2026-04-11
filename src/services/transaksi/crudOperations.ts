@@ -73,14 +73,13 @@ export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>)
   
   const oldTransaksi = { ...existing };
   
-  // If anggotaId is being updated, we need to update anggotaNama as well
+  // If anggotaId is being updated, we check if it exists
   if (transaksi.anggotaId) {
     const anggota = await getAnggotaById(transaksi.anggotaId);
     if (!anggota) {
       handleMemberNotFound();
       return { success: false, error: "Anggota tidak ditemukan" };
     }
-    transaksi.anggotaNama = anggota.nama;
   }
   
   const updatedTransaksi: Transaksi = {
@@ -123,10 +122,11 @@ export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>)
   }));
   
   // Log audit entry
+  const anggota = await getAnggotaById(updatedTransaksi.anggotaId);
   logAuditEntry(
     "UPDATE",
     "TRANSAKSI", 
-    `Memperbarui transaksi ${oldTransaksi.jenis} dari Rp ${oldTransaksi.jumlah.toLocaleString('id-ID')} menjadi Rp ${updatedTransaksi.jumlah.toLocaleString('id-ID')} untuk anggota ${updatedTransaksi.anggotaNama} dengan centralized sync`,
+    `Memperbarui transaksi ${oldTransaksi.jenis} dari Rp ${oldTransaksi.jumlah.toLocaleString('id-ID')} menjadi Rp ${updatedTransaksi.jumlah.toLocaleString('id-ID')} untuk anggota ${anggota?.nama || updatedTransaksi.anggotaId} dengan centralized sync`,
     id
   );
   
@@ -158,10 +158,11 @@ export async function deleteTransaksi(id: string): Promise<boolean> {
     }));
     
     // Log audit entry
+    const anggota = await getAnggotaById(transaksiToDelete.anggotaId);
     logAuditEntry(
       "DELETE",
       "TRANSAKSI",
-      `Menghapus transaksi ${transaksiToDelete.jenis} sebesar Rp ${transaksiToDelete.jumlah.toLocaleString('id-ID')} untuk anggota ${transaksiToDelete.anggotaNama} dengan centralized sync cleanup`,
+      `Menghapus transaksi ${transaksiToDelete.jenis} sebesar Rp ${transaksiToDelete.jumlah.toLocaleString('id-ID')} untuk anggota ${anggota?.nama || transaksiToDelete.anggotaId} dengan centralized sync cleanup`,
       id
     );
     

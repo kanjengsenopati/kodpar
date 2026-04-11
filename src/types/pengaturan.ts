@@ -4,8 +4,14 @@ export interface Pengaturan {
   sukuBunga: {
     pinjaman: number;
     simpanan: number;
-    metodeBunga: "flat" | "menurun";
-    pinjamanByCategory: Record<string, number>;
+    metodeBunga: "flat" | "menurun" | "anuitas";
+    metodePembulatan: 'none' | 'ribu' | 'ratus' | 'ratus_atas';
+    biayaAdministrasi: {
+      enabled: boolean;
+      fixed: number;
+      percentage: number;
+      applyTo: string[]; // List of transaction types or categories
+    };
     danaResikoKredit?: {
       enabled: boolean;
       persentase: number;

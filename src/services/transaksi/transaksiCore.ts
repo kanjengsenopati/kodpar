@@ -126,17 +126,6 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
     if (!data.anggotaId) {
       return { success: false, error: "ID Anggota wajib diisi" };
     }
-
-    // If anggotaId is provided but anggotaNama is not, try to get anggota name
-    let anggotaNama = data.anggotaNama || "";
-    if (data.anggotaId && !data.anggotaNama) {
-      const anggota = await getAnggotaById(data.anggotaId);
-      if (anggota) {
-        anggotaNama = anggota.nama;
-      } else {
-        return { success: false, error: `Anggota dengan ID ${data.anggotaId} tidak ditemukan` };
-      }
-    }
     
     // Validate kategori if provided
     if (data.jenis && data.kategori) {
@@ -151,7 +140,6 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       nomorTransaksi,
       tanggal: data.tanggal || new Date().toISOString().split('T')[0],
       anggotaId: data.anggotaId || "",
-      anggotaNama: anggotaNama,
       jenis: data.jenis || "Simpan",
       kategori: data.kategori || undefined,
       jumlah: data.jumlah || 0,

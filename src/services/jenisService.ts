@@ -1,12 +1,13 @@
-import { Jenis, JenisPengajuan, JenisSimpanan, JenisPinjaman } from "@/types/jenis";
 import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 const JENIS_KEY = "koperasi_jenis";
 
 // Initial data for the jenis (types)
 const initialJenis: Jenis[] = [
   {
-    id: "PG001",
+    id: "018e6a12-8c1d-7a01-8000-000000000401",
+    kode: "PG/SIMPAN",
     nama: "Pengajuan Simpanan",
     jenisTransaksi: "Pengajuan",
     keterangan: "Pengajuan untuk simpanan baru",
@@ -16,7 +17,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "PG002",
+    id: "018e6a12-8c1d-7a01-8000-000000000402",
+    kode: "PG/PINJAM",
     nama: "Pengajuan Pinjaman",
     jenisTransaksi: "Pengajuan",
     keterangan: "Pengajuan untuk pinjaman baru",
@@ -26,7 +28,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "SP001",
+    id: "018e6a12-8c1d-7a01-8000-000000000501",
+    kode: "SP/POKOK",
     nama: "Simpanan Pokok",
     jenisTransaksi: "Simpanan",
     keterangan: "Simpanan yang wajib dibayarkan saat menjadi anggota",
@@ -38,7 +41,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "SP002",
+    id: "018e6a12-8c1d-7a01-8000-000000000502",
+    kode: "SP/WAJIB",
     nama: "Simpanan Wajib",
     jenisTransaksi: "Simpanan",
     keterangan: "Simpanan yang dibayarkan secara rutin setiap bulan",
@@ -50,7 +54,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "SP003",
+    id: "018e6a12-8c1d-7a01-8000-000000000503",
+    kode: "SP/SUKARELA",
     nama: "Simpanan Sukarela",
     jenisTransaksi: "Simpanan",
     keterangan: "Simpanan yang dibayarkan secara sukarela",
@@ -62,7 +67,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "PJ001",
+    id: "018e6a12-8c1d-7a01-8000-000000000601",
+    kode: "PJ/REGULER",
     nama: "Reguler",
     jenisTransaksi: "Pinjaman",
     keterangan: "Pinjaman dengan bunga standar",
@@ -76,7 +82,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "PJ002",
+    id: "018e6a12-8c1d-7a01-8000-000000000602",
+    kode: "PJ/SERTIFIKASI",
     nama: "Sertifikasi",
     jenisTransaksi: "Pinjaman",
     keterangan: "Pinjaman khusus untuk biaya sertifikasi",
@@ -90,7 +97,8 @@ const initialJenis: Jenis[] = [
     isActive: true
   },
   {
-    id: "PJ003",
+    id: "018e6a12-8c1d-7a01-8000-000000000603",
+    kode: "PJ/MUSIMAN",
     nama: "Musiman",
     jenisTransaksi: "Pinjaman",
     keterangan: "Pinjaman jangka pendek untuk musim tertentu",
@@ -128,15 +136,9 @@ export function getActiveJenisByType(jenisTransaksi: "Pengajuan" | "Simpanan" | 
   return all.filter(jenis => jenis.jenisTransaksi === jenisTransaksi && jenis.isActive);
 }
 
-// Generate ID for new jenis
-function generateJenisId(jenisTransaksi: "Pengajuan" | "Simpanan" | "Pinjaman"): string {
-  const all = getAllJenis();
-  const prefix = jenisTransaksi === "Pengajuan" ? "PG" : jenisTransaksi === "Simpanan" ? "SP" : "PJ";
-  const filtered = all.filter(jenis => jenis.jenisTransaksi === jenisTransaksi);
-  const maxId = filtered.length > 0
-    ? Math.max(...filtered.map(jenis => parseInt(jenis.id.substring(2))))
-    : 0;
-  return `${prefix}${String(maxId + 1).padStart(3, "0")}`;
+// Generate ID for new jenis - NOW USING UUIDv7
+function generateJenisId(): string {
+  return generateUUIDv7();
 }
 
 // Create a new jenis
@@ -146,7 +148,7 @@ export function createJenis(jenis: Omit<Jenis, "id" | "createdAt" | "updatedAt">
   
   const newJenis = {
     ...jenis,
-    id: generateJenisId(jenis.jenisTransaksi),
+    id: generateJenisId(),
     createdAt: now,
     updatedAt: now
   } as Jenis;

@@ -76,7 +76,7 @@ export function processAutoDeductions(
         tanggal: loanTransaction.tanggal,
         kategori: "Dana Resiko Kredit",
         jumlah: deductions.danaResikoKredit.amount,
-        keterangan: `Auto deduction Dana Resiko Kredit ${deductions.danaResikoKredit.percentage}% dari pinjaman ${loanTransaction.anggotaNama} - ${loanTransaction.id}`,
+        keterangan: `Auto deduction Dana Resiko Kredit ${deductions.danaResikoKredit.percentage}% dari pinjaman ID Member #${loanTransaction.anggotaId} - TXID: ${loanTransaction.id}`,
         jenis: "Pemasukan",
         createdBy: "system_auto_deduction"
       });
@@ -94,7 +94,7 @@ export function processAutoDeductions(
         tanggal: loanTransaction.tanggal,
         kategori: "Simpanan Wajib Kredit",
         jumlah: deductions.simpananWajibKredit.amount,
-        keterangan: `Auto deduction Simpanan Wajib Kredit ${deductions.simpananWajibKredit.percentage}% dari pinjaman ${loanTransaction.anggotaNama} - ${loanTransaction.id}`,
+        keterangan: `Auto deduction Simpanan Wajib Kredit ${deductions.simpananWajibKredit.percentage}% dari pinjaman ID Member #${loanTransaction.anggotaId} - TXID: ${loanTransaction.id}`,
         jenis: "Pemasukan",
         createdBy: "system_auto_deduction"
       });

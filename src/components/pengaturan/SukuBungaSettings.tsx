@@ -17,7 +17,8 @@ import { Separator } from "@/components/ui/separator";
 import { Pengaturan } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import { updatePengaturan } from "@/services/pengaturanService";
-import { getPinjamanCategories } from "@/services/transaksi/categories";
+import { getAllJenis, updateJenis } from "@/services/jenisService";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SukuBungaSettingsProps {
   settings: Pengaturan;
@@ -27,7 +28,7 @@ interface SukuBungaSettingsProps {
 export function SukuBungaSettings({ settings, setSettings }: SukuBungaSettingsProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const pinjamanCategories = getPinjamanCategories();
+  const pinjamanJenis = getAllJenis().filter(j => j.jenisTransaksi === "Pinjaman");
   
   const handleSukuBungaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,16 +41,27 @@ export function SukuBungaSettings({ settings, setSettings }: SukuBungaSettingsPr
     }));
   };
   
-  const handleCategoryBungaChange = (category: string, value: string) => {
+  const handleCategoryBungaChange = (id: string, value: string) => {
     const floatValue = parseFloat(value);
     
+    // SSOT: Update directly in the Jenis table
+    updateJenis(id, { bungaPersen: floatValue });
+    
+    // Refresh UI state if needed, though Jenis is separate from Pengaturan
+    toast({
+      title: "Suku Bunga diperbarui",
+      description: `Bunga untuk jenis ini telah diperbarui secara modular (ID-Driven).`,
+    });
+  };
+
+  const handleAdminFeeChange = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
       sukuBunga: {
         ...prev.sukuBunga,
-        pinjamanByCategory: {
-          ...(prev.sukuBunga.pinjamanByCategory || {}),
-          [category]: floatValue
+        biayaAdministrasi: {
+          ...prev.sukuBunga.biayaAdministrasi,
+          [field]: value
         }
       }
     }));
@@ -86,7 +98,17 @@ export function SukuBungaSettings({ settings, setSettings }: SukuBungaSettingsPr
       ...prev,
       sukuBunga: {
         ...prev.sukuBunga,
-        metodeBunga: value as "flat" | "menurun"
+        metodeBunga: value as "flat" | "menurun" | "anuitas"
+      }
+    }));
+  };
+
+  const handleRoundingChange = (value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      sukuBunga: {
+        ...prev.sukuBunga,
+        metodePembulatan: value as any
       }
     }));
   };
@@ -114,12 +136,9 @@ export function SukuBungaSettings({ settings, setSettings }: SukuBungaSettingsPr
   };
   
   // Helper to safely get category bunga rate
-  const getCategoryBungaRate = (category: string): number => {
-    if (settings.sukuBunga.pinjamanByCategory && 
-        category in settings.sukuBunga.pinjamanByCategory) {
-      return settings.sukuBunga.pinjamanByCategory[category];
-    }
-    return settings.sukuBunga.pinjaman; // Default to general rate
+  const getCategoryBungaRate = (id: string): number => {
+    const jenis = getAllJenis().find(j => j.id === id);
+    return (jenis as any)?.bungaPersen || settings.sukuBunga.pinjaman;
   };
 
   // Format percentage for display
@@ -289,44 +308,144 @@ export function SukuBungaSettings({ settings, setSettings }: SukuBungaSettingsPr
           <Separator className="my-6" />
           
           <div className="mt-8">
-            <h3 className="text-base font-medium mb-4">Bunga Berdasarkan Kategori Pinjaman</h3>
+            <h3 className="text-base font-medium mb-4 flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-indigo-600" />
+              Suku Bunga Berdasarkan Jenis Pinjaman (Modular)
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {pinjamanCategories.map(category => (
-                <div key={category}>
-                  <Label htmlFor={`bunga-${category}`}>
-                    Bunga Pinjaman {category} (% per bulan)
+              {pinjamanJenis.map(jenis => (
+                <div key={jenis.id}>
+                  <Label htmlFor={`bunga-${jenis.id}`}>
+                    {jenis.nama} (% per bulan)
                   </Label>
                   <Input 
-                    id={`bunga-${category}`}
+                    id={`bunga-${jenis.id}`}
                     type="number" 
-                    value={getCategoryBungaRate(category)}
-                    onChange={(e) => handleCategoryBungaChange(category, e.target.value)}
+                    value={getCategoryBungaRate(jenis.id)}
+                    onChange={(e) => handleCategoryBungaChange(jenis.id, e.target.value)}
                     step="0.1" 
                     min="0" 
                     max="5"
                   />
+                  <p className="text-[10px] text-muted-foreground mt-0.5">ID: {jenis.id}</p>
                 </div>
               ))}
             </div>
           </div>
           
-          <div className="mt-6">
-            <Label htmlFor="metodeBunga">Metode Perhitungan Bunga Pinjaman</Label>
-            <Select 
-              value={settings.sukuBunga.metodeBunga}
-              onValueChange={handleSelectChange}
-            >
-              <SelectTrigger id="metodeBunga">
-                <SelectValue placeholder="Pilih metode bunga" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="flat">Flat</SelectItem>
-                <SelectItem value="menurun">Menurun (Sliding)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Metode perhitungan bunga yang digunakan untuk pinjaman
-            </p>
+          <Separator className="my-6" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="metodeBunga">Metode Perhitungan Bunga Pinjaman</Label>
+              <Select 
+                value={settings.sukuBunga.metodeBunga}
+                onValueChange={handleSelectChange}
+              >
+                <SelectTrigger id="metodeBunga">
+                  <SelectValue placeholder="Pilih metode bunga" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flat">Flat (Tetap)</SelectItem>
+                  <SelectItem value="menurun">Menurun (Sliding)</SelectItem>
+                  <SelectItem value="anuitas">Anuitas (Annuity)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Metode perhitungan bunga yang digunakan untuk pinjaman
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="metodePembulatan">Metode Pembulatan Angsuran</Label>
+              <Select 
+                value={settings.sukuBunga.metodePembulatan}
+                onValueChange={handleRoundingChange}
+              >
+                <SelectTrigger id="metodePembulatan">
+                  <SelectValue placeholder="Pilih metode pembulatan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Tanpa Pembulatan</SelectItem>
+                  <SelectItem value="ratus">Ratusan Terdekat</SelectItem>
+                  <SelectItem value="ratus_atas">Ratusan ke Atas</SelectItem>
+                  <SelectItem value="ribu">Ribuan Terdekat</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pembulatan nilai angsuran per bulan
+              </p>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Biaya Administrasi Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Save className="h-5 w-5 text-green-600" />
+              <h3 className="text-base font-medium">Biaya Administrasi (Flexible Management)</h3>
+            </div>
+            
+            <div className="space-y-4 p-4 border rounded-lg bg-slate-50/50">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={settings.sukuBunga.biayaAdministrasi?.enabled || false}
+                  onCheckedChange={(checked) => handleAdminFeeChange('enabled', checked)}
+                />
+                <Label>Aktifkan Biaya Administrasi</Label>
+              </div>
+              
+              {settings.sukuBunga.biayaAdministrasi?.enabled && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="admin-fixed">Biaya Tetap (Nominal)</Label>
+                      <Input
+                        id="admin-fixed"
+                        type="number"
+                        value={settings.sukuBunga.biayaAdministrasi?.fixed || 0}
+                        onChange={(e) => handleAdminFeeChange('fixed', parseFloat(e.target.value))}
+                        placeholder="Contoh: 50000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="admin-percent">Biaya Persentase (%)</Label>
+                      <Input
+                        id="admin-percent"
+                        type="number"
+                        value={settings.sukuBunga.biayaAdministrasi?.percentage || 0}
+                        onChange={(e) => handleAdminFeeChange('percentage', parseFloat(e.target.value))}
+                        step="0.1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Diberlakukan untuk Transaksi:</Label>
+                    <div className="flex flex-wrap gap-4">
+                      {["Simpan", "Pinjam", "Penarikan"].map(type => (
+                        <div key={type} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`apply-${type}`}
+                            checked={settings.sukuBunga.biayaAdministrasi?.applyTo?.includes(type)}
+                            onCheckedChange={(checked) => {
+                              const current = settings.sukuBunga.biayaAdministrasi?.applyTo || [];
+                              if (checked) {
+                                handleAdminFeeChange('applyTo', [...current, type]);
+                              } else {
+                                handleAdminFeeChange('applyTo', current.filter(t => t !== type));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`apply-${type}`}>{type}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           
           <div className="bg-muted/50 p-4 rounded-lg mt-6">

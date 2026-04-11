@@ -3,6 +3,7 @@ import { ArrowUpFromLine, TrendingDown, Calendar, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Transaksi } from "@/types";
+import { MemberName } from "@/components/anggota/MemberName";
 
 interface ChartDataItem {
   name: string;
@@ -157,7 +158,7 @@ export function PenarikanTabContent({
                       {recentPenarikan.map((penarikan) => (
                         <tr key={penarikan.id} className="border-b hover:bg-gray-50">
                           <td className="p-2">{new Date(penarikan.tanggal).toLocaleDateString('id-ID')}</td>
-                          <td className="p-2 max-w-[120px] truncate">{penarikan.anggotaNama}</td>
+                          <td className="p-2 max-w-[120px] truncate"><MemberName memberId={penarikan.anggotaId} /></td>
                           <td className="p-2 text-right font-medium">
                             Rp {Math.abs(penarikan.jumlah).toLocaleString('id-ID')}
                           </td>

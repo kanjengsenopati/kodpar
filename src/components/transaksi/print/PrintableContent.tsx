@@ -3,6 +3,7 @@ import React from 'react';
 import { Transaksi } from '@/types';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { getPengaturan } from '@/services/pengaturanService';
+import { MemberName } from '@/components/anggota/MemberName';
 
 interface PrintableContentProps {
   transaksi: Transaksi;
@@ -73,7 +74,7 @@ export const PrintableContent = React.forwardRef<HTMLDivElement, PrintableConten
                   </tr>
                   <tr>
                     <td className="py-2 text-gray-600 font-medium">Nama Anggota</td>
-                    <td className="py-2">: {anggotaNama || transaksi.anggotaNama}</td>
+                    <td className="py-2">: {anggotaNama ? anggotaNama : <MemberName memberId={transaksi.anggotaId} />}</td>
                   </tr>
                   {transaksi.kategori && (
                     <tr>

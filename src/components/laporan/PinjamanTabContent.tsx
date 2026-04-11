@@ -34,6 +34,7 @@ import { useEffect, useState } from "react";
 import { JenisPinjaman } from "@/types/jenis";
 import { getJenisByType } from "@/services/jenisService";
 import { calculateSpecificLoanRemainingBalance } from "@/services/financialCalculations";
+import { MemberName } from "@/components/anggota/MemberName";
 
 // Define chart data interface for better type checking
 interface ChartDataItem {
@@ -100,11 +101,14 @@ export function PinjamanTabContent({
       }
     }
     
-    // Filter by search query (anggota name)
+    // Note: Search by member name is disabled in this simplified version because anggotaNama 
+    // is removed from Transaksi to enforce SSOT. Search should be refactored to lookup 
+    // member IDs first.
     if (searchQuery.trim()) {
+      // Temporary: search by ID if query is UUID-like
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
-        t.anggotaNama.toLowerCase().includes(query)
+        t.anggotaId.toLowerCase().includes(query)
       );
     }
     
@@ -335,7 +339,7 @@ export function PinjamanTabContent({
                     <TableRow key={transaksi.id}>
                       <TableCell className="font-medium">{transaksi.id}</TableCell>
                       <TableCell>{formatDate(transaksi.tanggal)}</TableCell>
-                      <TableCell>{transaksi.anggotaNama}</TableCell>
+                      <TableCell><MemberName memberId={transaksi.anggotaId} /></TableCell>
                       <TableCell>{formatCurrency(transaksi.jumlah)}</TableCell>
                       <TableCell>{tenor} bulan</TableCell>
                       <TableCell>

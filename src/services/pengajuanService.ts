@@ -72,7 +72,7 @@ export async function generatePengajuanNumber(): Promise<string> {
  * Create a new pengajuan
  */
 export async function createPengajuan(
-  pengajuan: Omit<Pengajuan, "id" | "nomorPengajuan" | "anggotaNama" | "createdAt" | "updatedAt"> & { dokumen?: PersyaratanDokumen[] }
+  pengajuan: Omit<Pengajuan, "id" | "nomorPengajuan" | "createdAt" | "updatedAt"> & { dokumen?: PersyaratanDokumen[] }
 ): Promise<Pengajuan | null> {
   const anggota = await getAnggotaById(pengajuan.anggotaId);
   if (!anggota) return null;
@@ -95,8 +95,6 @@ export async function createPengajuan(
     ...pengajuan,
     id,
     nomorPengajuan,
-    anggotaNo: anggota.noAnggota,
-    anggotaNama: anggota.nama,
     history,
     createdAt: now,
     updatedAt: now,
@@ -119,7 +117,6 @@ export async function updatePengajuan(
   if (pengajuan.anggotaId) {
     const anggota = await getAnggotaById(pengajuan.anggotaId);
     if (!anggota) return null;
-    pengajuan.anggotaNama = anggota.nama;
   }
   
   const updated: Pengajuan = {
@@ -146,98 +143,94 @@ export async function deletePengajuan(id: string): Promise<boolean> {
 import { getPengaturan } from "./pengaturanService";
 
 /**
- * Approve a pengajuan dan convert ke transaction dengan centralized sync
- * Menggunakan Dexie transaction untuk memastikan atomisitas
+ * STRICT ATOMIC: Approve a pengajuan and convert to transaction in a single commit
  */
 export async function approvePengajuan(id: string): Promise<boolean> {
-  const pengajuan = await db.pengajuan.get(id);
-  if (!pengajuan || pengajuan.status !== "Menunggu") return false;
-  
   try {
-    // ── Phase 1: Validation ───────────────────────────────────────────────────
-    if (pengajuan.jenis === "Penarikan") {
-      const settings = getPengaturan();
-      const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
-      
-      let minRequired = 0;
-      if (settings.penarikan) {
-        if (settings.penarikan.minPreservedBalanceType === "fixed") {
-          minRequired = settings.penarikan.minPreservedBalanceValue;
-        } else {
-          minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
+    // 1. EXECUTE GLOBAL ATOMIC TRANSACTION
+    // This transaction covers the Application state, the Financial Transaction, 
+    // and the Accounting Journal (via createTransaksi internal logic)
+    await db.transaction('rw', [db.pengajuan, db.transaksi, db.jurnal, db.anggota, db.auditLog], async () => {
+      const pengajuan = await db.pengajuan.get(id);
+      if (!pengajuan || pengajuan.status !== "Menunggu") {
+        throw new Error("Pengajuan tidak ditemukan atau sudah diproses");
+      }
+
+      // --- A. Domain Validation ---
+      if (pengajuan.jenis === "Penarikan") {
+        const settings = getPengaturan();
+        const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
+        // ... (existing balance logic remains same)
+        let minRequired = 0;
+        if (settings.penarikan) {
+          if (settings.penarikan.minPreservedBalanceType === "fixed") {
+            minRequired = settings.penarikan.minPreservedBalanceValue;
+          } else {
+            minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
+          }
+        }
+        let maxAllowedByRule = availableBalance - minRequired;
+        if (settings.penarikan) {
+          let maxRule = 0;
+          if (settings.penarikan.maxWithdrawalType === "fixed") {
+            maxRule = settings.penarikan.maxWithdrawalValue;
+          } else {
+            maxRule = (availableBalance * settings.penarikan.maxWithdrawalValue) / 100;
+          }
+          maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
+        }
+        if (pengajuan.jumlah > maxAllowedByRule) {
+          throw new Error(`Aturan Penarikan Dilanggar: Maksimal ${maxAllowedByRule.toLocaleString('id-ID')}`);
         }
       }
-      let maxAllowedByRule = availableBalance - minRequired;
-      if (settings.penarikan) {
-        let maxRule = 0;
-        if (settings.penarikan.maxWithdrawalType === "fixed") {
-          maxRule = settings.penarikan.maxWithdrawalValue;
-        } else {
-          maxRule = (availableBalance * settings.penarikan.maxWithdrawalValue) / 100;
-        }
-        maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
+
+      // --- B. Generate Final Description ---
+      let finalKeterangan = `Dari Pengajuan #${pengajuan.id}: ${pengajuan.keterangan || ""}`.trim();
+      if (pengajuan.jenis === "Pinjam") {
+        const tenor = (pengajuan as any).tenor;
+        const loanCalculation = calculateLoanDetails(pengajuan.kategori!, pengajuan.jumlah, tenor);
+        finalKeterangan = generateLoanDescription(loanCalculation, finalKeterangan);
       }
-      if (pengajuan.jumlah > maxAllowedByRule) {
-        throw new Error(`Aturan Penarikan Dilanggar: Maksimal yang bisa ditarik adalah ${maxAllowedByRule.toLocaleString('id-ID')}`);
+
+      // --- C. Create Transaction (Atomic Ledger Creation happens inside!) ---
+      const result = await createTransaksi({
+        tanggal: pengajuan.tanggal,
+        anggotaId: pengajuan.anggotaId,
+        jenis: pengajuan.jenis,
+        jumlah: pengajuan.jumlah,
+        kategori: pengajuan.kategori,
+        keterangan: finalKeterangan,
+        status: "Sukses",
+        referensiPinjamanId: pengajuan.referensiPinjamanId,
+        nominalPokok: pengajuan.nominalPokok,
+        nominalJasa: pengajuan.nominalJasa
+      });
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Gagal membuat transaksi finansial");
       }
-    }
 
-    // Pre-load async data BEFORE any DB writes
-    if (pengajuan.jenis === "Pinjam") {
-      await ensureAutoDeductionCategories();
-    }
+      const createdTransaction = result.data;
+      const user = getCurrentUser();
+      const now = new Date().toISOString();
 
-    let finalKeterangan = `Dari Pengajuan #${pengajuan.id}: ${pengajuan.keterangan || ""}`.trim();
-    if (pengajuan.jenis === "Pinjam") {
-      const tenor = (pengajuan as any).tenor;
-      const loanCalculation = calculateLoanDetails(pengajuan.kategori!, pengajuan.jumlah, tenor);
-      finalKeterangan = generateLoanDescription(loanCalculation, finalKeterangan);
-    } else if (pengajuan.jenis === "Angsuran" && pengajuan.referensiPinjamanId) {
-      finalKeterangan = `${finalKeterangan} (Ref Pinjaman: ${pengajuan.referensiPinjamanId})`.trim();
-    }
+      // --- D. Update Application State ---
+      const newHistoryEntry: PengajuanHistory = {
+        id: generateUUIDv7(),
+        tanggal: now,
+        aksi: "Disetujui",
+        oleh: user?.name || "Admin",
+        keterangan: "Disetujui (Atomic SAK-EP)"
+      };
 
-    // ── Phase 2: Core writes — NO explicit db.transaction() wrapper ───────────
-    // Each Dexie call uses its own implicit auto-commit transaction.
-    // Wrapping with db.transaction() conflicts with createTransactionWithSync
-    // which internally opens its own db.transaction(), causing nested transaction errors.
-    const result = await createTransaksi({
-      tanggal: pengajuan.tanggal,
-      anggotaId: pengajuan.anggotaId,
-      jenis: pengajuan.jenis,
-      jumlah: pengajuan.jumlah,
-      kategori: pengajuan.kategori,
-      keterangan: finalKeterangan,
-      status: "Sukses",
-      referensiPinjamanId: pengajuan.referensiPinjamanId,
-      nominalPokok: pengajuan.nominalPokok,
-      nominalJasa: pengajuan.nominalJasa
-    });
+      await db.pengajuan.update(id, {
+        status: "Disetujui",
+        history: [...(pengajuan.history || []), newHistoryEntry],
+        updatedAt: now
+      });
 
-    if (!result.success || !result.data) {
-      throw new Error(result.error || "Gagal membuat transaksi finansial");
-    }
-
-    const createdTransaction = result.data;
-    const user = getCurrentUser();
-    const now = new Date().toISOString();
-
-    const newHistoryEntry: PengajuanHistory = {
-      id: generateUUIDv7(),
-      tanggal: now,
-      aksi: "Disetujui",
-      oleh: user?.name || "Admin",
-      keterangan: "Pengajuan disetujui dan transaksi finansial dibuat"
-    };
-
-    // Update pengajuan status (independent auto-commit)
-    await db.pengajuan.update(id, {
-      status: "Disetujui",
-      history: [...(pengajuan.history || []), newHistoryEntry],
-      updatedAt: now
-    });
-
-    // ── Phase 3: Post-commit side effects (non-fatal, won't block UI success) ─
-    try {
+      // --- E. Side Effects (Schedule generation) ---
+      // We do this inside the transaction for Pinjaman to ensure schedules exist
       if (pengajuan.jenis === "Pinjam") {
         const { generateInitialSchedule } = await import("./transaksi/installmentScheduleService");
         await generateInitialSchedule(createdTransaction);
@@ -246,23 +239,14 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         const { linkPaymentToSchedule } = await import("./transaksi/installmentScheduleService");
         await linkPaymentToSchedule(createdTransaction);
       }
-    } catch (scheduleErr) {
-      // Schedule generation failure is non-fatal: the core approval is done.
-      console.warn("⚠️ Schedule generation warning (non-fatal):", scheduleErr);
-    }
 
-    window.dispatchEvent(new CustomEvent('pengajuan-approved', {
-      detail: {
-        pengajuanId: id,
-        transaction: createdTransaction,
-        timestamp: new Date().toISOString()
-      }
-    }));
+      // Emit event after successful commit outside if needed or use Dexie.on('committed')
+      // For now, we return true and let calling code emit UI events.
+    });
 
     return true;
-
   } catch (error: any) {
-    console.error("❌ Approval failed:", error);
+    console.error("❌ SAK-EP APPROVAL REJECTED (ROLLBACK):", error);
     return false;
   }
 }

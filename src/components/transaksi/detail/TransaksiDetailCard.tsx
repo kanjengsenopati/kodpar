@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Transaksi } from '@/types';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { FileUp, FileDown, Wallet, TrendingDown } from 'lucide-react';
+import { MemberName } from '@/components/anggota/MemberName';
 
 interface TransaksiDetailCardProps {
   transaksi: Transaksi;
@@ -87,7 +88,9 @@ export function TransaksiDetailCard({ transaksi, anggotaNama }: TransaksiDetailC
             
             <div>
               <p className="text-sm text-muted-foreground">Nama Anggota</p>
-              <p className="font-medium text-lg">{anggotaNama || transaksi.anggotaNama}</p>
+              <div className="font-medium text-lg">
+                {anggotaNama ? anggotaNama : <MemberName memberId={transaksi.anggotaId} />}
+              </div>
             </div>
             
             <div>

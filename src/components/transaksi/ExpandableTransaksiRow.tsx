@@ -9,6 +9,7 @@ import * as Text from "@/components/ui/text";
 import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 import { cn } from "@/lib/utils";
 import { getScheduleByLoanId } from "@/services/transaksi/installmentScheduleService";
+import { MemberName } from "@/components/anggota/MemberName";
 
 interface ExpandableTransaksiRowProps {
   transaksi: Transaksi;
@@ -102,7 +103,7 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
         </TableCell>
         <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{transaksi.nomorTransaksi || (transaksi.id.length > 10 ? transaksi.id.substring(0,8) + "..." : transaksi.id)}</Text.Caption></TableCell>
         <TableCell><Text.Body className="text-xs">{formatDate(transaksi.tanggal)}</Text.Body></TableCell>
-        <TableCell><Text.Body className="font-bold text-slate-800">{transaksi.anggotaNama}</Text.Body></TableCell>
+        <TableCell><MemberName memberId={transaksi.anggotaId} className="font-bold text-slate-800" /></TableCell>
         <TableCell><Text.Label className="bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 text-[10px]">{transaksi.kategori || "-"}</Text.Label></TableCell>
         <TableCell>
           <Text.Amount className="text-sm">

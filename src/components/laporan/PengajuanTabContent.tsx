@@ -1,6 +1,7 @@
 
 import { Pengajuan } from "@/types";
 import { formatCurrency, formatDate } from "@/utils/formatters";
+import { MemberName } from "@/components/anggota/MemberName";
 import { ChartPie, Download, FileCheck, FileText, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -205,7 +206,7 @@ export function PengajuanTabContent({
                   <TableRow key={pengajuan.id}>
                     <TableCell>{pengajuan.id}</TableCell>
                     <TableCell>{formatDate(pengajuan.tanggal)}</TableCell>
-                    <TableCell>{pengajuan.anggotaNama}</TableCell>
+                    <TableCell><MemberName memberId={pengajuan.anggotaId} /></TableCell>
                     <TableCell>{pengajuan.jenis}</TableCell>
                     <TableCell>{formatCurrency(pengajuan.jumlah)}</TableCell>
                     <TableCell>

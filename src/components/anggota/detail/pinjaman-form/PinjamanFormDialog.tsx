@@ -11,25 +11,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getPinjamanCategories } from "@/services/transaksi/categories";
+import { getAllJenis } from "@/services/jenisService";
 import { PinjamanFormFields } from "./PinjamanFormFields";
 import { PinjamanFormData, PinjamanFormProps } from "./types";
 import { formatNumberInput } from "@/utils/formatters";
+import { MemberName } from "@/components/anggota/MemberName";
 
 export function PinjamanFormDialog({ 
   anggotaId, 
-  anggotaNama, 
   isOpen, 
   onClose,
   onSubmit,
   isSubmitting
 }: PinjamanFormProps) {
-  const pinjamanCategories = getPinjamanCategories();
+  const pinjamanJenis = getAllJenis().filter(j => j.jenisTransaksi === "Pinjaman" && j.isActive);
   
   const [formData, setFormData] = useState<PinjamanFormData>({
     jumlah: '',
     keterangan: '',
-    kategori: pinjamanCategories[0]
+    jenisId: pinjamanJenis[0]?.id || ''
   });
   
   const [formattedJumlah, setFormattedJumlah] = useState('');
@@ -40,11 +40,11 @@ export function PinjamanFormDialog({
       setFormData({
         jumlah: '',
         keterangan: '',
-        kategori: pinjamanCategories[0]
+        jenisId: pinjamanJenis[0]?.id || ''
       });
       setFormattedJumlah('');
     }
-  }, [isOpen, pinjamanCategories]);
+  }, [isOpen, pinjamanJenis]);
 
   // Update formatted amount when raw amount changes
   useEffect(() => {
@@ -73,7 +73,9 @@ export function PinjamanFormDialog({
         <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
           <div className="grid w-full items-center gap-2">
             <Label htmlFor="anggota">Nama Anggota</Label>
-            <Input id="anggota" value={anggotaNama} disabled />
+            <div className="p-2 border rounded bg-slate-50 font-medium">
+              <MemberName memberId={anggotaId} />
+            </div>
           </div>
           
           <PinjamanFormFields 

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Clock } from "lucide-react";
+import { MemberName } from "@/components/anggota/MemberName";
 
 interface JatuhTempoTabContentProps {
   upcomingDueLoans: {
@@ -234,7 +235,7 @@ export function JatuhTempoTabContent({
                   upcomingDueLoans.map((loan, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{loan.transaksi.id}</TableCell>
-                      <TableCell>{loan.transaksi.anggotaNama}</TableCell>
+                      <TableCell><MemberName memberId={loan.transaksi.anggotaId} /></TableCell>
                       <TableCell>{formatDate(loan.transaksi.tanggal)}</TableCell>
                       <TableCell>{formatCurrency(loan.transaksi.jumlah)}</TableCell>
                       <TableCell>{formatDate(loan.jatuhTempo)}</TableCell>

@@ -1,13 +1,11 @@
-
 export interface PinjamanFormData {
   jumlah: string;
   keterangan: string;
-  kategori: string;
+  jenisId: string; // The UUID of the loan type
 }
 
 export interface PinjamanFormProps {
   anggotaId: string;
-  anggotaNama: string;
   onClose: () => void;
   isOpen: boolean;
   onSubmit: (formData: PinjamanFormData) => Promise<void>;
@@ -15,7 +13,6 @@ export interface PinjamanFormProps {
 }
 
 export interface PinjamanFormSummaryProps {
-  kategori: string;
+  jenisId: string;
   jumlah: string;
-  bunga: number;
 }

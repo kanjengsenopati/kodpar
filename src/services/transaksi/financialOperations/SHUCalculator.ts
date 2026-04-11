@@ -1,6 +1,7 @@
 import { getAllTransaksi } from "../transaksiCore";
 import { getPengaturan } from "../../pengaturanService";
 import { evaluateFormulaWithVariables } from "../../keuangan/formulaEvaluatorService";
+import { getActiveJenisByType } from "../../jenisService";
 
 /**
  * SHU Calculator Service - PURE DATABASE DRIVEN
@@ -8,9 +9,9 @@ import { evaluateFormulaWithVariables } from "../../keuangan/formulaEvaluatorSer
  */
 export class SHUCalculator {
   /**
-   * Calculate SHU (Sisa Hasil Usaha) using structured DB data
+   * Calculate SHU (Sisa Hasil Usaha) using structured DB data for a specific period (Fiscal Year)
    */
-  static async calculate(anggotaId: string | number): Promise<number> {
+  static async calculate(anggotaId: string | number, periode?: string): Promise<number> {
     const idAsString = String(anggotaId);
     const settings = getPengaturan();
     const minValue = Number(settings.shu?.minValue || 0);
@@ -19,14 +20,14 @@ export class SHUCalculator {
     // Formula from settings (DB Driven)
     const formula = settings.shu?.formula || "simpanan_khusus * 0.03 + simpanan_wajib * 0.05 + pendapatan * 0.02";
     
-    // Prepare variables strictly from DB
-    const variables = await this.prepareVariables(idAsString);
+    // Prepare variables for the specific period
+    const variables = await this.prepareVariables(idAsString, periode);
     
     try {
       const result = evaluateFormulaWithVariables(formula, variables);
       
       if (result === null) {
-        return minValue; // Prevent negative/null values
+        return minValue;
       }
       
       return Math.max(minValue, Math.min(maxValue, Math.round(result)));
@@ -37,40 +38,60 @@ export class SHUCalculator {
   }
   
   /**
-   * Prepare variables strictly from structured database fields
+   * Prepare variables strictly from structured database fields, scoped to a period if provided
    */
-  private static async prepareVariables(anggotaId: string): Promise<Record<string, number>> {
+  private static async prepareVariables(anggotaId: string, periode?: string): Promise<Record<string, number>> {
     const allTransaksi = await getAllTransaksi();
-    const memberTransaksi = allTransaksi.filter(t => t.anggotaId === anggotaId && t.status === "Sukses");
     
-    // 1. Simpanan Variables (Structure Categorized)
-    const simpanan_pokok = memberTransaksi
-      .filter(t => t.jenis === "Simpan" && t.kategori === "Simpanan Pokok")
-      .reduce((total, t) => total + (t.jumlah || 0), 0);
+    // Scope transactions to the specific year if period is provided (e.g., "2023")
+    const filteredTransaksi = periode 
+      ? allTransaksi.filter(t => t.tanggal && t.tanggal.startsWith(periode))
+      : allTransaksi;
+
+    const memberTransaksi = filteredTransaksi.filter(t => t.anggotaId === anggotaId && t.status === "Sukses");
+    
+    // Resolve Jenis IDs for mapping to ensure ID-driven SSOT
+    const simpananJenis = getActiveJenisByType("Simpanan");
+    const idPokok = simpananJenis.find(j => j.nama === "Simpanan Pokok")?.id;
+    const idWajib = simpananJenis.find(j => j.nama === "Simpanan Wajib")?.id;
+    const idSukarela = simpananJenis.find(j => j.nama.includes("Sukarela") || j.nama.includes("Khusus"))?.id;
+
+    const isCategory = (t: any, id?: string, name?: string) => {
+      return t.kategori === id || t.kategori === name;
+    };
+
+    // 1. Simpanan Variables (Calculation: Closing mutation for the period)
+    // SAK EP: Proportional contribution should reflect the net increase/balance in the period
+    const getBalance = (catId?: string, catName?: string) => {
+      const simpan = memberTransaksi
+        .filter(t => t.jenis === "Simpan" && isCategory(t, catId, catName))
+        .reduce((total, t) => total + (t.jumlah || 0), 0);
       
-    const simpanan_wajib = memberTransaksi
-      .filter(t => t.jenis === "Simpan" && t.kategori === "Simpanan Wajib")
-      .reduce((total, t) => total + (t.jumlah || 0), 0);
+      const tarik = memberTransaksi
+        .filter(t => t.jenis === "Penarikan" && isCategory(t, catId, catName))
+        .reduce((total, t) => total + Math.abs(t.jumlah || 0), 0);
       
-    const simpanan_khusus = memberTransaksi
-      .filter(t => t.jenis === "Simpan" && (t.kategori === "Simpanan Sukarela" || t.kategori === "Simpanan Khusus"))
-      .reduce((total, t) => total + (t.jumlah || 0), 0);
-      
+      return Math.max(0, simpan - tarik);
+    };
+
+    const simpanan_pokok = getBalance(idPokok, "Simpanan Pokok");
+    const simpanan_wajib = getBalance(idWajib, "Simpanan Wajib");
+    const simpanan_khusus = getBalance(idSukarela, "Simpanan Sukarela") || getBalance(undefined, "Simpanan Khusus");
     const totalSimpanan = simpanan_pokok + simpanan_wajib + simpanan_khusus;
     
-    // 2. Loan Variables (Pure DB Driven)
+    // 2. Loan Variables (Scope: New loans disbursed in this period)
     const pinjamTransactions = memberTransaksi.filter(t => t.jenis === "Pinjam");
     const totalPinjaman = pinjamTransactions.reduce((total, t) => total + (t.jumlah || 0), 0);
     
-    // 3. Jasa (Interest) - SUM of strictly structured nominalJasa fields from Angsuran
+    // 3. Jasa (Interest) - SUM of strictly realized nominalJasa from Angsuran in this period
+    // This is the primary 'Participation' metric for borrowers.
     const jasa = memberTransaksi
       .filter(t => t.jenis === "Angsuran")
       .reduce((total, t) => total + (t.nominalJasa || 0), 0);
     
-    // 4. Pendapatan (Revenue) - Realized Interest
-    const pendapatan = jasa; // Realized interest IS the revenue for the coop
+    const pendapatan = jasa; 
     
-    const lama_keanggotaan = this.calculateMembershipDuration(memberTransaksi);
+    const lama_keanggotaan = this.calculateMembershipDuration(allTransaksi.filter(t => t.anggotaId === anggotaId));
     const angsuran_total = memberTransaksi
       .filter(t => t.jenis === "Angsuran")
       .reduce((total, t) => total + (t.jumlah || 0), 0);
@@ -87,7 +108,6 @@ export class SHUCalculator {
       angsuran: angsuran_total
     };
     
-    // 5. Custom Dynamic Settings
     const settings = getPengaturan();
     (settings.shu?.customVariables || []).forEach(variable => {
       variables[variable.id] = variable.value;

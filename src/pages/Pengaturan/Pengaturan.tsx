@@ -21,6 +21,8 @@ import { SukuBungaSettings } from "@/components/pengaturan/SukuBungaSettings";
 import { DendaSettings } from "@/components/pengaturan/DendaSettings";
 import { SHUSettings } from "@/components/pengaturan/SHUSettings";
 import { ProfilKoperasiSettings } from "@/components/pengaturan/ProfilKoperasiSettings";
+import { DataIntegrityDashboard } from "@/components/pengaturan/DataIntegrityDashboard";
+import { ShieldCheck } from "lucide-react";
 
 export default function Pengaturan() {
   const [settings, setSettings] = useState<PengaturanType>(getPengaturan());
@@ -30,7 +32,7 @@ export default function Pengaturan() {
       <h1 className="page-title">Pengaturan Koperasi</h1>
       
       <Tabs defaultValue="profil" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="profil" className="gap-2">
             <Building2 size={16} /> Profil
           </TabsTrigger>
@@ -45,6 +47,9 @@ export default function Pengaturan() {
           </TabsTrigger>
           <TabsTrigger value="pusat-rumus" className="gap-2">
             <Beaker size={16} /> Pusat Rumus
+          </TabsTrigger>
+          <TabsTrigger value="integritas" className="gap-2">
+            <ShieldCheck size={16} /> Integritas
           </TabsTrigger>
         </TabsList>
         
@@ -66,6 +71,10 @@ export default function Pengaturan() {
         
         <TabsContent value="pusat-rumus">
           <SHUSettings settings={settings} setSettings={setSettings} />
+        </TabsContent>
+        
+        <TabsContent value="integritas">
+          <DataIntegrityDashboard />
         </TabsContent>
       </Tabs>
     </Layout>

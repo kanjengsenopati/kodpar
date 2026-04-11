@@ -3,26 +3,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { createPengajuan } from "@/services/pengajuanService";
-import { getPinjamanCategories } from "@/services/transaksi/categories";
+import { getAllJenis } from "@/services/jenisService";
 import { formatNumberInput, cleanNumberInput } from "@/utils/formatters";
 import { PinjamanFormDialog } from "./PinjamanFormDialog";
 import { PinjamanFormData } from "./types";
 
 interface PengajuanPinjamanButtonProps {
   anggotaId: string;
-  anggotaNama: string;
 }
 
-export function PengajuanPinjamanButton({ anggotaId, anggotaNama }: PengajuanPinjamanButtonProps) {
+export function PengajuanPinjamanButton({ anggotaId }: PengajuanPinjamanButtonProps) {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const pinjamanCategories = getPinjamanCategories();
+  const pinjamanJenis = getAllJenis().filter(j => j.jenisTransaksi === "Pinjaman" && j.isActive);
   
   const [formData, setFormData] = useState<PinjamanFormData>({
     jumlah: '',
     keterangan: '',
-    kategori: pinjamanCategories[0]
+    jenisId: pinjamanJenis[0]?.id || ''
   });
 
   const handleSubmit = async (submittedData: PinjamanFormData) => {
@@ -58,7 +57,7 @@ export function PengajuanPinjamanButton({ anggotaId, anggotaNama }: PengajuanPin
         setFormData({ 
           jumlah: '', 
           keterangan: '', 
-          kategori: pinjamanCategories[0] 
+          jenisId: pinjamanJenis[0]?.id || '' 
         });
       } else {
         throw new Error("Gagal membuat pengajuan");
@@ -86,7 +85,6 @@ export function PengajuanPinjamanButton({ anggotaId, anggotaNama }: PengajuanPin
       
       <PinjamanFormDialog 
         anggotaId={anggotaId}
-        anggotaNama={anggotaNama}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSubmit={handleSubmit}

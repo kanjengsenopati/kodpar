@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { getSimpananCategories, getPinjamanCategories } from "@/services/transaksi/categories";
+import { getAllJenis } from "@/services/jenisService";
 import { getPengaturan } from "@/services/pengaturanService";
 
 interface KategoriFieldProps {
@@ -19,23 +19,20 @@ interface KategoriFieldProps {
 export function KategoriField({ jenis, value, onChange }: KategoriFieldProps) {
   const pengaturan = getPengaturan();
   
-  // Get categories based on type
-  let categories: string[] = [];
-  if (jenis === "Simpan") {
-    categories = getSimpananCategories();
-  } else if (jenis === "Pinjam") {
-    categories = getPinjamanCategories();
-  } else if (jenis === "Penarikan") {
-    categories = ["Reguler", "Darurat"];
-  }
+  // Get types based on transaction group
+  const mapGroup = (j: "Simpan" | "Pinjam" | "Penarikan"): string => {
+    if (j === "Simpan") return "Simpanan";
+    if (j === "Pinjam") return "Pinjaman";
+    return "Pengajuan";
+  };
+  
+  const allJenis = getAllJenis();
+  const filteredJenis = allJenis.filter(j => j.jenisTransaksi === mapGroup(jenis) && j.isActive);
   
   // Helper function to get interest rate for loan category
-  const getInterestRateForCategory = (category: string): number => {
-    if (jenis === "Pinjam" && pengaturan?.sukuBunga?.pinjamanByCategory && 
-        category in pengaturan.sukuBunga.pinjamanByCategory) {
-      return pengaturan.sukuBunga.pinjamanByCategory[category];
-    }
-    return pengaturan?.sukuBunga?.pinjaman || 1.5;
+  const getInterestRateForCategory = (id: string): number => {
+    const j = allJenis.find(item => item.id === id);
+    return (j as any)?.bungaPersen || pengaturan?.sukuBunga?.pinjaman || 1.5;
   };
 
   const getJenisLabel = () => {
@@ -61,11 +58,11 @@ export function KategoriField({ jenis, value, onChange }: KategoriFieldProps) {
           <SelectValue placeholder={`Pilih kategori ${getJenisLabel().toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
-          {categories.map((category) => (
-            <SelectItem key={category} value={category}>
-              {jenis === "Pinjam" 
-                ? `${category} - ${getInterestRateForCategory(category)}% per bulan`
-                : category
+          {filteredJenis.map((item) => (
+            <SelectItem key={item.id} value={item.id}>
+              {jenis === "Pinjam" && 'bungaPersen' in item
+                ? `${item.nama} - ${item.bungaPersen}% per bulan`
+                : item.nama
               }
             </SelectItem>
           ))}

@@ -57,6 +57,23 @@ export async function generateJurnalNumber(): Promise<string> {
 }
 
 /**
+ * Prepare a journal entry object without saving it to DB
+ * Useful for atomic transactions
+ */
+export async function prepareJurnalEntry(entry: Omit<JurnalEntry, "id" | "createdAt" | "updatedAt">): Promise<JurnalEntry> {
+  const nomorJurnal = entry.nomorJurnal || await generateJurnalNumber();
+  
+  return {
+    ...entry,
+    id: generateUUIDv7(),
+    nomorJurnal,
+    status: 'POSTED',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+/**
  * Create new journal entry with duplicate prevention and auto-posting
  */
 export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "createdAt" | "updatedAt">): Promise<SubmissionResult<JurnalEntry>> {
@@ -71,27 +88,18 @@ export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "created
     if (entry.referensi) {
       const existingEntry = await getJurnalEntryByReference(entry.referensi);
       if (existingEntry) {
-        console.log(`⚠️ Journal entry already exists for reference ${entry.referensi}, returning existing entry`);
         return { success: true, data: existingEntry };
       }
     }
     
-    const nomorJurnal = entry.nomorJurnal || await generateJurnalNumber();
-    
-    const newEntry: JurnalEntry = {
-      ...entry,
-      id: generateUUIDv7(),
-      nomorJurnal,
-      status: 'POSTED', // Auto-post journal entries for immediate sync
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const newEntry = await prepareJurnalEntry(entry);
     
     // 3. Commit to database
     try {
       await db.jurnal.add(newEntry);
     } catch (dbError: any) {
       if (dbError.name === 'ConstraintError') {
+        // Retry with jitter for serial number collisions
         const jitter = Math.floor(Math.random() * 30) + 10;
         await new Promise(resolve => setTimeout(resolve, jitter));
         return await createJurnalEntry(entry);
@@ -101,7 +109,7 @@ export async function createJurnalEntry(entry: Omit<JurnalEntry, "id" | "created
     
     console.log(`✅ Journal entry created and auto-posted: ${newEntry.nomorJurnal}`);
     
-    // Trigger sync events for Buku Besar and Reports
+    // Trigger sync events (non-critical)
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('journal-entry-posted', {
         detail: { journalEntry: newEntry }

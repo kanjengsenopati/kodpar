@@ -7,9 +7,9 @@ import { formatDate, formatCurrency } from "@/utils/formatters";
 import { Pengajuan } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { getPengaturan } from "@/services/pengaturanService";
-import * as Text from "@/components/ui/text";
-import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 import { cn } from "@/lib/utils";
+import { MemberName } from "@/components/anggota/MemberName";
+import { useMemberLookup } from "@/hooks/useMemberLookup";
 import { 
   Dialog, 
   DialogContent, 
@@ -30,6 +30,7 @@ interface ExpandablePengajuanRowProps {
 }
 
 export function ExpandablePengajuanRow({ item, onDelete, colSpan, index, onStatusChange }: ExpandablePengajuanRowProps) {
+  const { member } = useMemberLookup(item.anggotaId);
   const [isOpen, setIsOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectInput, setShowRejectInput] = useState(false);
@@ -119,7 +120,7 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index, onStatu
         </TableCell>
         <TableCell><Text.Caption className="not-italic font-bold text-slate-600">{item.nomorPengajuan || "NO-REF"}</Text.Caption></TableCell>
         <TableCell><Text.Body className="text-xs text-nowrap">{formatDate(item.tanggal)}</Text.Body></TableCell>
-        <TableCell><Text.Body className="font-bold text-slate-800 text-nowrap">{item.anggotaNama}</Text.Body></TableCell>
+        <TableCell><MemberName memberId={item.anggotaId} className="font-bold text-slate-800 text-nowrap" /></TableCell>
         <TableCell>{getJenisBadge(item.jenis)}</TableCell>
         <TableCell><Text.Amount className="text-sm">{formatCurrency(item.jumlah)}</Text.Amount></TableCell>
         <TableCell>{getStatusBadge(item.status)}</TableCell>
@@ -171,7 +172,7 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index, onStatu
                       </div>
                       <div className="flex justify-between items-center">
                         <Text.Label className="text-[10px]">NO ANGGOTA</Text.Label>
-                        <Text.Body className="text-xs font-bold text-slate-700">{item.anggotaNo || "N/A"}</Text.Body>
+                        <Text.Body className="text-xs font-bold text-slate-700">{member?.noAnggota || "N/A"}</Text.Body>
                       </div>
                       
                       <div className="pt-2 border-t border-slate-100">
@@ -202,7 +203,7 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index, onStatu
                                 </DialogTrigger>
                                 <DialogContent className="max-w-3xl rounded-[24px]">
                                   <DialogHeader>
-                                    <DialogTitle>{doc.jenis} - {item.anggotaNama}</DialogTitle>
+                                    <DialogTitle>{doc.jenis} - <MemberName memberId={item.anggotaId} className="inline" /></DialogTitle>
                                   </DialogHeader>
                                   <div className="mt-4 flex justify-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
                                     <img 

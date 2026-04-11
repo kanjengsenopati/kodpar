@@ -1,6 +1,4 @@
-import { Pengaturan } from "../types";
 import { getFromLocalStorage, saveToLocalStorage } from "../utils/localStorage";
-import { PinjamanCategory, defaultPinjamanInterestRates } from "./transaksi/categories";
 
 const PENGATURAN_KEY = "koperasi_pengaturan";
 
@@ -9,19 +7,21 @@ const initialPengaturan: Pengaturan = {
   sukuBunga: {
     pinjaman: 1.5, // 1.5% per bulan 
     simpanan: 0.5, // 0.5% per bulan
-    metodeBunga: "flat", // Set flat as default method
-    pinjamanByCategory: {
-      [PinjamanCategory.REGULER]: 1.5,    // 1.5% per month
-      [PinjamanCategory.SERTIFIKASI]: 1.0, // 1.0% per month
-      [PinjamanCategory.MUSIMAN]: 2.0      // 2.0% per month
+    metodeBunga: "flat",
+    metodePembulatan: "none",
+    biayaAdministrasi: {
+      enabled: false,
+      fixed: 0,
+      percentage: 0,
+      applyTo: ["Pinjam"]
     },
     danaResikoKredit: {
-      enabled: true,  // Set as active by default
+      enabled: true,
       persentase: 2.0,
       autoDeduction: true
     },
     simpananWajibKredit: {
-      enabled: true,  // Set as active by default
+      enabled: true,
       persentase: 5.0,
       autoDeduction: true
     }

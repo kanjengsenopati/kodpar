@@ -331,7 +331,7 @@ export function LaporanTabs({
                 upcomingDueLoans,
                 [
                   { key: 'transaksi.id', label: 'ID Transaksi', selected: true },
-                  { key: 'transaksi.anggotaNama', label: 'Nama Anggota', selected: true },
+                  { key: 'transaksi.anggotaId', label: 'ID Anggota', selected: true },
                   { key: 'transaksi.jumlah', label: 'Jumlah Pinjaman', selected: true },
                   { key: 'jatuhTempo', label: 'Tanggal Jatuh Tempo', selected: true },
                   { key: 'daysUntilDue', label: 'Hari Tersisa', selected: true }
@@ -360,7 +360,7 @@ export function LaporanTabs({
                 overdueLoans,
                 [
                   { key: 'transaksi.id', label: 'ID Transaksi', selected: true },
-                  { key: 'transaksi.anggotaNama', label: 'Nama Anggota', selected: true },
+                  { key: 'transaksi.anggotaId', label: 'ID Anggota', selected: true },
                   { key: 'transaksi.jumlah', label: 'Jumlah Pinjaman', selected: true },
                   { key: 'jatuhTempo', label: 'Tanggal Jatuh Tempo', selected: true },
                   { key: 'daysOverdue', label: 'Hari Terlambat', selected: true },
