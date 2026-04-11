@@ -1,7 +1,7 @@
 
-import { calculateSHU } from "@/services/transaksiService";
+import { calculateSHU } from "@/services/transaksi/financialOperations/shuOperations";
 import { getAnggotaList } from "@/services/anggotaService";
-import { getAllTransaksi } from "@/services/transaksiService";
+import { getAllTransaksi } from "@/services/transaksi/transaksiCore";
 import { toast } from "sonner";
 
 // Helper function to calculate SHU for sample members
