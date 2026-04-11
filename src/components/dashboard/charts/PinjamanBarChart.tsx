@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,29 +9,22 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-
-const data = [
-  { month: 'Jan', pinjaman: 0, lunas: 0 },
-  { month: 'Feb', pinjaman: 0, lunas: 0 },
-  { month: 'Mar', pinjaman: 0, lunas: 0 },
-  { month: 'Apr', pinjaman: 0, lunas: 0 },
-  { month: 'Mei', pinjaman: 0, lunas: 0 },
-  { month: 'Jun', pinjaman: 0, lunas: 0 }
-];
+import { getLoanGrowthData } from '@/services/dashboardDataService';
+import { Loader2 } from 'lucide-react';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="font-semibold text-gray-800">{`${label} 2024`}</p>
+        <p className="font-semibold text-gray-800">{`${label} ${new Date().getFullYear()}`}</p>
         <p className="text-blue-600">
           Pinjaman Baru: <span className="font-bold">
-            Rp {payload[0].value.toLocaleString('id-ID')}
+            Rp {(payload[0].value || 0).toLocaleString('id-ID')}
           </span>
         </p>
         <p className="text-green-600">
-          Pinjaman Lunas: <span className="font-bold">
-            Rp {payload[1].value.toLocaleString('id-ID')}
+          Repayment: <span className="font-bold">
+            Rp {(payload[1].value || 0).toLocaleString('id-ID')}
           </span>
         </p>
       </div>
@@ -41,7 +34,31 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function PinjamanBarChart() {
-  // Check if all values are zero to show empty state
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const result = await getLoanGrowthData();
+        setData(result);
+      } catch (error) {
+        console.error("Error fetching loan growth data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="h-80 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
   const isEmpty = data.every(item => item.pinjaman === 0 && item.lunas === 0);
   
   if (isEmpty) {
@@ -69,11 +86,11 @@ export function PinjamanBarChart() {
           <YAxis 
             tick={{ fontSize: 12, fill: '#6b7280' }}
             axisLine={{ stroke: '#d1d5db' }}
-            tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
+            tickFormatter={(value) => value === 0 ? '0' : `${(value / 10000).toLocaleString('id-ID')}rb`}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="pinjaman" fill="#3b82f6" name="Pinjaman Baru" />
-          <Bar dataKey="lunas" fill="#10b981" name="Pinjaman Lunas" />
+          <Bar dataKey="pinjaman" fill="#3b82f6" name="Pinjaman Baru" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="lunas" fill="#10b981" name="Repayment" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

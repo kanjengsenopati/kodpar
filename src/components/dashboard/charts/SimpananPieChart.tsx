@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { calculateTotalSavings } from '@/utils/shuUtils';
+import { getSavingsComposition } from '@/services/dashboardDataService';
 import { Loader2 } from 'lucide-react';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B'];
@@ -43,23 +43,8 @@ export function SimpananPieChart() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [pokok, wajib, khusus] = await Promise.all([
-          calculateTotalSavings('simpanan_pokok'),
-          calculateTotalSavings('simpanan_wajib'),
-          calculateTotalSavings('simpanan_khusus')
-        ]);
-
-        const total = pokok + wajib + khusus;
-        if (total === 0) {
-          setChartData([]);
-          return;
-        }
-
-        setChartData([
-          { name: 'Simpanan Pokok', value: Math.round((pokok / total) * 100), amount: pokok },
-          { name: 'Simpanan Wajib', value: Math.round((wajib / total) * 100), amount: wajib },
-          { name: 'Simpanan Sukarela', value: Math.round((khusus / total) * 100), amount: khusus }
-        ]);
+        const data = await getSavingsComposition();
+        setChartData(data);
       } catch (error) {
         console.error("Error fetching pie chart data:", error);
       } finally {

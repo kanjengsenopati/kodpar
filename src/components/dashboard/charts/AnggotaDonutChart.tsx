@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -7,14 +7,8 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-
-const data = [
-  { name: 'PNS', value: 0, count: 0 },
-  { name: 'Karyawan Swasta', value: 0, count: 0 },
-  { name: 'Wiraswasta', value: 0, count: 0 },
-  { name: 'Pensiunan', value: 0, count: 0 },
-  { name: 'Lainnya', value: 0, count: 0 }
-];
+import { getMemberDistribution } from '@/services/dashboardDataService';
+import { Loader2 } from 'lucide-react';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -25,10 +19,7 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
         <p className="font-semibold text-gray-800">{data.name}</p>
         <p className="text-blue-600">
-          Jumlah: <span className="font-bold">{data.payload.count} orang</span>
-        </p>
-        <p className="text-green-600">
-          Persentase: <span className="font-bold">{data.value}%</span>
+          Jumlah: <span className="font-bold">{data.value} orang</span>
         </p>
       </div>
     );
@@ -37,14 +28,36 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const renderLabel = ({ name, value }: any) => {
-  return value > 0 ? `${value}%` : '0%';
+  return value > 0 ? `${value}` : '0';
 };
 
 export function AnggotaDonutChart() {
-  // Check if all values are zero to show empty state
-  const isEmpty = data.every(item => item.value === 0);
-  
-  if (isEmpty) {
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const result = await getMemberDistribution();
+        setData(result);
+      } catch (error) {
+        console.error("Error fetching member distribution data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="h-80 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
     return (
       <div className="h-80 flex items-center justify-center">
         <div className="text-center">
@@ -81,9 +94,8 @@ export function AnggotaDonutChart() {
         </PieChart>
       </ResponsiveContainer>
       
-      {/* Legend inside component container */}
       <div className="flex flex-wrap gap-4 mt-4">
-        {Array.isArray(data) && data.map((entry, index) => (
+        {data.map((entry, index) => (
           <div key={index} className="flex items-center gap-1.5">
             <div 
               className="w-3 h-3 rounded-full" 
