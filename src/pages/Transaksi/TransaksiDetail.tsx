@@ -18,6 +18,7 @@ import { Anggota, Transaksi } from "@/types";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, formatCurrency } from "@/utils/formatters";
 import { ReceiptDialog } from "@/components/transaksi/receipt/ReceiptDialog";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
 
 export default function TransaksiDetail() {
   const { id } = useParams<{ id: string }>();
@@ -159,6 +160,12 @@ export default function TransaksiDetail() {
                     <p className="text-sm text-muted-foreground">Jumlah</p>
                     <p className="font-medium">{formatCurrency(transaksi.jumlah)}</p>
                   </div>
+                  {transaksi.kategori && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Kategori</p>
+                      <p className="font-medium">{getCategoryNameSync(transaksi.kategori)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

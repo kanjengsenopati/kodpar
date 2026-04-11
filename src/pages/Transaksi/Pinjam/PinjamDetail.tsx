@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDate, formatCurrency } from "@/utils/formatters";
 import { ReceiptDialog } from "@/components/transaksi/receipt/ReceiptDialog";
 import { LoanReceiptDialog } from "@/components/transaksi/receipt/LoanReceiptDialog";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
 
 export default function PinjamDetail() {
   const { id } = useParams<{ id: string }>();
@@ -151,7 +152,7 @@ export default function PinjamDetail() {
                   {transaksi.kategori && (
                     <div>
                       <p className="text-sm text-muted-foreground">Kategori</p>
-                      <p className="font-medium">{transaksi.kategori}</p>
+                      <p className="font-medium">{getCategoryNameSync(transaksi.kategori)}</p>
                     </div>
                   )}
                 </div>

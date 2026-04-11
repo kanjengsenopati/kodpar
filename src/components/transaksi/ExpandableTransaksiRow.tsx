@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight, Edit, Trash2, Calendar, DollarSign, Clock, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Edit, Trash2, Calendar, DollarSign, Clock, Loader2, User, ExternalLink } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatCurrency } from "@/utils/formatters";
@@ -10,6 +10,9 @@ import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 import { cn } from "@/lib/utils";
 import { getScheduleByLoanId } from "@/services/transaksi/installmentScheduleService";
 import { MemberName } from "@/components/anggota/MemberName";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ExpandableTransaksiRowProps {
   transaksi: Transaksi;
@@ -60,6 +63,8 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
   };
 
   const getBreakdownData = () => {
+    const categoryName = getCategoryNameSync(transaksi.kategori);
+    
     if (type === "angsuran") {
       const data = [];
       if (transaksi.nominalPokok) {
@@ -77,18 +82,20 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
     
     if (type === "simpan") {
       return [
-        { tipe: `Simpanan ${transaksi.kategori || ''}`, jumlah: transaksi.jumlah, catatan: "Setoran masuk" }
+        { tipe: `Simpanan ${categoryName}`, jumlah: transaksi.jumlah, catatan: "Setoran masuk" }
       ];
     }
     
     if (type === "penarikan") {
       return [
-        { tipe: `Penarikan ${transaksi.kategori || ''}`, jumlah: transaksi.jumlah, catatan: "Penarikan dana" }
+        { tipe: `Penarikan ${categoryName}`, jumlah: transaksi.jumlah, catatan: "Penarikan dana" }
       ];
     }
 
     return [];
   };
+
+  const kategoriName = getCategoryNameSync(transaksi.kategori);
 
   return (
     <>
@@ -101,10 +108,16 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
             ? <ChevronDown className="h-4 w-4 text-slate-400" />
             : <ChevronRight className="h-4 w-4 text-slate-400" />}
         </TableCell>
-        <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{transaksi.nomorTransaksi || (transaksi.id.length > 10 ? transaksi.id.substring(0,8) + "..." : transaksi.id)}</Text.Caption></TableCell>
+        <TableCell><Text.Caption className="not-italic font-bold text-slate-400">{transaksi.nomorTransaksi || (transaksi.id.length > 10 ? transaksi.id.substring(0,8) : transaksi.id)}</Text.Caption></TableCell>
         <TableCell><Text.Body className="text-xs">{formatDate(transaksi.tanggal)}</Text.Body></TableCell>
-        <TableCell><MemberName memberId={transaksi.anggotaId} className="font-bold text-slate-800" /></TableCell>
-        <TableCell><Text.Label className="bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 text-[10px]">{transaksi.kategori || "-"}</Text.Label></TableCell>
+        <TableCell>
+          <MemberName memberId={transaksi.anggotaId} className="font-bold text-slate-800" showId={true} />
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary" className="bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 text-[10px] border-none font-bold uppercase">
+            {kategoriName}
+          </Badge>
+        </TableCell>
         <TableCell>
           <Text.Amount className="text-sm">
             {formatCurrency(transaksi.jumlah)}
@@ -114,8 +127,8 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
         <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
           <div className="flex justify-end gap-1.5 transition-opacity">
             <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50">
-              <Link to={`/transaksi/${type}/edit/${transaksi.id}`}>
-                <Edit className="h-4 w-4" />
+              <Link to={`/transaksi/${type}/detail/${transaksi.id}`}>
+                <ExternalLink className="h-4 w-4" />
               </Link>
             </Button>
             <Button
@@ -137,9 +150,14 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Basic Info Summary */}
                 <div className="md:col-span-4 space-y-4">
-                  <div className="bg-slate-50/50 rounded-[20px] p-5 space-y-3">
-                    <Text.Label className="text-slate-400">Rincian Transaksi</Text.Label>
-                    <div className="space-y-2">
+                  <div className="bg-slate-50/50 rounded-[24px] p-5 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <Text.Label className="text-slate-400">Rincian Transaksi</Text.Label>
+                      <Badge variant="outline" className="text-[9px] font-mono border-slate-200 text-slate-400 bg-white">
+                        SYS-ID: {transaksi.id.substring(0, 8)}
+                      </Badge>
+                    </div>
+                                        <div className="space-y-2">
                       <div className="flex justify-between items-center text-[10px] text-slate-400 overflow-hidden">
                         <span className="shrink-0 mr-2">ID Record:</span>
                         <span className="truncate select-all">{transaksi.id}</span>

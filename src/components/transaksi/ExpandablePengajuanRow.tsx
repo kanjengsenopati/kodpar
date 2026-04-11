@@ -10,6 +10,9 @@ import { getPengaturan } from "@/services/pengaturanService";
 import { cn } from "@/lib/utils";
 import { MemberName } from "@/components/anggota/MemberName";
 import { useMemberLookup } from "@/hooks/useMemberLookup";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
+import { Badge } from "@/components/ui/badge";
+import * as Text from "@/components/ui/text";
 import { 
   Dialog, 
   DialogContent, 
@@ -118,11 +121,19 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index, onStatu
             ? <ChevronDown className="h-4 w-4 text-slate-400" />
             : <ChevronRight className="h-4 w-4 text-slate-400" />}
         </TableCell>
-        <TableCell><Text.Caption className="not-italic font-bold text-slate-600">{item.nomorPengajuan || "NO-REF"}</Text.Caption></TableCell>
+        <TableCell>
+          <Text.Caption className="not-italic font-bold text-slate-600 uppercase">
+            {item.nomorPengajuan || (item.id.length > 8 ? item.id.substring(0,8) : item.id)}
+          </Text.Caption>
+        </TableCell>
         <TableCell><Text.Body className="text-xs text-nowrap">{formatDate(item.tanggal)}</Text.Body></TableCell>
-        <TableCell><MemberName memberId={item.anggotaId} className="font-bold text-slate-800 text-nowrap" /></TableCell>
-        <TableCell>{getJenisBadge(item.jenis)}</TableCell>
-        <TableCell><Text.Amount className="text-sm">{formatCurrency(item.jumlah)}</Text.Amount></TableCell>
+        <TableCell><MemberName memberId={item.anggotaId} className="font-bold text-slate-800 text-nowrap" showId={true} /></TableCell>
+        <TableCell>
+          <Badge variant="secondary" className="bg-slate-50 text-slate-500 rounded px-1.5 py-0.5 text-[10px] border-none font-bold uppercase">
+            {getCategoryNameSync(item.kategori)}
+          </Badge>
+        </TableCell>
+        <TableCell><Text.Amount className="text-sm font-bold">{formatCurrency(item.jumlah)}</Text.Amount></TableCell>
         <TableCell>{getStatusBadge(item.status)}</TableCell>
         <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
           <div className="flex justify-end gap-1.5 transition-opacity">
@@ -153,26 +164,34 @@ export function ExpandablePengajuanRow({ item, onDelete, colSpan, index, onStatu
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Summary Panel */}
                 <div className="md:col-span-4 space-y-4">
-                  <div className="bg-slate-50/50 rounded-[20px] p-5 space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Info className="h-3 w-3 text-blue-600" />
+                  <div className="bg-slate-50/50 rounded-[24px] p-5 space-y-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Info className="h-3 w-3 text-blue-600" />
+                        </div>
+                        <Text.H2 className="text-sm font-bold m-0 p-0">Detail Pengajuan</Text.H2>
                       </div>
-                      <Text.H2 className="text-sm font-bold m-0 p-0">Detail Pengajuan</Text.H2>
+                      <Badge variant="outline" className="text-[9px] font-mono border-slate-200 text-slate-400 bg-white">
+                        SYS: {item.id.substring(0,8)}
+                      </Badge>
                     </div>
                     
                     <div className="space-y-2">
                        <div className="flex justify-between items-center">
                         <Text.Label className="text-[10px]">KATEGORI</Text.Label>
-                        <Text.Body className="text-xs font-bold">{item.kategori || "Umum"}</Text.Body>
+                        <Text.Body className="text-xs font-bold text-slate-700">{getCategoryNameSync(item.kategori)}</Text.Body>
                       </div>
                       <div className="flex justify-between items-center">
                         <Text.Label className="text-[10px]">ID PENGAJUAN</Text.Label>
                         <Text.Body className="text-xs font-bold text-blue-600">{item.nomorPengajuan || "PENDING"}</Text.Body>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <Text.Label className="text-[10px]">NO ANGGOTA</Text.Label>
-                        <Text.Body className="text-xs font-bold text-slate-700">{member?.noAnggota || "N/A"}</Text.Body>
+                      <div className="flex justify-between items-center border-t border-slate-100 pt-2">
+                        <Text.Label className="text-[10px]">PEMOHON</Text.Label>
+                        <div className="flex flex-col items-end">
+                          <MemberName memberId={item.anggotaId} className="text-xs font-bold text-slate-800" showId={true} />
+                          <Text.Caption className="text-[8px] opacity-40 font-mono italic">{item.anggotaId}</Text.Caption>
+                        </div>
                       </div>
                       
                       <div className="pt-2 border-t border-slate-100">

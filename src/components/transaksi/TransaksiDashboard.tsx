@@ -11,8 +11,15 @@ import {
   Wallet, 
   ArrowRight, 
   CreditCard,
-  Clock
+  Clock,
+  History,
+  FileText
 } from "lucide-react";
+import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
+import { MemberName } from "@/components/anggota/MemberName";
+import { Badge } from "@/components/ui/badge";
+import * as Text from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
 interface TransaksiDashboardProps {
   totalSimpanan: number;
@@ -52,21 +59,21 @@ export function TransaksiDashboard({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Simpanan Summary */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-none rounded-[24px] bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Simpanan</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalSimpanan)}</p>
+                <Text.Label className="text-slate-400 mb-1">Total Simpanan</Text.Label>
+                <Text.Amount className="text-2xl font-bold">{formatCurrency(totalSimpanan)}</Text.Amount>
               </div>
-              <div className="rounded-full bg-green-100 p-3">
-                <Wallet className="h-6 w-6 text-green-600" />
+              <div className="rounded-2xl bg-emerald-50 p-3">
+                <Wallet className="h-6 w-6 text-emerald-600" />
               </div>
             </div>
             <Button 
               variant="ghost" 
               onClick={onNavigateToSimpanan}
-              className="w-full justify-between mt-4"
+              className="w-full justify-between mt-4 rounded-xl hover:bg-emerald-50 text-emerald-600 font-bold text-xs"
             >
               Lihat Simpanan <ArrowRight size={16} />
             </Button>
@@ -74,21 +81,21 @@ export function TransaksiDashboard({
         </Card>
         
         {/* Pinjaman Summary */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-none rounded-[24px] bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Pinjaman</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalPinjaman)}</p>
+                <Text.Label className="text-slate-400 mb-1">Total Pinjaman</Text.Label>
+                <Text.Amount className="text-2xl font-bold text-blue-600">{formatCurrency(totalPinjaman)}</Text.Amount>
               </div>
-              <div className="rounded-full bg-amber-100 p-3">
-                <CreditCard className="h-6 w-6 text-amber-600" />
+              <div className="rounded-2xl bg-blue-50 p-3">
+                <CreditCard className="h-6 w-6 text-blue-600" />
               </div>
             </div>
             <Button 
               variant="ghost" 
               onClick={onNavigateToPinjaman}
-              className="w-full justify-between mt-4"
+              className="w-full justify-between mt-4 rounded-xl hover:bg-blue-50 text-blue-600 font-bold text-xs"
             >
               Lihat Pinjaman <ArrowRight size={16} />
             </Button>
@@ -96,21 +103,21 @@ export function TransaksiDashboard({
         </Card>
         
         {/* Angsuran Summary */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-none rounded-[24px] bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Angsuran</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalAngsuran)}</p>
+                <Text.Label className="text-slate-400 mb-1">Total Angsuran</Text.Label>
+                <Text.Amount className="text-2xl font-bold text-purple-600">{formatCurrency(totalAngsuran)}</Text.Amount>
               </div>
-              <div className="rounded-full bg-blue-100 p-3">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+              <div className="rounded-2xl bg-purple-50 p-3">
+                <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
             </div>
             <Button 
               variant="ghost" 
               onClick={onNavigateToAngsuran}
-              className="w-full justify-between mt-4"
+              className="w-full justify-between mt-4 rounded-xl hover:bg-purple-50 text-purple-600 font-bold text-xs"
             >
               Lihat Angsuran <ArrowRight size={16} />
             </Button>
@@ -118,21 +125,21 @@ export function TransaksiDashboard({
         </Card>
         
         {/* Pengajuan Summary */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-none rounded-[24px] bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Pengajuan Menunggu</p>
-                <p className="text-2xl font-bold">{pendingPengajuan}</p>
+                <Text.Label className="text-slate-400 mb-1">Pengajuan Menunggu</Text.Label>
+                <Text.Amount className="text-2xl font-bold text-amber-600">{pendingPengajuan}</Text.Amount>
               </div>
-              <div className="rounded-full bg-purple-100 p-3">
-                <Clock className="h-6 w-6 text-purple-600" />
+              <div className="rounded-2xl bg-amber-50 p-3">
+                <Clock className="h-6 w-6 text-amber-600" />
               </div>
             </div>
             <Button 
               variant="ghost" 
               onClick={onNavigateToPengajuan}
-              className="w-full justify-between mt-4"
+              className="w-full justify-between mt-4 rounded-xl hover:bg-amber-50 text-amber-600 font-bold text-xs"
             >
               Lihat Pengajuan <ArrowRight size={16} />
             </Button>
@@ -142,135 +149,162 @@ export function TransaksiDashboard({
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Transactions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Transaksi Terbaru</CardTitle>
+        <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-white">
+          <CardHeader className="pb-3 border-b border-slate-50 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <History className="h-4 w-4 text-slate-400" />
+              Transaksi Terbaru
+            </CardTitle>
+            <Link to="/transaksi" className="text-[11px] font-bold text-blue-600 hover:underline uppercase tracking-wider">
+              Lihat Semua
+            </Link>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left font-medium py-2 px-2">ID</th>
-                    <th className="text-left font-medium py-2 px-2">Tanggal</th>
-                    <th className="text-left font-medium py-2 px-2">Jenis</th>
-                    <th className="text-left font-medium py-2 px-2">Jumlah</th>
-                    <th className="text-left font-medium py-2 px-2">Status</th>
+                  <tr className="bg-slate-50/50">
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">No. Transaksi</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Anggota</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kategori</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Jumlah</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-50">
                   {recentTransaksi.map(transaksi => (
-                    <tr key={transaksi.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-2">
+                    <tr key={transaksi.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="py-3 px-4">
                         <Link 
                           to={`/transaksi/${transaksi.id}`}
-                          className="text-blue-600 hover:underline font-medium"
+                          className="flex flex-col"
                         >
-                          {transaksi.id}
+                          <Text.Caption className="not-italic font-bold text-slate-600 group-hover:text-blue-600 transition-colors">
+                            {transaksi.nomorTransaksi || (transaksi.id.length > 8 ? transaksi.id.substring(0,8) : transaksi.id)}
+                          </Text.Caption>
+                          <Text.Caption className="text-[8px] text-slate-300 font-mono mt-0.5">SYS: {transaksi.id.substring(0,8)}</Text.Caption>
                         </Link>
                       </td>
-                      <td className="py-2 px-2">{formatDate(transaksi.tanggal)}</td>
-                      <td className="py-2 px-2">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          transaksi.jenis === "Simpan" ? "bg-green-100 text-green-800" : 
-                          transaksi.jenis === "Pinjam" ? "bg-amber-100 text-amber-800" : 
-                          "bg-blue-100 text-blue-800"
-                        }`}>
-                          {transaksi.jenis}
-                        </span>
+                      <td className="py-3 px-4">
+                        <MemberName memberId={transaksi.anggotaId} className="scale-90 origin-left" showId={true} />
                       </td>
-                      <td className="py-2 px-2">{formatCurrency(transaksi.jumlah)}</td>
-                      <td className="py-2 px-2">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          transaksi.status === "Sukses" ? "bg-green-100 text-green-800" : 
-                          transaksi.status === "Pending" ? "bg-yellow-100 text-yellow-800" : 
-                          "bg-red-100 text-red-800"
-                        }`}>
+                      <td className="py-3 px-4">
+                        <Badge variant="secondary" className="bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 text-[9px] border-none font-bold uppercase">
+                          {getCategoryNameSync(transaksi.kategori)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Text.Amount className="text-xs font-bold">
+                          {formatCurrency(transaksi.jumlah)}
+                        </Text.Amount>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                          transaksi.status === "Sukses" ? "bg-emerald-50 text-emerald-600" : 
+                          transaksi.status === "Pending" ? "bg-amber-50 text-amber-600" : 
+                          "bg-red-50 text-red-600"
+                        )}>
                           {transaksi.status}
-                        </span>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {recentTransaksi.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-4">
-                        Tidak ada transaksi terbaru
+                      <td colSpan={5} className="text-center py-10">
+                        <Text.Body className="text-slate-400">Tidak ada transaksi terbaru</Text.Body>
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-            </div>
-            <div className="mt-4 text-right">
-              <Link 
-                to="/transaksi"
-                className="text-sm text-blue-600 hover:underline flex items-center justify-end gap-1"
-              >
-                Lihat semua transaksi <ArrowRight size={14} />
-              </Link>
             </div>
           </CardContent>
         </Card>
         
         {/* Recent Applications */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Pengajuan Terbaru</CardTitle>
+        <Card className="rounded-[24px] border-none shadow-sm overflow-hidden bg-white">
+          <CardHeader className="pb-3 border-b border-slate-50 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-slate-400" />
+              Pengajuan Terbaru
+            </CardTitle>
+            <Link to="/transaksi/pengajuan" className="text-[11px] font-bold text-blue-600 hover:underline uppercase tracking-wider">
+              Lihat Semua
+            </Link>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left font-medium py-2 px-2">ID</th>
-                    <th className="text-left font-medium py-2 px-2">Tanggal</th>
-                    <th className="text-left font-medium py-2 px-2">Jenis</th>
-                    <th className="text-left font-medium py-2 px-2">Jumlah</th>
-                    <th className="text-left font-medium py-2 px-2">Status</th>
+                  <tr className="bg-slate-50/50">
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Anggota</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kategori</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Jumlah</th>
+                    <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-50">
                   {recentPengajuan.map(pengajuan => (
-                    <tr key={pengajuan.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-2">
+                    <tr key={pengajuan.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="py-3 px-4">
                         <Link 
                           to={`/transaksi/pengajuan/${pengajuan.id}`}
-                          className="text-blue-600 hover:underline font-medium"
+                          className="flex flex-col"
                         >
-                          {pengajuan.id}
+                          <Text.Caption className="not-italic font-bold text-slate-600 group-hover:text-blue-600 transition-colors">
+                            {pengajuan.id.substring(0, 8)}
+                          </Text.Caption>
                         </Link>
                       </td>
-                      <td className="py-2 px-2">{formatDate(pengajuan.tanggal)}</td>
-                      <td className="py-2 px-2">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          pengajuan.jenis === "Simpan" ? "bg-green-100 text-green-800" : 
-                          "bg-amber-100 text-amber-800"
-                        }`}>
-                          {pengajuan.jenis}
-                        </span>
+                      <td className="py-3 px-4">
+                        <MemberName memberId={pengajuan.anggotaId} className="scale-90 origin-left" showId={true} />
                       </td>
-                      <td className="py-2 px-2">{formatCurrency(pengajuan.jumlah)}</td>
-                      <td className="py-2 px-2">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          pengajuan.status === "Disetujui" ? "bg-green-100 text-green-800" : 
-                          pengajuan.status === "Menunggu" ? "bg-yellow-100 text-yellow-800" : 
-                          "bg-red-100 text-red-800"
-                        }`}>
+                      <td className="py-3 px-4">
+                        <Badge variant="secondary" className="bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 text-[9px] border-none font-bold uppercase">
+                          {getCategoryNameSync(pengajuan.kategori)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Text.Amount className="text-xs font-bold text-blue-600">
+                          {formatCurrency(pengajuan.jumlah)}
+                        </Text.Amount>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                          pengajuan.status === "Disetujui" ? "bg-emerald-50 text-emerald-600" : 
+                          pengajuan.status === "Menunggu" ? "bg-amber-50 text-amber-600" : 
+                          "bg-red-50 text-red-600"
+                        )}>
                           {pengajuan.status}
-                        </span>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {recentPengajuan.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-4">
-                        Tidak ada pengajuan terbaru
+                      <td colSpan={5} className="text-center py-10">
+                        <Text.Body className="text-slate-400">Tidak ada pengajuan terbaru</Text.Body>
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
+            <div className="mt-4 text-right p-4 border-t border-slate-50">
+              <Link 
+                to="/transaksi/pengajuan"
+                className="text-sm text-blue-600 hover:underline flex items-center justify-end gap-1 font-bold"
+              >
+                Semua Pengajuan <ArrowRight size={14} />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
             <div className="mt-4 text-right">
               <Link 
                 to="/transaksi/pengajuan"
