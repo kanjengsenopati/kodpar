@@ -78,8 +78,8 @@ export class SHUManager {
    * @param anggotaId - The member ID
    * @returns The calculated SHU value
    */
-  static calculateForMember(anggotaId: string | number): number {
-    return calculateSHU(anggotaId);
+  static async calculateForMember(anggotaId: string | number): Promise<number> {
+    return await calculateSHU(anggotaId);
   }
 
   /**
@@ -87,8 +87,8 @@ export class SHUManager {
    * 
    * @returns Number of members affected
    */
-  static resetAllValues(): number {
-    const count = resetAllSHUValues();
+  static async resetAllValues(): Promise<number> {
+    const count = await resetAllSHUValues();
     toast.success(`${count} nilai SHU anggota berhasil direset dan dihitung ulang`);
     return count;
   }
