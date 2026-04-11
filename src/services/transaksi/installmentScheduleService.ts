@@ -47,7 +47,9 @@ export async function generateInitialSchedule(loan: Transaksi): Promise<JadwalAn
   }
 
   // Persist to database
-  await db.jadwal_angsuran.bulkAdd(schedule);
+  if (schedule.length > 0) {
+    await db.jadwal_angsuran.bulkAdd(schedule);
+  }
   return schedule;
 }
 

@@ -1,5 +1,6 @@
 import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
 import { getCurrentUser } from "@/services/authService";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 export interface AuditEntry {
   id: string;
