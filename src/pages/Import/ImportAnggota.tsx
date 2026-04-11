@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Anggota } from "@/types";
 import { AlertCircle, CheckCircle, FileSpreadsheet, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as Text from "@/components/ui/text";
 
 export default function ImportAnggota() {
   const [isLoading, setIsLoading] = useState(false);
@@ -123,26 +124,23 @@ export default function ImportAnggota() {
   return (
     <Layout pageTitle="Impor Anggota">
       <div className="container mx-auto py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Impor Data Anggota</h1>
-            <p className="text-muted-foreground">
-              Upload data anggota dari file Excel
-            </p>
-          </div>
-          <Button onClick={handleDownloadTemplate} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Unduh Template
-          </Button>
-        </div>
-        
         <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Impor Data Anggota</CardTitle>
-              <CardDescription>
-                Upload file Excel atau gunakan data demo untuk melihat pratinjau
-              </CardDescription>
+          <Card className="rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div className="flex flex-col gap-1">
+                <Text.H2>Impor Data Anggota</Text.H2>
+                <Text.Body className="text-slate-400">
+                  Upload file Excel atau gunakan data demo untuk melihat pratinjau
+                </Text.Body>
+              </div>
+              <Button 
+                onClick={handleDownloadTemplate} 
+                variant="ghost" 
+                className="hover:bg-blue-50 text-blue-600 font-semibold gap-2"
+              >
+                <Download size={18} strokeWidth={2} />
+                <span>Unduh Template</span>
+              </Button>
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
