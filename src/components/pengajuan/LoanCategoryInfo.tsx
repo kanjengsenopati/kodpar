@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info, Percent, Calendar, FileText } from "lucide-react";
 import { getPengaturan } from "@/services/pengaturanService";
 import { Text } from "@/components/ui/text";
+import { formatCurrency } from "@/utils/formatters";
 
 interface LoanCategoryInfoProps {
   kategori: string;
