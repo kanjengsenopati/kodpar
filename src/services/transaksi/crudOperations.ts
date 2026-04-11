@@ -177,7 +177,9 @@ export async function deleteTransaksi(id: string): Promise<boolean> {
  */
 export async function resetTransaksiData(): Promise<Transaksi[]> {
   await db.transaksi.clear();
-  await db.transaksi.bulkAdd(initialTransaksi);
+  if (initialTransaksi.length > 0) {
+    await db.transaksi.bulkAdd(initialTransaksi);
+  }
   
   handleDataResetSuccess();
   

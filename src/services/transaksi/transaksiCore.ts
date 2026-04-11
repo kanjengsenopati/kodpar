@@ -16,7 +16,9 @@ export async function getAllTransaksi(): Promise<Transaksi[]> {
   
   const count = await db.transaksi.count();
   if (count === 0) {
-    await db.transaksi.bulkAdd(initialTransaksi);
+    if (initialTransaksi.length > 0) {
+      await db.transaksi.bulkAdd(initialTransaksi);
+    }
     return isAnggota && user?.anggotaId
       ? initialTransaksi.filter(t => t.anggotaId === user.anggotaId)
       : initialTransaksi;
