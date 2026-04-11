@@ -50,6 +50,8 @@ export interface Pengajuan {
   referensiPinjamanId?: string; // ID of the loan being paid
   nominalPokok?: number;
   nominalJasa?: number;
+  tenor?: number;       // Masa pinjaman (bulan)
+  sukuBunga?: number;   // Rate bunga (%)
   createdAt: string;
   updatedAt: string;
 }
@@ -66,7 +68,7 @@ export interface PersyaratanDokumen {
 
 // Persisted Installment Schedule (Database Driven)
 export interface JadwalAngsuran {
-  id?: number;
+  id?: string;  // UUID v7 (optional agar kompatibel dengan Omit pattern lama)
   loanId: string;
   anggotaId: string;
   angsuranKe: number;

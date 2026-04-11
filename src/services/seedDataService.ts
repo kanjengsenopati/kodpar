@@ -121,19 +121,21 @@ export async function seedDemoData(): Promise<void> {
 
   const allTransaksi: Transaksi[] = [];
   const allPengajuan: Pengajuan[] = [];
-  const allJadwal: Omit<JadwalAngsuran, 'id'>[] = [];
+  const allJadwal: JadwalAngsuran[] = [];  // ← Full type with id (UUID v7)
   const allJurnal: JurnalEntry[] = [];
 
-  let txSeq = 1;
+  let txSeq  = 1;
   let jrnSeq = 1;
-  let pgSeq = 1;
+  let pgSeq  = 1;
+  let jdwSeq = 1;
 
-  const mkTxId   = () => makeSeedUUID("TR", txSeq);
-  const mkTxNo   = () => formatReferenceNumber({ prefix: "TR", year: today.getFullYear(), month: today.getMonth() + 1, sequence: txSeq++, padding: 6 });
+  const mkTxId   = () => makeSeedUUID("TR",  txSeq);
+  const mkTxNo   = () => formatReferenceNumber({ prefix: "TR",  year: today.getFullYear(), month: today.getMonth() + 1, sequence: txSeq++,  padding: 6 });
   const mkJrnId  = () => makeSeedUUID("JRN", jrnSeq);
   const mkJrnNo  = () => `JU${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(jrnSeq++).padStart(4, '0')}`;
-  const mkPgId   = () => makeSeedUUID("PG", pgSeq);
-  const mkPgNo   = () => formatReferenceNumber({ prefix: "PG", year: today.getFullYear(), sequence: pgSeq++ });
+  const mkPgId   = () => makeSeedUUID("PG",  pgSeq);
+  const mkPgNo   = () => formatReferenceNumber({ prefix: "PG",  year: today.getFullYear(), sequence: pgSeq++ });
+  const mkJdwId  = () => makeSeedUUID("JRN", 1000 + jdwSeq++); // unique range for jadwal
 
   const COA = {
     KAS:                "coa-kas",
@@ -270,6 +272,7 @@ export async function seedDemoData(): Promise<void> {
       const periode = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(dueDate);
 
       allJadwal.push({
+        id: mkJdwId(),       // ← UUID wajib ada (PK non-auto-increment di v5 schema)
         loanId: txPinjamanId,
         anggotaId: anggota.id,
         angsuranKe: m,
