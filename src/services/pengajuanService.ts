@@ -81,11 +81,23 @@ export async function createPengajuan(
   const nomorPengajuan = await generatePengajuanNumber();
   const now = new Date().toISOString();
   
+  const history: PengajuanHistory[] = [
+    {
+      id: generateUUIDv7(),
+      tanggal: now,
+      aksi: "Diajukan",
+      oleh: `Anggota (${anggota.nama})`,
+      keterangan: "Pengajuan baru dibuat via sistem"
+    }
+  ];
+
   const newPengajuan: Pengajuan = {
     ...pengajuan,
     id,
     nomorPengajuan,
+    anggotaNo: anggota.noAnggota,
     anggotaNama: anggota.nama,
+    history,
     createdAt: now,
     updatedAt: now,
   };
@@ -206,11 +218,22 @@ export async function approvePengajuan(id: string): Promise<boolean> {
     }
 
     const createdTransaction = result.data;
+    const user = getCurrentUser();
+    const now = new Date().toISOString();
+
+    const newHistoryEntry: PengajuanHistory = {
+      id: generateUUIDv7(),
+      tanggal: now,
+      aksi: "Disetujui",
+      oleh: user?.name || "Admin",
+      keterangan: "Pengajuan disetujui dan transaksi finansial dibuat"
+    };
 
     // Update pengajuan status (independent auto-commit)
     await db.pengajuan.update(id, {
       status: "Disetujui",
-      updatedAt: new Date().toISOString()
+      history: [...(pengajuan.history || []), newHistoryEntry],
+      updatedAt: now
     });
 
     // ── Phase 3: Post-commit side effects (non-fatal, won't block UI success) ─
@@ -249,17 +272,32 @@ export async function approvePengajuan(id: string): Promise<boolean> {
 /**
  * Reject a pengajuan
  */
-export async function rejectPengajuan(id: string): Promise<boolean> {
+export async function rejectPengajuan(id: string, alasan: string): Promise<boolean> {
   const pengajuan = await getPengajuanById(id);
   if (!pengajuan || pengajuan.status !== "Menunggu") return false;
   
-  const updatedPengajuan = await updatePengajuan(id, { status: "Ditolak" });
+  const user = getCurrentUser();
+  const now = new Date().toISOString();
+
+  const newHistoryEntry: PengajuanHistory = {
+    id: generateUUIDv7(),
+    tanggal: now,
+    aksi: "Ditolak",
+    oleh: user?.name || "Admin",
+    keterangan: alasan
+  };
+
+  const updatedPengajuan = await updatePengajuan(id, { 
+    status: "Ditolak",
+    alasanPenolakan: alasan,
+    history: [...(pengajuan.history || []), newHistoryEntry]
+  });
   
   if (updatedPengajuan) {
     window.dispatchEvent(new CustomEvent('pengajuan-rejected', {
       detail: { 
         pengajuan: updatedPengajuan,
-        timestamp: new Date().toISOString()
+        timestamp: now
       }
     }));
   }

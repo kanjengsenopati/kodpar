@@ -34,10 +34,19 @@ export interface SubmissionResult<T> {
   error?: string;
 }
 
+export interface PengajuanHistory {
+  id: string;
+  tanggal: string;
+  aksi: string;
+  oleh: string;
+  keterangan: string;
+}
+
 export interface Pengajuan {
   id: string;
   nomorPengajuan?: string; // Human-readable ID (e.g. PG/2026/0001)
   anggotaId: string;
+  anggotaNo?: string;      // Human-readable Member ID (e.g. AG-0001)
   anggotaNama: string;
   jenis: "Simpan" | "Pinjam" | "Penarikan" | "Angsuran";
   jumlah: number;
@@ -45,6 +54,8 @@ export interface Pengajuan {
   status: "Menunggu" | "Disetujui" | "Ditolak";
   kategori: string;
   keterangan?: string;
+  alasanPenolakan?: string; // Reason why application was rejected
+  history?: PengajuanHistory[]; // Audit trail of status changes
   dokumen?: PersyaratanDokumen[];
   buktiTransfer?: string; // Base64 image
   referensiPinjamanId?: string; // ID of the loan being paid
