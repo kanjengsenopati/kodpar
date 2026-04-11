@@ -18,36 +18,13 @@ export function PengajuanFormContainer({
   isEdit = false,
   isLoading = false 
 }: PengajuanFormContainerProps) {
-  const navigate = useNavigate();
-  
   return (
-    <Card>
-      <CardContent className="p-6">
-        <form onSubmit={onSubmit}>
-          <div className="space-y-4">
-            {children}
-            
-            <div className="flex justify-between pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate("/transaksi/pengajuan")}
-                disabled={isLoading}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-              </Button>
-              
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-              >
-                <Save className="mr-2 h-4 w-4" /> 
-                {isEdit ? "Simpan Perubahan" : "Simpan"}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="w-full">
+      <form onSubmit={onSubmit}>
+        <div className="space-y-4">
+          {children}
+        </div>
+      </form>
+    </div>
   );
 }

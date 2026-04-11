@@ -3,7 +3,7 @@ import { TenorField } from "./TenorField";
 import { JumlahField } from "./JumlahField";
 import { KeteranganField } from "./KeteranganField";
 import { LoanCategoryInfo } from "./LoanCategoryInfo";
-import { PinjamanPreview } from "./PinjamanPreview";
+
 
 interface PengajuanFieldsProps {
   jenis: "Simpan" | "Pinjam" | "Penarikan";
@@ -77,14 +77,6 @@ export function PengajuanFields({
         onChange={handleInputChange}
       />
       
-      {/* Keep the existing PinjamanPreview for backward compatibility */}
-      {jenis === "Pinjam" && formData.kategori && formData.jumlah > 0 && (
-        <PinjamanPreview 
-          kategori={formData.kategori}
-          jumlah={formData.jumlah}
-          tenor={formData.tenor}
-        />
-      )}
     </div>
   );
 }

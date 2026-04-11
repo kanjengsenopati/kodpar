@@ -79,13 +79,12 @@ export default function PengajuanForm() {
 
   return (
     <Layout pageTitle="Tambah Pengajuan">
-      <div className="flex items-center gap-4 mb-6">
+      <div className="mb-6">
         <Link to="/transaksi/pengajuan">
-          <Button variant="outline" size="icon">
-            <ArrowLeft size={16} />
+          <Button variant="outline" size="sm" className="gap-2 rounded-[24px]">
+            <ArrowLeft size={16} /> Kembali
           </Button>
         </Link>
-        <h1 className="page-title">Tambah Pengajuan Pinjaman</h1>
       </div>
       
       <PengajuanFormContent

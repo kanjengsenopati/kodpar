@@ -21,15 +21,15 @@ export default function Header({ pageTitle, actions }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b sticky top-14 z-30 pt-1 pb-2 mb-[3px] px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1600px] mx-auto flex items-start justify-between">
+    <header className="bg-white/80 backdrop-blur-md border-b sticky top-14 z-30 py-2.5 px-4 sm:px-6 lg:px-8 shadow-sm">
+      <div className="max-w-[1600px] mx-auto flex items-center justify-between">
 
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-0.5">
           
           {/* BREADCRUMBS */}
-          <nav className="flex items-center space-x-1.5 text-[11px] font-medium text-slate-400 mb-1.5">
+          <nav className="flex items-center space-x-1.5 text-[10px] font-bold text-slate-400/80 uppercase tracking-wider">
             <Link to="/dashboard" className="flex items-center hover:text-blue-600 transition-colors">
-              <Home className="h-3 w-3" />
+              <Home className="h-2.5 w-2.5" />
             </Link>
             {paths.map((path, index) => {
               const isLast = index === paths.length - 1;
@@ -37,9 +37,9 @@ export default function Header({ pageTitle, actions }: HeaderProps) {
               
               return (
                 <React.Fragment key={to}>
-                  <ChevronRight className="h-3 w-3 text-slate-300" />
+                  <ChevronRight className="h-2.5 w-2.5 text-slate-300" />
                   {isLast ? (
-                    <span className="text-slate-800 font-semibold">{formatPathName(path)}</span>
+                    <span className="text-slate-600 font-bold">{formatPathName(path)}</span>
                   ) : (
                     <Link to={to} className="hover:text-blue-600 transition-colors">
                       {formatPathName(path)}
@@ -48,24 +48,19 @@ export default function Header({ pageTitle, actions }: HeaderProps) {
                 </React.Fragment>
               );
             })}
-            
-            {paths.length === 0 && (
-               <>
-                 <ChevronRight className="h-3 w-3 text-slate-300" />
-                 <span className="text-slate-800 font-semibold">Dashboard</span>
-               </>
-            )}
           </nav>
 
-          <Text.H1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            {pageTitle}
-          </Text.H1>
-          
-          <div className="flex items-center gap-2 mt-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-            <Text.Label className="text-[10px] tracking-tight leading-tight uppercase font-bold text-slate-400">
-              Live Environment • KOPIMU
-            </Text.Label>
+          <div className="flex items-baseline gap-3">
+            <Text.H1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-none">
+              {pageTitle}
+            </Text.H1>
+            
+            <div className="flex items-center gap-1.5 opacity-80 scale-90 origin-left">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+              <Text.Label className="text-[9px] tracking-tight leading-tight uppercase font-bold text-slate-400">
+                LIVE
+              </Text.Label>
+            </div>
           </div>
         </div>
         
