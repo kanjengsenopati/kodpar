@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { approvePengajuan, rejectPengajuan } from "@/services/pengajuanService";
 import { toast } from "sonner";
+import { NestedDetailTable } from "@/components/ui/NestedDetailTable";
 
 interface ExpandablePengajuanRowProps {
   item: Pengajuan;
