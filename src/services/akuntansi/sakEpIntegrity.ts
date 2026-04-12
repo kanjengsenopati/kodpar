@@ -49,12 +49,29 @@ export function generateSakEpDetails(transaksi: Transaksi): JurnalDetail[] {
 
     case "Angsuran":
       // (D) Kas -> (K) Piutang + (K) Pendapatan Jasa
-      const nominalPokok = transaksi.nominalPokok || 0;
-      const nominalJasa = transaksi.nominalJasa || 0;
-      const total = nominalPokok + nominalJasa;
+      // ANCHOR: Always use the actual transaction amount as the Debit base
+      const totalDebit = transaksi.jumlah || 0;
+      details.push({ coaId: COA_KAS, debit: totalDebit, kredit: 0 });
 
-      details.push({ coaId: COA_KAS, debit: total, kredit: 0 });
+      // COMPONENTS: Get portions from transaction data
+      let nominalPokok = transaksi.nominalPokok || 0;
+      let nominalJasa = transaksi.nominalJasa || 0;
       
+      // AUTO-BALANCING: Ensure credits match the anchor debit
+      const currentSum = nominalPokok + nominalJasa;
+      
+      if (currentSum !== totalDebit) {
+        if (currentSum === 0) {
+          // Fallback: If both are 0, attribute 100% to Pokok (conservative recovery)
+          nominalPokok = totalDebit;
+        } else {
+          // Adjust difference to Pokok (Piutang) to ensure total balance
+          const diff = totalDebit - currentSum;
+          nominalPokok += diff;
+        }
+      }
+
+      // Add Kredit entries
       if (nominalPokok > 0) {
         details.push({ coaId: COA_PIUTANG, debit: 0, kredit: nominalPokok });
       }
@@ -62,26 +79,9 @@ export function generateSakEpDetails(transaksi: Transaksi): JurnalDetail[] {
         details.push({ coaId: COA_PENDAPATAN_JASA, debit: 0, kredit: nominalJasa });
       }
       
-      // Safety check: if total doesn't match sum of details, force balance to Pendapatan or general
-      const currentKredit = details.reduce((sum, d) => sum + d.kredit, 0);
-      if (currentKredit !== total) {
-        const diff = total - currentKredit;
-        if (diff !== 0) {
-          // If we have total but porsi is 0, attribute everything to Piutang to prevent unbalanced journal
-          // This is a safety fallback for race conditions in forms
-          if (details.length === 1 && total > 0) {
-            console.warn(`⚠️ SAK EP Safety Fallback: Missing allocation porsi for Angsuran. Attributing 100% to Piutang.`);
-            details.push({ coaId: COA_PIUTANG, debit: 0, kredit: total });
-          } else if (diff !== 0) {
-            // Adjust any small rounding differences to Pendapatan Jasa
-            const lastEntry = details.find(d => d.coaId === COA_PENDAPATAN_JASA);
-            if (lastEntry) {
-              lastEntry.kredit += diff;
-            } else {
-              details.push({ coaId: COA_PENDAPATAN_JASA, debit: 0, kredit: diff });
-            }
-          }
-        }
+      // Post-check log for safety fallback
+      if (currentSum === 0 && totalDebit > 0) {
+        console.warn(`⚠️ SAK EP Auto-Balance: missing porsi for Angsuran #${transaksi.nomorTransaksi}. Resolved using 100% Pokok fallback.`);
       }
       break;
 
