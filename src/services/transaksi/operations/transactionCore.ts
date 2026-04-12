@@ -67,9 +67,11 @@ export async function createTransactionWithSync(data: Partial<Transaksi>): Promi
       }));
       
       // Comprehensive sync for non-accounting modules (e.g., specific reports)
-      syncTransactionToKeuangan(syncedTx).catch(err => 
-        console.warn("⚠️ Non-fatal sync warning:", err)
-      );
+      try {
+        syncTransactionToKeuangan(syncedTx);
+      } catch (err) {
+        console.warn("⚠️ Non-fatal sync warning:", err);
+      }
     }
     
     return result;
