@@ -1,12 +1,17 @@
 import { db } from "../db/db";
 import { Jenis } from "@/types/jenis";
 
+// Synchronous cache for high-performance UI lookups (tables, selects)
+let jenisCache: Jenis[] = [];
+
 /**
  * Get all jenis from local mirror (IndexedDB)
  */
 export async function getAllJenis(): Promise<Jenis[]> {
   try {
-    return await db.table('mst_jenis').toArray();
+    const data = await db.table('mst_jenis').toArray();
+    jenisCache = data; // Update cache
+    return data;
   } catch (error) {
     console.error("Error getting jenis:", error);
     return [];
@@ -14,10 +19,42 @@ export async function getAllJenis(): Promise<Jenis[]> {
 }
 
 /**
+ * Get results from cache if available, otherwise fetch from DB
+ */
+export async function getJenisOptions(jenisTransaksi: string): Promise<Jenis[]> {
+  // If cache is empty, we must wait for at least one fetch
+  if (jenisCache.length === 0) {
+    await getAllJenis();
+  }
+  
+  return jenisCache.filter(j => j.jenisTransaksi === jenisTransaksi);
+}
+
+/**
+ * Legacy support for synchronous callers. 
+ * Note: May return empty array if database hasn't been queried yet.
+ */
+export function getJenisOptionsSync(jenisTransaksi: string): Jenis[] {
+  return jenisCache.filter(j => j.jenisTransaksi === jenisTransaksi);
+}
+
+/**
  * Get jenis by ID
  */
 export async function getJenisById(id: string): Promise<Jenis | undefined> {
+  // First try cache
+  const cached = jenisCache.find(j => j.id === id);
+  if (cached) return cached;
+  
+  // Fallback to DB
   return await db.table('mst_jenis').get(id);
+}
+
+/**
+ * Synchronous version for use in rendering loops
+ */
+export function getJenisByIdSync(id: string): Jenis | undefined {
+  return jenisCache.find(j => j.id === id);
 }
 
 /**
@@ -53,6 +90,9 @@ export async function createJenis(jenis: Omit<Jenis, "id" | "createdAt" | "updat
   
   await db.table('mst_jenis').add(newJenis);
   
+  // Update cache
+  jenisCache.push(newJenis);
+  
   // Trigger Sync
   const { centralizedSync } = await import("./sync/centralizedSyncService");
   centralizedSync.syncEntity('mst_jenis', newJenis.id, newJenis);
@@ -66,5 +106,7 @@ export async function createJenis(jenis: Omit<Jenis, "id" | "createdAt" | "updat
 export async function resetJenisData(): Promise<void> {
   const { neonMasterSync } = await import("./sync/neonMasterSyncService");
   await db.table('mst_jenis').clear();
+  jenisCache = [];
   await neonMasterSync.rehydrateFromCloud();
+  await getAllJenis(); // Refill cache
 }

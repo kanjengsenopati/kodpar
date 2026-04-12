@@ -1,4 +1,24 @@
 
+import { useState, useMemo, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { formatCurrency } from "@/utils/formatters";
+import { Transaksi, Jenis } from "@/types";
+import { getJenisOptions } from "@/services/jenisService";
 import { getCategoryNameSync } from "@/hooks/useCategoryLookup";
 import { cn } from "@/lib/utils";
 import * as Text from "@/components/ui/text";
@@ -9,9 +29,16 @@ interface SimpananTransactionTableProps {
 
 export function SimpananTransactionTable({ transaksi }: SimpananTransactionTableProps) {
   const [selectedKategori, setSelectedKategori] = useState<string>("all");
+  const [simpananCategories, setSimpananCategories] = useState<Jenis[]>([]);
   
-  // Get available simpanan categories
-  const simpananCategories = getJenisOptions("Simpanan");
+  // Load available simpanan categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categories = await getJenisOptions("Simpanan");
+      setSimpananCategories(categories);
+    };
+    loadCategories();
+  }, []);
   
   // Filter transactions based on selected kategori
   const filteredTransaksi = useMemo(() => {
