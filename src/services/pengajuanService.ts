@@ -308,7 +308,6 @@ export async function rejectPengajuan(id: string, alasan: string = "Ditolak oleh
     console.error("Error rejecting pengajuan:", error);
     return { success: false, error: error.message || "Gagal menolak pengajuan" };
   }
-  }
 }
 
 /**
@@ -333,5 +332,3 @@ export async function getPengajuanByJenis(jenis: "Simpan" | "Pinjam" | "Penarika
   
   return data;
 }
-
-
