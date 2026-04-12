@@ -31,7 +31,6 @@ export const createRole = async (roleData: Omit<Role, "id" | "createdAt" | "upda
   
   // Trigger sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('roles', newRole.id, newRole);
   
   return newRole;
@@ -54,10 +53,25 @@ export const updateRole = async (id: string, roleData: Partial<Role>): Promise<R
   
   // Trigger sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('roles', id, updatedRole);
   
   return updatedRole;
+};
+
+/**
+ * Delete role with sync
+ */
+export const deleteRole = async (id: string): Promise<boolean> => {
+  const existing = await getRoleById(id);
+  if (!existing) return false;
+  
+  await db.table('roles').delete(id);
+  
+  // Trigger sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('roles', id, null);
+  
+  return true;
 };
 
 /**

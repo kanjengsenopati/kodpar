@@ -175,6 +175,44 @@ class CentralizedSyncService {
     }
   }
 
+  /**
+   * Generic entry point for syncing Module Entities (Users, Roles, Products, etc.)
+   */
+  async syncEntity(type: string, entityId: string, data: any | null): Promise<void> {
+    const now = new Date().toISOString();
+    
+    // 1. Check if already exists in queue
+    const existing = await db.sync_queue.where('entityId').equals(entityId).first();
+    
+    if (existing) {
+      await db.sync_queue.update(existing.id, {
+        type,
+        data: data ? JSON.stringify(data) : null,
+        status: SYNC_STATUS.PENDING,
+        remoteStatus: SYNC_STATUS.PENDING,
+        updatedAt: now
+      });
+    } else {
+      await db.sync_queue.add({
+        id: IdUtils.generateUUIDv7(),
+        entityId,
+        type,
+        data: data ? JSON.stringify(data) : null,
+        status: SYNC_STATUS.PENDING,
+        remoteStatus: SYNC_STATUS.PENDING,
+        retryCount: 0,
+        updatedAt: now
+      });
+    }
+
+    console.log(`📡 [SYNC-QUEUE] Queued ${type} (${entityId}) for cloud synchronization.`);
+    
+    // Optional: Trigger immediate background processing if online
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      this.processPendingQueue();
+    }
+  }
+
   // ... (markAsSuccess, updateQueueStatus, safeDispatchEvent preserved)
   private async markAsSuccess(entityId: string, type: string, journalId?: string): Promise<void> {
     const existing = await db.sync_queue.where('entityId').equals(entityId).first();

@@ -31,7 +31,6 @@ export const createUser = async (userData: Omit<User, "id" | "createdAt" | "upda
   
   // Trigger Sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('users', newUser.id, newUser);
   
   return newUser;
@@ -54,11 +53,31 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
   
   // Trigger Sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('users', id, updatedUser);
   
   return updatedUser;
 };
+
+/**
+ * Delete user with sync
+ */
+export const deleteUser = async (id: string): Promise<boolean> => {
+  const existing = await getUserById(id);
+  if (!existing) return false;
+  
+  await db.table('users').delete(id);
+  
+  // Trigger sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('users', id, null);
+  
+  return true;
+};
+
+/**
+ * Default Users (Empty fallback to fix imports)
+ */
+export const defaultUsers: User[] = [];
 
 /**
  * Initialize users (Rehydration Trigger)

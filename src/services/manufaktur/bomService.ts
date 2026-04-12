@@ -78,7 +78,6 @@ export const createBOM = async (data: Partial<BOM>): Promise<BOM> => {
 
   // Trigger Sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('mfg_bom', newBOM.id, newBOM);
 
   return newBOM;
@@ -114,7 +113,6 @@ export const updateBOM = async (id: string, data: Partial<BOM>): Promise<BOM | n
 
   // Trigger Sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('mfg_bom', id, updatedBOM);
 
   return updatedBOM;
@@ -134,7 +132,6 @@ export const deleteBOM = async (id: string): Promise<boolean> => {
 
   // Trigger Sync
   const { centralizedSync } = await import("../sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('mfg_bom', id, null);
 
   return true;
