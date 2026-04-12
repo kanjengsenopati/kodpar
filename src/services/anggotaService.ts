@@ -3,7 +3,7 @@ import { db } from "@/db/db";
 import { getAllUnitKerja, syncUnitKerjaWithAnggota } from "./unitKerjaService";
 import { logAuditEntry } from "./auditService";
 import { getCurrentUser } from "./auth/sessionManagement";
-import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "../utils/idUtils";
+import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "@/utils/idUtils";
 
 // Initial sample data with deterministic UUIDv7 for stable demo reset
 const initialAnggota: Anggota[] = [
@@ -145,13 +145,13 @@ export async function getAnggotaById(id: string): Promise<Anggota | undefined> {
 }
 
 export async function generateAnggotaNumber(): Promise<string> {
-  const anggotaList = await db.anggota.toArray();
+  // Optimization: Get only the last record by index to determine sequence
+  const lastAnggota = await db.anggota.orderBy('noAnggota').last();
   
-  const existingNumbers = anggotaList
-    .map(a => extractNumericSuffix(a.noAnggota || a.id))
-    .filter(n => !isNaN(n));
-    
-  const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+  let lastSeq = 0;
+  if (lastAnggota) {
+    lastSeq = extractNumericSuffix(lastAnggota.noAnggota || lastAnggota.id);
+  }
   
   return formatReferenceNumber({
     prefix: "AG",

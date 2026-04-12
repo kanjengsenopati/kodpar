@@ -72,27 +72,28 @@ export default function PengajuanDetail() {
 
   const handleUpdateStatus = async (status: "Menunggu" | "Disetujui" | "Ditolak") => {
     if (id && pengajuan) {
-      let success;
+      let result;
       
       if (status === "Disetujui") {
-        success = await approvePengajuan(id);
-        if (success) {
+        result = await approvePengajuan(id);
+        if (result.success) {
           toast({
             title: "Pengajuan disetujui",
             description: `Pengajuan telah disetujui dan transaksi baru telah dibuat`,
           });
         }
       } else if (status === "Ditolak") {
-        success = await rejectPengajuan(id);
-        if (success) {
+        result = await rejectPengajuan(id, "Ditolak melalui panel detail oleh admin");
+        if (result.success) {
           toast({
             title: "Pengajuan ditolak",
             description: `Pengajuan telah ditandai sebagai ditolak`,
           });
         }
       } else {
-        success = await updatePengajuan(id, { status });
-        if (success) {
+        const updated = await updatePengajuan(id, { status });
+        result = { success: !!updated, data: updated };
+        if (result.success) {
           toast({
             title: "Status berhasil diperbarui",
             description: `Status pengajuan telah diubah menjadi ${status}`,
@@ -100,16 +101,20 @@ export default function PengajuanDetail() {
         }
       }
       
-      if (success) {
+      if (result.success) {
         // Refresh pengajuan data
-        const updatedPengajuan = await getPengajuanById(id);
-        if (updatedPengajuan) {
-          setPengajuan(updatedPengajuan);
+        if (result.data) {
+          setPengajuan(result.data as Pengajuan);
+        } else {
+          const updatedPengajuan = await getPengajuanById(id);
+          if (updatedPengajuan) {
+            setPengajuan(updatedPengajuan);
+          }
         }
       } else {
-        const errorDesc = pengajuan.jenis === "Penarikan" 
+        const errorDesc = (result as any).error || (pengajuan.jenis === "Penarikan" 
           ? "Gagal memperbarui status. Pastikan persyaratan penarikan (saldo & batas limit) terpenuhi."
-          : "Terjadi kesalahan saat memperbarui status pengajuan. Silakan cek validitas data.";
+          : "Terjadi kesalahan saat memperbarui status pengajuan. Silakan cek validitas data.");
 
         toast({
           title: "Gagal memperbarui status",

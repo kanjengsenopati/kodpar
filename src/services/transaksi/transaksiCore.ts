@@ -1,8 +1,7 @@
 import { Transaksi, SubmissionResult } from "@/types";
 import { db } from "@/db/db";
 import { initialTransaksi } from "./initialData";
-import { generateTransaksiId, generateTransaksiNumber } from "./idGenerator";
-import { getAnggotaById } from "@/services/anggotaService";
+import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "@/utils/idUtils";
 import { getJenisByType } from "@/services/jenisService";
 import { getCurrentUser } from "@/services/auth/sessionManagement";
 
@@ -120,11 +119,33 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam" | "Angsuran", kategor
 }
 
 /**
+ * Generate a new human-readable transaksi reference number
+ */
+export async function generateTransaksiNumber(): Promise<string> {
+  const allTransaksi = await db.transaksi.toArray();
+  const today = new Date();
+  
+  const existingNumbers = allTransaksi
+    .map(t => extractNumericSuffix(t.nomorTransaksi || t.id))
+    .filter(n => !isNaN(n));
+    
+  const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+  
+  return formatReferenceNumber({
+    prefix: "TR",
+    year: today.getFullYear(),
+    month: today.getMonth() + 1,
+    sequence: lastSeq + 1,
+    padding: 6
+  });
+}
+
+/**
  * Create a new transaksi with automatic accounting sync
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
-    const newId = await generateTransaksiId();
+    const newId = generateUUIDv7();
     const nomorTransaksi = await generateTransaksiNumber();
     const now = new Date().toISOString();
     
@@ -151,8 +172,6 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       jumlah: data.jumlah || 0,
       keterangan: data.keterangan || "",
       status: data.status || "Sukses",
-      accountingSyncStatus: data.status === "Sukses" ? "PENDING" : undefined,
-      createdAt: now,
       updatedAt: now,
     };
     
@@ -166,6 +185,9 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       }
       return { success: false, error: `Database Error: ${dbError.message || 'Gagal menulis ke IndexedDB'}` };
     }
+    
+    // AUDIT LOG (Internal skip for core)
+    // Business audit should be handled by wrapper (crudOperations)
     
     return { success: true, data: newTransaksi };
   } catch (error: any) {

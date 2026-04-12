@@ -1,13 +1,13 @@
-import { Pengajuan, PersyaratanDokumen } from "@/types";
+import { Pengajuan, PersyaratanDokumen, PengajuanHistory, SubmissionResult } from "@/types";
 import { db } from "@/db/db";
 import { getAnggotaById } from "./anggotaService";
-import { createTransaksi } from "./transaksiService";
 import { calculateTotalSimpanan } from "./transaksiService";
+import { createTransactionWithSync } from "./transaksi/operations/transactionCore";
 import { calculateLoanDetails, generateLoanDescription } from "../utils/loanCalculations";
 import { ensureAutoDeductionCategories } from "./keuangan/baseService";
 import { centralizedSync } from "./sync/centralizedSyncService";
 import { getCurrentUser } from "./auth/sessionManagement";
-import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "../utils/idUtils";
+import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "@/utils/idUtils";
 
 /**
  * Get all pengajuan from IndexedDB
@@ -145,22 +145,26 @@ import { getPengaturan } from "./pengaturanService";
 /**
  * STRICT ATOMIC: Approve a pengajuan and convert to transaction in a single commit
  */
-export async function approvePengajuan(id: string): Promise<boolean> {
+export async function approvePengajuan(id: string): Promise<SubmissionResult<Pengajuan>> {
   try {
     // 1. EXECUTE GLOBAL ATOMIC TRANSACTION
     // This transaction covers the Application state, the Financial Transaction, 
-    // and the Accounting Journal (via createTransaksi internal logic)
-    await db.transaction('rw', [db.pengajuan, db.transaksi, db.jurnal, db.anggota, db.auditLog], async () => {
+    // and the Accounting Journal (via createTransactionWithSync internal logic)
+    const result = await db.transaction('rw', [db.pengajuan, db.transaksi, db.jurnal, db.anggota, db.audit_log], async () => {
       const pengajuan = await db.pengajuan.get(id);
-      if (!pengajuan || pengajuan.status !== "Menunggu") {
-        throw new Error("Pengajuan tidak ditemukan atau sudah diproses");
+      if (!pengajuan) {
+        throw new Error("Pengajuan tidak ditemukan");
+      }
+      
+      if (pengajuan.status !== "Menunggu") {
+        throw new Error("Pengajuan sudah diproses");
       }
 
       // --- A. Domain Validation ---
       if (pengajuan.jenis === "Penarikan") {
         const settings = getPengaturan();
         const availableBalance = await calculateTotalSimpanan(pengajuan.anggotaId);
-        // ... (existing balance logic remains same)
+        
         let minRequired = 0;
         if (settings.penarikan) {
           if (settings.penarikan.minPreservedBalanceType === "fixed") {
@@ -169,6 +173,7 @@ export async function approvePengajuan(id: string): Promise<boolean> {
             minRequired = (availableBalance * settings.penarikan.minPreservedBalanceValue) / 100;
           }
         }
+        
         let maxAllowedByRule = availableBalance - minRequired;
         if (settings.penarikan) {
           let maxRule = 0;
@@ -179,6 +184,7 @@ export async function approvePengajuan(id: string): Promise<boolean> {
           }
           maxAllowedByRule = Math.min(maxAllowedByRule, maxRule);
         }
+        
         if (pengajuan.jumlah > maxAllowedByRule) {
           throw new Error(`Aturan Penarikan Dilanggar: Maksimal ${maxAllowedByRule.toLocaleString('id-ID')}`);
         }
@@ -192,8 +198,8 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         finalKeterangan = generateLoanDescription(loanCalculation, finalKeterangan);
       }
 
-      // --- C. Create Transaction (Atomic Ledger Creation happens inside!) ---
-      const result = await createTransaksi({
+      // --- C. Create Transaction via ATOMIC ENGINE ---
+      const txResult = await createTransactionWithSync({
         tanggal: pengajuan.tanggal,
         anggotaId: pengajuan.anggotaId,
         jenis: pengajuan.jenis,
@@ -203,14 +209,15 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         status: "Sukses",
         referensiPinjamanId: pengajuan.referensiPinjamanId,
         nominalPokok: pengajuan.nominalPokok,
-        nominalJasa: pengajuan.nominalJasa
+        nominalJasa: pengajuan.nominalJasa,
+        tenor: (pengajuan as any).tenor
       });
 
-      if (!result.success || !result.data) {
-        throw new Error(result.error || "Gagal membuat transaksi finansial");
+      if (!txResult.success || !txResult.data) {
+        throw new Error(txResult.error || "Gagal membuat transaksi finansial");
       }
 
-      const createdTransaction = result.data;
+      const createdTransaction = txResult.data;
       const user = getCurrentUser();
       const now = new Date().toISOString();
 
@@ -223,70 +230,85 @@ export async function approvePengajuan(id: string): Promise<boolean> {
         keterangan: "Disetujui (Atomic SAK-EP)"
       };
 
-      await db.pengajuan.update(id, {
+      const updatedPengajuan: Pengajuan = {
+        ...pengajuan,
         status: "Disetujui",
         history: [...(pengajuan.history || []), newHistoryEntry],
         updatedAt: now
-      });
+      };
+
+      await db.pengajuan.put(updatedPengajuan);
 
       // --- E. Side Effects (Schedule generation) ---
-      // We do this inside the transaction for Pinjaman to ensure schedules exist
       if (pengajuan.jenis === "Pinjam") {
         const { generateInitialSchedule } = await import("./transaksi/installmentScheduleService");
         await generateInitialSchedule(createdTransaction);
       }
+      
       if (pengajuan.jenis === "Angsuran") {
         const { linkPaymentToSchedule } = await import("./transaksi/installmentScheduleService");
         await linkPaymentToSchedule(createdTransaction);
       }
 
-      // Emit event after successful commit outside if needed or use Dexie.on('committed')
-      // For now, we return true and let calling code emit UI events.
+      return { success: true, data: updatedPengajuan };
     });
 
-    return true;
+    return result as SubmissionResult<Pengajuan>;
   } catch (error: any) {
     console.error("❌ SAK-EP APPROVAL REJECTED (ROLLBACK):", error);
-    return false;
+    return { success: false, error: error.message || "Gagal menyetujui pengajuan" };
   }
 }
 
-
-
 /**
- * Reject a pengajuan
+ * Reject a pengajuan with atomic history update
  */
-export async function rejectPengajuan(id: string, alasan: string): Promise<boolean> {
-  const pengajuan = await getPengajuanById(id);
-  if (!pengajuan || pengajuan.status !== "Menunggu") return false;
-  
-  const user = getCurrentUser();
-  const now = new Date().toISOString();
-
-  const newHistoryEntry: PengajuanHistory = {
-    id: generateUUIDv7(),
-    tanggal: now,
-    aksi: "Ditolak",
-    oleh: user?.name || "Admin",
-    keterangan: alasan
-  };
-
-  const updatedPengajuan = await updatePengajuan(id, { 
-    status: "Ditolak",
-    alasanPenolakan: alasan,
-    history: [...(pengajuan.history || []), newHistoryEntry]
-  });
-  
-  if (updatedPengajuan) {
-    window.dispatchEvent(new CustomEvent('pengajuan-rejected', {
-      detail: { 
-        pengajuan: updatedPengajuan,
-        timestamp: now
+export async function rejectPengajuan(id: string, alasan: string = "Ditolak oleh admin"): Promise<SubmissionResult<Pengajuan>> {
+  try {
+    const result = await db.transaction('rw', [db.pengajuan], async () => {
+      const pengajuan = await db.pengajuan.get(id);
+      if (!pengajuan || pengajuan.status !== "Menunggu") {
+        throw new Error("Pengajuan tidak ditemukan atau sudah diproses");
       }
-    }));
+      
+      const user = getCurrentUser();
+      const now = new Date().toISOString();
+
+      const newHistoryEntry: PengajuanHistory = {
+        id: generateUUIDv7(),
+        tanggal: now,
+        aksi: "Ditolak",
+        oleh: user?.name || "Admin",
+        keterangan: alasan
+      };
+
+      const updatedPengajuan: Pengajuan = {
+        ...pengajuan,
+        status: "Ditolak",
+        alasanPenolakan: alasan,
+        history: [...(pengajuan.history || []), newHistoryEntry],
+        updatedAt: now
+      };
+
+      await db.pengajuan.put(updatedPengajuan);
+      return { success: true, data: updatedPengajuan };
+    });
+    
+    if (result.success && result.data) {
+      window.dispatchEvent(new CustomEvent('pengajuan-rejected', {
+        detail: { 
+          pengajuan: result.data,
+          timestamp: new Date().toISOString()
+        }
+      }));
+    }
+    
+    return result as SubmissionResult<Pengajuan>;
+  } catch (error: any) {
+    console.error("Error rejecting pengajuan:", error);
+    return { success: false, error: error.message || "Gagal menolak pengajuan" };
   }
-  
-  return !!updatedPengajuan;
+  }
 }
 
 /**

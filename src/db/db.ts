@@ -12,6 +12,8 @@ export class KoperasiDB extends Dexie {
   jurnal!: Table<JurnalEntry>;
   pengajuan!: Table;
   jadwal_angsuran!: Table<JadwalAngsuran>;
+  audit_log!: Table<any>;
+  unit_kerja!: Table<any>;
 
   constructor() {
     super('KoperasiDB');
@@ -48,7 +50,8 @@ export class KoperasiDB extends Dexie {
       jurnal: 'id, nomorJurnal, tanggal, status, referensi',
       pengajuan: 'id, nomorPengajuan, anggotaId, jenis, status, tanggal, loanId',
       jadwal_angsuran: 'id, loanId, anggotaId, status, tanggalJatuhTempo',
-      audit_log: 'id, timestamp, action, resource, userId'
+      audit_log: 'id, timestamp, action, resource, userId',
+      unit_kerja: 'id, kode, nama'
     });
   }
 

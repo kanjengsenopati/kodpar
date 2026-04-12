@@ -18,15 +18,23 @@ export async function generateInitialSchedule(loan: Transaksi): Promise<JadwalAn
   const approvalDate = new Date(loan.tanggal);
   const now = new Date().toISOString();
 
+  const monthlyPokok = Math.round(nominalPokok / (tenor || 12));
+  let remainingPokok = nominalPokok;
+
   // Create entries for each installment
   for (let i = 1; i <= (tenor || 12); i++) {
     const dueDate = new Date(approvalDate);
-    // Logic: First installment is 1 month after approval
     dueDate.setMonth(approvalDate.getMonth() + i);
 
-    // Format Periode (e.g. "Mei 2026")
     const periodeOptions: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
     const periode = new Intl.DateTimeFormat('id-ID', periodeOptions).format(dueDate);
+
+    let currentMonthlyPokok = monthlyPokok;
+    if (i === (tenor || 12)) {
+      currentMonthlyPokok = remainingPokok;
+    } else {
+      remainingPokok -= monthlyPokok;
+    }
 
     const entry: JadwalAngsuran = {
       id: generateUUIDv7(),
@@ -35,9 +43,9 @@ export async function generateInitialSchedule(loan: Transaksi): Promise<JadwalAn
       angsuranKe: i,
       periode,
       tanggalJatuhTempo: dueDate.toISOString(),
-      nominalPokok: nominalPokok / (tenor || 12),
-      nominalJasa: nominalJasa,
-      totalTagihan: angsuranPerBulan,
+      nominalPokok: currentMonthlyPokok,
+      nominalJasa: Math.round(nominalJasa),
+      totalTagihan: Math.round(currentMonthlyPokok + nominalJasa),
       status: "BELUM_BAYAR",
       createdAt: now,
       updatedAt: now
