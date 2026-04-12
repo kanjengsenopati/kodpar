@@ -5,7 +5,7 @@ import { generateTransaksiId, generateTransaksiNumber } from "./idGenerator";
 import { getAnggotaById } from "@/services/anggotaService";
 import { getJenisByType } from "@/services/jenisService";
 import { getCurrentUser } from "@/services/auth/sessionManagement";
-import { generateUUIDv7 } from "@/utils/idUtils";
+import { generateTransaksiNumber, generateUUIDv7 } from "./idGenerator";
 
 /**
  * Get all transaksi from IndexedDB
@@ -137,7 +137,7 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
     // Validate kategori if provided
     if (data.jenis && data.kategori) {
       // Check if kategori is valid for the given jenis
-      if (!isValidKategori(data.jenis as "Simpan" | "Pinjam", data.kategori)) {
+      if (!isValidKategori(data.jenis as any, data.kategori)) {
         console.warn(`Kategori '${data.kategori}' is not valid for jenis ${data.jenis}`);
       }
     }
