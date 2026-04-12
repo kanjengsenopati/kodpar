@@ -92,14 +92,16 @@ export function getAvailableKategori(jenis: "Simpan" | "Pinjam"): string[] {
 /**
  * Validate if a kategori is valid for a specific jenis
  */
-export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): boolean {
-  const availableKategori = getAvailableKategori(jenis);
+export function isValidKategori(jenis: "Simpan" | "Pinjam" | "Angsuran", kategori: string): boolean {
+  // Angsuran uses same categories as Pinjam
+  const effectiveJenis = jenis === "Angsuran" ? "Pinjam" : jenis;
+  const availableKategori = getAvailableKategori(effectiveJenis);
   
   // 1. Exact match check
   if (availableKategori.includes(kategori)) return true;
   
   // 2. Backward compatibility: check with "Pinjaman " prefix if the type is "Pinjam"
-  if (jenis === "Pinjam") {
+  if (effectiveJenis === "Pinjam") {
     // If input is "Reguler", check for "Pinjaman Reguler"
     if (availableKategori.includes(`Pinjaman ${kategori}`)) return true;
     
@@ -109,7 +111,7 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): b
   }
   
   // 3. Same for Simpan if needed (future proofing)
-  if (jenis === "Simpan") {
+  if (effectiveJenis === "Simpan") {
     if (availableKategori.includes(`Simpanan ${kategori}`)) return true;
     const cleaned = kategori.replace(/^Simpanan\s+/, "");
     if (availableKategori.includes(cleaned)) return true;

@@ -87,7 +87,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
       return;
     }
 
-    const jumlahAngsuran = parseInt(formData.jumlah);
+    const jumlahAngsuran = Math.round(Number(formData.jumlah));
     if (jumlahAngsuran <= 0) {
       toast({
         title: "Jumlah tidak valid",
@@ -238,7 +238,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
                 <SelectContent className="rounded-2xl">
                   {Array.isArray(anggotaList) && anggotaList.map((anggota: any) => (
                     <SelectItem key={anggota.id} value={anggota.id}>
-                      {anggota.nama} - {anggota.id}
+                      {anggota.nama} - {anggota.noAnggota || anggota.id.substring(0, 8)}
                     </SelectItem>
                   ))}
                 </SelectContent>

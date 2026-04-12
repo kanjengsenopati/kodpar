@@ -86,7 +86,7 @@ export function LoanSelectionPreview({
             
             // Calculate suggested monthly installment (interest + some principal)
             const suggestedPrincipal = Math.min(remainingAmount * 0.1, remainingAmount); // 10% of remaining or full amount
-            const suggestedAmount = monthlyInterest + suggestedPrincipal;
+            const suggestedAmount = Math.round(monthlyInterest + suggestedPrincipal);
 
             setLoanDetails({
               ...selectedLoan,
@@ -154,7 +154,7 @@ export function LoanSelectionPreview({
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">#{loan.id}</span>
+                    <span className="font-medium">{loan.nomorTransaksi || `#${loan.id.substring(0, 8)}...`}</span>
                     <Badge variant="outline">{loan.kategori || "Umum"}</Badge>
                   </div>
                   <p className="text-sm text-gray-600">
