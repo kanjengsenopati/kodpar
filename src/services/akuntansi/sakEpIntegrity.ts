@@ -67,9 +67,19 @@ export function generateSakEpDetails(transaksi: Transaksi): JurnalDetail[] {
       if (currentKredit !== total) {
         const diff = total - currentKredit;
         if (diff !== 0) {
-          // If we only have 'jumlah' but no breakdown, attribute everything to Piutang (Conservative approach)
-          if (details.length === 1) {
+          // If we have total but porsi is 0, attribute everything to Piutang to prevent unbalanced journal
+          // This is a safety fallback for race conditions in forms
+          if (details.length === 1 && total > 0) {
+            console.warn(`⚠️ SAK EP Safety Fallback: Missing allocation porsi for Angsuran. Attributing 100% to Piutang.`);
             details.push({ coaId: COA_PIUTANG, debit: 0, kredit: total });
+          } else if (diff !== 0) {
+            // Adjust any small rounding differences to Pendapatan Jasa
+            const lastEntry = details.find(d => d.coaId === COA_PENDAPATAN_JASA);
+            if (lastEntry) {
+              lastEntry.kredit += diff;
+            } else {
+              details.push({ coaId: COA_PENDAPATAN_JASA, debit: 0, kredit: diff });
+            }
           }
         }
       }

@@ -98,14 +98,22 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
     }
 
     setIsSubmitting(true);
-
     try {
+      // Direct Fresh Calculation to prevent race conditions
+      const pinjaman = await getTransaksiById(selectedLoanId);
+      let finalNominalPokok = allocationPreview?.nominalPokok ?? 0;
+      let finalNominalJasa = allocationPreview?.nominalJasa ?? 0;
+
+      if (pinjaman) {
+        const allocation = calculateAngsuranAllocation(pinjaman, jumlahAngsuran);
+        finalNominalPokok = allocation.nominalPokok;
+        finalNominalJasa = allocation.nominalJasa;
+      }
+
       // Enhanced keterangan with allocation info
       let enhancedKeterangan = `${formData.keterangan} - Pinjaman: ${selectedLoanId}`;
-      if (allocationPreview) {
-        const allocationInfo = ` (Jasa Bulanan: ${formatCurrency(allocationPreview.nominalJasa)}, Pokok: ${formatCurrency(allocationPreview.nominalPokok)})`;
-        enhancedKeterangan += allocationInfo;
-      }
+      const allocationInfo = ` (Jasa Bulanan: ${formatCurrency(finalNominalJasa)}, Pokok: ${formatCurrency(finalNominalPokok)})`;
+      enhancedKeterangan += allocationInfo;
 
       if (initialData) {
         // Update existing transaction
@@ -117,8 +125,8 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           kategori: "Pinjaman Reguler",
           keterangan: enhancedKeterangan,
           referensiPinjamanId: selectedLoanId,
-          nominalPokok: allocationPreview?.nominalPokok ?? 0,
-          nominalJasa: allocationPreview?.nominalJasa ?? 0,
+          nominalPokok: finalNominalPokok,
+          nominalJasa: finalNominalJasa,
           status: initialData.status
         });
 
@@ -141,8 +149,8 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           jumlah: jumlahAngsuran,
           keterangan: enhancedKeterangan,
           referensiPinjamanId: selectedLoanId,
-          nominalPokok: allocationPreview?.nominalPokok ?? 0,
-          nominalJasa: allocationPreview?.nominalJasa ?? 0,
+          nominalPokok: finalNominalPokok,
+          nominalJasa: finalNominalJasa,
           status: "Sukses"
         });
 
