@@ -74,7 +74,7 @@ export default function SimpanList() {
     }
   };
 
-  const headers = ["ID Transaksi", "Tanggal", "Nama Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
+  const headers = ["No", "ID Transaksi", "Tanggal", "Nama Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
 
   return (
     <Layout 
@@ -106,9 +106,8 @@ export default function SimpanList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8" />
                   {headers.map((h) => (
-                    <TableHead key={h}>{h}</TableHead>
+                    <TableHead key={h} className={h === "No" ? "w-10 text-center" : ""}>{h}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -120,13 +119,14 @@ export default function SimpanList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredList.map((transaksi) => (
+                  filteredList.map((transaksi, index) => (
                     <ExpandableTransaksiRow
                       key={transaksi.id}
                       transaksi={transaksi}
                       type="simpan"
                       onDelete={handleDelete}
                       colSpan={headers.length}
+                      index={index + 1}
                     />
                   ))
                 )}

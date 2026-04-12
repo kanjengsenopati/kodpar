@@ -19,9 +19,10 @@ interface ExpandableTransaksiRowProps {
   type: "simpan" | "pinjam" | "angsuran" | "penarikan";
   onDelete: (id: string) => void;
   colSpan: number;
+  index?: number;
 }
 
-export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: ExpandableTransaksiRowProps) {
+export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan, index }: ExpandableTransaksiRowProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [schedule, setSchedule] = useState<JadwalAngsuran[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +104,9 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
         className="group cursor-pointer border-slate-50 hover:bg-slate-50/50 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
+        <TableCell className="text-center font-bold text-slate-300 text-[11px] w-10">
+          {index !== undefined ? index : "-"}
+        </TableCell>
         <TableCell className="w-8 px-2 text-center">
           {isOpen
             ? <ChevronDown className="h-4 w-4 text-slate-400" />
@@ -145,35 +149,39 @@ export function ExpandableTransaksiRow({ transaksi, type, onDelete, colSpan }: E
 
       {isOpen && (
         <TableRow className="bg-slate-50/20 hover:bg-slate-50/20">
-          <TableCell colSpan={colSpan + 1} className="p-0 border-none">
+          <TableCell colSpan={colSpan + 2} className="p-0 border-none">
             <div className="px-10 py-6 border-l-4 border-slate-100 bg-white/40 backdrop-blur-sm animate-in slide-in-from-top-1 duration-200">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Basic Info Summary */}
                 <div className="md:col-span-4 space-y-4">
                   <div className="bg-slate-50/50 rounded-[24px] p-5 space-y-3">
                     <div className="flex items-center justify-between mb-2">
-                      <Text.Label className="text-slate-400">Rincian Transaksi</Text.Label>
+                      <Text.Label className="text-slate-600 font-bold">Rincian Transaksi</Text.Label>
                       <Badge variant="outline" className="text-[9px] font-mono border-slate-200 text-slate-400 bg-white">
                         SYS-ID: {transaksi.id.substring(0, 8)}
                       </Badge>
                     </div>
-                                        <div className="space-y-2">
-                      <div className="flex justify-between items-center text-[10px] text-slate-400 overflow-hidden">
-                        <span className="shrink-0 mr-2">ID Record:</span>
-                        <span className="truncate select-all">{transaksi.id}</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-[10px] text-slate-500 overflow-hidden">
+                        <span className="shrink-0 mr-2 font-bold text-slate-600">ID Record:</span>
+                        <span className="truncate select-all bg-slate-100 px-1.5 py-0.5 rounded text-slate-400 font-mono">
+                          {transaksi.id.substring(0, 18)}...
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center border-t border-slate-100 pt-2">
-                        <Text.Caption className="not-italic">ID Anggota</Text.Caption>
-                        <Text.Body className="font-bold text-xs">{transaksi.anggotaId}</Text.Body>
+                      <div className="flex justify-between items-center border-t border-slate-100 pt-2 text-[11px]">
+                        <Text.Caption className="not-italic text-slate-600 font-bold uppercase tracking-wider">ID Anggota</Text.Caption>
+                        <Text.Body className="font-bold text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg border border-blue-100/50">
+                          {transaksi.anggotaId.substring(0, 15)}...
+                        </Text.Body>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <Text.Caption className="not-italic">Dicek Pada</Text.Caption>
-                        <Text.Body className="text-[10px]">{formatDate(transaksi.createdAt)}</Text.Body>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <Text.Caption className="not-italic text-slate-600 font-bold uppercase tracking-wider">Dicek Pada</Text.Caption>
+                        <Text.Body className="text-[10px] font-semibold text-slate-700">{formatDate(transaksi.createdAt)}</Text.Body>
                       </div>
                       <div className="pt-2 border-t border-slate-100">
-                        <Text.Caption className="not-italic mb-1 block">Keterangan</Text.Caption>
-                        <Text.Body className="text-[13px] italic text-slate-500 leading-snug">
-                          {transaksi.keterangan || "Tidak ada keterangan tambahan dari petugas."}
+                        <Text.Caption className="not-italic mb-1 block text-slate-600 font-bold uppercase tracking-wider text-[11px]">Keterangan</Text.Caption>
+                        <Text.Body className="text-[13px] italic text-slate-600 leading-snug">
+                          {transaksi.keterangan || "Tidak ada rincian keterangan tambahan."}
                         </Text.Body>
                       </div>
                     </div>

@@ -76,7 +76,7 @@ export default function PinjamList() {
     (t.kategori || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const headers = ["ID Transaksi", "Tanggal", "Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
+  const headers = ["No", "ID Transaksi", "Tanggal", "Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
 
   return (
     <Layout 
@@ -109,9 +109,8 @@ export default function PinjamList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8" />
                   {headers.map((h) => (
-                    <TableHead key={h}>{h}</TableHead>
+                    <TableHead key={h} className={h === "No" ? "w-10 text-center" : ""}>{h}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -123,13 +122,14 @@ export default function PinjamList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTransaksi.map((transaksi) => (
+                  filteredTransaksi.map((transaksi, index) => (
                     <ExpandableTransaksiRow
                       key={transaksi.id}
                       transaksi={transaksi}
                       type="pinjam"
                       onDelete={handleDeleteClick}
                       colSpan={headers.length}
+                      index={index + 1}
                     />
                   ))
                 )}

@@ -75,7 +75,7 @@ export default function AngsuranList() {
     (t.anggotaNama || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const headers = ["ID Transaksi", "Tanggal", "Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
+  const headers = ["No", "ID Transaksi", "Tanggal", "Anggota", "Kategori", "Jumlah", "Status", "Aksi"];
 
   return (
     <Layout 
@@ -108,9 +108,8 @@ export default function AngsuranList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8" />
                   {headers.map((h) => (
-                    <TableHead key={h}>{h}</TableHead>
+                    <TableHead key={h} className={h === "No" ? "w-10 text-center" : ""}>{h}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
@@ -122,13 +121,14 @@ export default function AngsuranList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTransaksi.map((transaksi) => (
+                  filteredTransaksi.map((transaksi, index) => (
                     <ExpandableTransaksiRow
                       key={transaksi.id}
                       transaksi={transaksi}
                       type="angsuran"
                       onDelete={handleDeleteClick}
                       colSpan={headers.length}
+                      index={index + 1}
                     />
                   ))
                 )}

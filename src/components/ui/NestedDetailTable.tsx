@@ -39,7 +39,7 @@ export function NestedDetailTable({ title, columns, data, emptyMessage = "Tidak 
             <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-slate-100">
               {columns.map((col, idx) => (
                 <TableHead key={idx} className={cn("h-9", col.className)}>
-                  <Text.Label className="text-[10px] text-slate-400">{col.header}</Text.Label>
+                  <Text.Label className="text-[10px] text-slate-600">{col.header}</Text.Label>
                 </TableHead>
               ))}
             </TableRow>
