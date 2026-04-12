@@ -35,24 +35,25 @@ export async function getJurnalEntryByReference(referensi: string): Promise<Jurn
  * Generate next journal number
  */
 export async function generateJurnalNumber(): Promise<string> {
-  // Add 1-20ms jitter to desynchronize concurrent batch calls
-  const jitter = Math.floor(Math.random() * 20);
-  if (jitter > 0) await new Promise(resolve => setTimeout(resolve, jitter));
+  // REMOVED JITTER: Jitter with setTimeout breaks Dexie transaction zones.
+  // In an atomic transaction, the DB is already locked, so jitter is unnecessary.
 
-  const entries = await getAllJurnalEntries();
   const currentYear = new Date().getFullYear();
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-  
   const prefix = `JU${currentYear}${currentMonth}`;
-  const existingNumbers = entries
-    .filter(entry => entry.nomorJurnal.startsWith(prefix))
-    .map(entry => {
-      const suffix = entry.nomorJurnal.replace(prefix, '');
-      return parseInt(suffix) || 0;
-    })
-    .sort((a, b) => b - a);
+
+  // OPTIMIZED QUERY: Fetch only the last entry for the current prefix
+  const lastEntry = await db.jurnal
+    .where('nomorJurnal')
+    .startsWith(prefix)
+    .last();
   
-  const nextNumber = existingNumbers.length > 0 ? existingNumbers[0] + 1 : 1;
+  let nextNumber = 1;
+  if (lastEntry) {
+    const lastSuffix = lastEntry.nomorJurnal.replace(prefix, '');
+    nextNumber = (parseInt(lastSuffix) || 0) + 1;
+  }
+  
   return `${prefix}${String(nextNumber).padStart(4, '0')}`;
 }
 
