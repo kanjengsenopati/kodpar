@@ -14,17 +14,17 @@ export class KoperasiDB extends Dexie {
   jadwal_angsuran!: Table<JadwalAngsuran>;
   audit_log!: Table<any>;
   unit_kerja!: Table<any>;
+  sync_queue!: Table<any>;
 
   constructor() {
     super('KoperasiDB');
-    // v1: original schema
+    // ... legacy versions 1-4
     this.version(1).stores({
       anggota: '++id, nama, nip, noHp, status, unitKerja',
       transaksi: '++id, anggotaId, jenis, tanggal, status, kategori',
       coa: '++id, kode, nama, jenis, kategori',
       jurnal: '++id, nomorJurnal, tanggal, status, referensi'
     });
-    // v3: Pure DB Driven Schema with structured financial fields
     this.version(3).stores({
       anggota: '++id, nama, nip, noHp, status, unitKerja',
       transaksi: '++id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
@@ -32,7 +32,6 @@ export class KoperasiDB extends Dexie {
       jurnal: '++id, nomorJurnal, tanggal, status, referensi',
       pengajuan: '++id, anggotaId, jenis, status, tanggal, loanId'
     });
-    // v4: Persistent Installment Schedule
     this.version(4).stores({
       anggota: '++id, nama, nip, noHp, status, unitKerja',
       transaksi: '++id, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId, tenor',
@@ -42,7 +41,7 @@ export class KoperasiDB extends Dexie {
       jadwal_angsuran: '++id, loanId, anggotaId, status, tanggalJatuhTempo'
     });
 
-    // v6: Final Stabilized Schema (Migration from v5 schema extension block)
+    // v6: Final Stabilized Schema
     this.version(6).stores({
       anggota: 'id, noAnggota, nama, nip, noHp, status, unitKerja',
       transaksi: 'id, nomorTransaksi, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId',
@@ -52,6 +51,19 @@ export class KoperasiDB extends Dexie {
       jadwal_angsuran: 'id, loanId, anggotaId, status, tanggalJatuhTempo',
       audit_log: 'id, timestamp, action, resource, userId',
       unit_kerja: 'id, kode, nama'
+    });
+
+    // v7: Persistent Sync Queue for SaaS & Multi-client stability
+    this.version(7).stores({
+      anggota: 'id, noAnggota, nama, nip, noHp, status, unitKerja',
+      transaksi: 'id, nomorTransaksi, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId',
+      coa: 'id, kode, nama, jenis, kategori',
+      jurnal: 'id, nomorJurnal, tanggal, status, referensi',
+      pengajuan: 'id, nomorPengajuan, anggotaId, jenis, status, tanggal, loanId',
+      jadwal_angsuran: 'id, loanId, anggotaId, status, tanggalJatuhTempo',
+      audit_log: 'id, timestamp, action, resource, userId',
+      unit_kerja: 'id, kode, nama',
+      sync_queue: 'id, entityId, type, status, updatedAt'
     });
   }
 
