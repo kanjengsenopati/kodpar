@@ -31,7 +31,7 @@ export async function generateTransaksiNumber(): Promise<string> {
  * Legacy compatibility: generateTransaksiId now returns a UUID v7
  * But for internal consistency, it's better to use generateUUIDv7 directly.
  */
-import { generateUUIDv7 } from "@/utils/idUtils";
+export { generateUUIDv7 } from "@/utils/idUtils";
 
 export async function generateTransaksiId(): Promise<string> {
   return generateUUIDv7();
