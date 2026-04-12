@@ -14,6 +14,7 @@ import { getAllInventory, deleteInventory, createInventory, addStockMovement, ge
 import { ManufakturInventory, INVENTORY_CATEGORIES, MATERIAL_UNITS, StockMovement } from '@/types/manufaktur';
 import { Plus, Search, Trash2, Package, AlertTriangle, ArrowDownToLine, ArrowUpFromLine, History } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatNumberInput, cleanNumberInput } from '@/utils/formatters';
 
 export default function InventoryList() {
   const [inventory, setInventory] = useState<ManufakturInventory[]>([]);
@@ -83,9 +84,9 @@ export default function InventoryList() {
                 <div><Label>Satuan</Label><Select value={newItem.unit} onValueChange={v => setNewItem({...newItem, unit: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MATERIAL_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent></Select></div>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div><Label>Stok Awal</Label><Input type="number" value={newItem.currentStock} onChange={e => setNewItem({...newItem, currentStock: Number(e.target.value)})} /></div>
-                <div><Label>Min. Stok</Label><Input type="number" value={newItem.minimumStock} onChange={e => setNewItem({...newItem, minimumStock: Number(e.target.value)})} /></div>
-                <div><Label>Harga/Unit</Label><Input type="number" value={newItem.unitCost} onChange={e => setNewItem({...newItem, unitCost: Number(e.target.value)})} /></div>
+                <div><Label>Stok Awal</Label><Input type="text" value={formatNumberInput(newItem.currentStock)} onChange={e => setNewItem({...newItem, currentStock: cleanNumberInput(e.target.value)})} /></div>
+                <div><Label>Min. Stok</Label><Input type="text" value={formatNumberInput(newItem.minimumStock)} onChange={e => setNewItem({...newItem, minimumStock: cleanNumberInput(e.target.value)})} /></div>
+                <div><Label>Harga/Unit</Label><Input type="text" value={formatNumberInput(newItem.unitCost)} onChange={e => setNewItem({...newItem, unitCost: cleanNumberInput(e.target.value)})} /></div>
               </div>
               <div><Label>Lokasi</Label><Input value={newItem.location} onChange={e => setNewItem({...newItem, location: e.target.value})} placeholder="Gudang A" /></div>
               <Button className="w-full" onClick={handleAddItem}>Simpan</Button>
@@ -195,7 +196,7 @@ export default function InventoryList() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Jumlah</Label><Input type="number" value={movementForm.quantity} onChange={e => setMovementForm({...movementForm, quantity: Number(e.target.value)})} /></div>
+              <div><Label>Jumlah</Label><Input type="text" value={formatNumberInput(movementForm.quantity)} onChange={e => setMovementForm({...movementForm, quantity: cleanNumberInput(e.target.value)})} /></div>
               <div><Label>Dilakukan oleh</Label><Input value={movementForm.performedBy} onChange={e => setMovementForm({...movementForm, performedBy: e.target.value})} /></div>
               <div><Label>Catatan</Label><Textarea value={movementForm.notes} onChange={e => setMovementForm({...movementForm, notes: e.target.value})} /></div>
               <Button className="w-full" onClick={handleMovement}>Simpan Perubahan Stok</Button>

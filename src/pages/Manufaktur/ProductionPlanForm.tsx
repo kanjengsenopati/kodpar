@@ -14,6 +14,7 @@ import { PP_STATUSES, MATERIAL_UNITS } from '@/types/manufaktur';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
+import { formatNumberInput, cleanNumberInput } from '@/utils/formatters';
 
 export default function ProductionPlanForm() {
   const navigate = useNavigate();
@@ -78,14 +79,14 @@ export default function ProductionPlanForm() {
               </div>
               <div><Label>Tanggal Mulai</Label><Input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} /></div>
               <div><Label>Tanggal Selesai</Label><Input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} /></div>
-              <div><Label>Target Output</Label><Input type="number" value={form.targetOutput} onChange={e => setForm({...form, targetOutput: Number(e.target.value)})} /></div>
+              <div><Label>Target Output</Label><Input type="text" value={formatNumberInput(form.targetOutput)} onChange={e => setForm({...form, targetOutput: cleanNumberInput(e.target.value)})} /></div>
               <div><Label>Satuan</Label>
                 <Select value={form.outputUnit} onValueChange={v => setForm({...form, outputUnit: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{MATERIAL_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              {isEdit && <div><Label>Output Aktual</Label><Input type="number" value={form.actualOutput} onChange={e => setForm({...form, actualOutput: Number(e.target.value)})} /></div>}
+              {isEdit && <div><Label>Output Aktual</Label><Input type="text" value={formatNumberInput(form.actualOutput)} onChange={e => setForm({...form, actualOutput: cleanNumberInput(e.target.value)})} /></div>}
               <div><Label>Shift</Label><Input value={form.shift} onChange={e => setForm({...form, shift: e.target.value})} placeholder="Pagi / Siang / Malam" /></div>
               <div><Label>Supervisor</Label><Input value={form.supervisor} onChange={e => setForm({...form, supervisor: e.target.value})} /></div>
             </div>
