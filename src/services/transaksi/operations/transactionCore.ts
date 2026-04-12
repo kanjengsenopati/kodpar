@@ -6,7 +6,7 @@ import { getAnggotaById } from "@/services/anggotaService";
 import { logAuditEntry } from "@/services/auditService";
 import { syncTransactionToKeuangan } from "@/services/sync/comprehensiveSyncService";
 import { createTransaksi as createTransaksiCore } from "../transaksiCore";
-import * as IdUtils from "../../../utils/idUtils";
+import { generateUUIDv7 } from "../../../utils/id-generator";
 
 /**
  * STRICTLY ATOMIC: Create transaksi with immediate SAK EP Journal Entry

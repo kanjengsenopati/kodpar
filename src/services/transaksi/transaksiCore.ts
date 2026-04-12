@@ -140,32 +140,24 @@ export async function generateTransaksiNumber(): Promise<string> {
   });
 }
 
+import { generateUUIDv7 } from "../../utils/id-generator";
+// ... (existing imports)
+
 /**
  * Create a new transaksi with automatic accounting sync
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
-    // LAZY BINDING: Ensure utility is evaluated
-    const generateId = IdUtils.generateUUIDv7;
-    if (typeof generateId !== 'function') {
-      throw new Error("ID Generator utility is not yet initialized (Circular Dependency detected)");
-    }
+    // 1. GENERATE ID BEFORE ANY DB OPERATION (SaaS Sync Readiness)
+    const newId = generateUUIDv7();
     
-    const newId = generateId();
+    // 2. GENERATE TRANSACTION NUMBER
     const nomorTransaksi = await generateTransaksiNumber();
     const now = new Date().toISOString();
     
-    // VALIDATION: Ensure required fields are present
+    // VALIDATION
     if (!data.anggotaId) {
       return { success: false, error: "ID Anggota wajib diisi" };
-    }
-    
-    // Validate kategori if provided
-    if (data.jenis && data.kategori) {
-      // Check if kategori is valid for the given jenis
-      if (!isValidKategori(data.jenis as any, data.kategori)) {
-        console.warn(`Kategori '${data.kategori}' is not valid for jenis ${data.jenis}`);
-      }
     }
     
     const newTransaksi: Transaksi = {
@@ -181,23 +173,17 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       updatedAt: now,
     };
     
-    // Add to database
-    try {
-      await db.transaksi.add(newTransaksi);
-    } catch (dbError: any) {
-      if (dbError.name === 'ConstraintError') {
-        console.warn(`🔄 Primary key collision for transaction ${newId}, retrying with a new ID...`);
-        return await createTransaksi(data);
-      }
-      return { success: false, error: `Database Error: ${dbError.message || 'Gagal menulis ke IndexedDB'}` };
-    }
-    
-    // AUDIT LOG (Internal skip for core)
-    // Business audit should be handled by wrapper (crudOperations)
+    // 3. ADD TO INDEXEDDB
+    await db.transaksi.add(newTransaksi);
     
     return { success: true, data: newTransaksi };
   } catch (error: any) {
+    if (error.name === 'ConstraintError') {
+      console.warn(`🔄 ID collision detector: Retrying...`);
+      return await createTransaksi(data);
+    }
     console.error("Error in core createTransaksi:", error);
-    return { success: false, error: `Critical Error: ${error.message || 'Kesalahan sistem saat membuat transaksi'}` };
+    return { success: false, error: `Critical Error: ${error.message || 'Kesalahan sistem'}` };
   }
 }
+
