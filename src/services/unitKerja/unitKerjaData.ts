@@ -1,5 +1,13 @@
 import { UnitKerja } from "@/types/unitKerja";
 import { db } from "@/db/db";
+import { generateUUIDv7 } from "@/utils/idUtils";
+
+/**
+ * Generate a new unique ID for Unit Kerja
+ */
+export function generateUnitKerjaId(): string {
+  return generateUUIDv7();
+}
 
 /**
  * Get all unit kerja from local mirror (IndexedDB)

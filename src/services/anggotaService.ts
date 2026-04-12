@@ -15,7 +15,7 @@ export async function resetAnggotaData(): Promise<void> {
   await neonMasterSync.rehydrateFromCloud();
   
   // After resetting anggota data, sync unit kerja
-  syncUnitKerjaWithAnggota();
+  await syncUnitKerjaWithAnggota();
 }
 
 
@@ -95,7 +95,7 @@ export async function createAnggota(anggota: Omit<Anggota, 'id' | 'noAnggota' | 
   await db.anggota.add(newAnggota);
   
   // Sync unit kerja after creating anggota
-  syncUnitKerjaWithAnggota();
+  await syncUnitKerjaWithAnggota();
   
   // Log audit entry
   logAuditEntry(
@@ -127,7 +127,7 @@ export async function updateAnggota(id: string, anggota: Partial<Anggota>): Prom
   await db.anggota.put(updatedAnggota);
   
   // Sync unit kerja after updating anggota (in case unit kerja changed)
-  syncUnitKerjaWithAnggota();
+  await syncUnitKerjaWithAnggota();
   
   // Log audit entry
   logAuditEntry(
@@ -168,7 +168,8 @@ export async function deleteAnggota(id: string): Promise<boolean> {
  */
 export async function validateAnggotaUnitKerja(): Promise<number> {
   const anggotaList = await getAllAnggota();
-  const unitKerjaList = getAllUnitKerja().map(uk => uk.nama);
+  const allUnitKerja = await getAllUnitKerja();
+  const unitKerjaList = allUnitKerja.map(uk => uk.nama);
   
   const defaultUnitKerja = unitKerjaList.length > 0 ? unitKerjaList[0] : "";
   

@@ -1,13 +1,13 @@
 
 import { UnitKerja } from "@/types/unitKerja";
-import { getFromLocalStorage } from "@/utils/localStorage";
+import { db } from "@/db/db";
 import { getAllUnitKerja } from "./unitKerjaData";
 
 /**
  * Check if unit kerja name already exists
  */
-export function isDuplicateName(nama: string, excludeId?: string): boolean {
-  const unitKerjaList = getAllUnitKerja();
+export async function isDuplicateName(nama: string, excludeId?: string): Promise<boolean> {
+  const unitKerjaList = await getAllUnitKerja();
   return unitKerjaList.some(uk => 
     uk.id !== excludeId && uk.nama.toLowerCase() === nama.toLowerCase()
   );
@@ -16,10 +16,10 @@ export function isDuplicateName(nama: string, excludeId?: string): boolean {
 /**
  * Check if unit kerja is being used by any anggota
  */
-export function isUnitKerjaInUse(unitKerjaNama: string): boolean {
+export async function isUnitKerjaInUse(unitKerjaNama: string): Promise<boolean> {
   try {
-    const anggotaData = getFromLocalStorage("koperasi_anggota", []);
-    return anggotaData.some((anggota: any) => anggota.unitKerja === unitKerjaNama);
+    const count = await db.anggota.where('unitKerja').equals(unitKerjaNama).count();
+    return count > 0;
   } catch (error) {
     console.error("Error checking unit kerja usage:", error);
     return false;
@@ -54,10 +54,10 @@ export function validateUnitKerjaData(nama: string, keterangan?: string): string
 /**
  * Validate unit kerja for creation
  */
-export function validateForCreate(nama: string, keterangan?: string): void {
+export async function validateForCreate(nama: string, keterangan?: string): Promise<void> {
   const errors = validateUnitKerjaData(nama, keterangan);
   
-  if (isDuplicateName(nama)) {
+  if (await isDuplicateName(nama)) {
     errors.push("Unit kerja dengan nama tersebut sudah ada");
   }
   
@@ -69,10 +69,10 @@ export function validateForCreate(nama: string, keterangan?: string): void {
 /**
  * Validate unit kerja for update
  */
-export function validateForUpdate(id: string, nama: string, keterangan?: string): void {
+export async function validateForUpdate(id: string, nama: string, keterangan?: string): Promise<void> {
   const errors = validateUnitKerjaData(nama, keterangan);
   
-  if (isDuplicateName(nama, id)) {
+  if (await isDuplicateName(nama, id)) {
     errors.push("Unit kerja dengan nama tersebut sudah ada");
   }
   
@@ -84,8 +84,8 @@ export function validateForUpdate(id: string, nama: string, keterangan?: string)
 /**
  * Validate unit kerja for deletion
  */
-export function validateForDelete(unitKerja: UnitKerja): void {
-  if (isUnitKerjaInUse(unitKerja.nama)) {
+export async function validateForDelete(unitKerja: UnitKerja): Promise<void> {
+  if (await isUnitKerjaInUse(unitKerja.nama)) {
     throw new Error("Unit kerja tidak dapat dihapus karena masih digunakan oleh anggota");
   }
 }
