@@ -5,7 +5,6 @@ import { generateTransaksiId, generateTransaksiNumber } from "./idGenerator";
 import { getAnggotaById } from "@/services/anggotaService";
 import { getJenisByType } from "@/services/jenisService";
 import { getCurrentUser } from "@/services/auth/sessionManagement";
-import { generateTransaksiNumber, generateUUIDv7 } from "./idGenerator";
 
 /**
  * Get all transaksi from IndexedDB
@@ -125,7 +124,7 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam" | "Angsuran", kategor
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
-    const newId = generateUUIDv7();
+    const newId = await generateTransaksiId();
     const nomorTransaksi = await generateTransaksiNumber();
     const now = new Date().toISOString();
     
