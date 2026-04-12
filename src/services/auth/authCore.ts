@@ -25,22 +25,42 @@ export const loginUser = async (email: string, password: string): Promise<Extend
   }
 
   try {
-    // Try demo login first
-    const demoUser = await handleDemoLogin(email, password);
-    if (demoUser) {
-      return demoUser;
+    const { BACKEND_URL } = await import("@/config/apiConfig");
+    
+    const response = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        const user = result.data as ExtendedUser;
+        
+        // Finalize session (tokens matching demoAuth logic)
+        const { generateSecureToken } = await import("@/utils/security");
+        const { storeSession } = await import("@/utils/secureStorage");
+        const token = generateSecureToken();
+        const refreshToken = generateSecureToken();
+        storeSession(user.id, token, refreshToken);
+        clearFailedAttempts(email);
+
+        console.log("Cloud Database Login successful for:", email);
+        return user;
+      }
     }
 
-    // For real users, try Supabase authentication
-    try {
-      return await handleSupabaseLogin(email, password);
-    } catch (supabaseError) {
-      console.log("Supabase auth failed:", supabaseError);
+    // If backend failed or rejected, check the status
+    if (response.status === 401) {
       recordFailedAttempt(email);
-      throw new Error("Invalid email or password");
+      throw new Error("Email atau password salah");
     }
+
+    throw new Error("Gagal terhubung ke layanan otentikasi awan");
 
   } catch (error) {
+
     console.error("Login error:", error);
     if (error instanceof Error) {
       throw error;

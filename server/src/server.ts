@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { syncRoutes } from './routes/syncRoutes.js';
+import { authRoutes } from './routes/authRoutes.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -22,6 +23,8 @@ await server.register(cors, {
 
 // Register Routes
 await server.register(syncRoutes);
+await server.register(authRoutes);
+
 
 const start = async () => {
   try {

@@ -19,7 +19,7 @@ INSERT INTO coa (id, kode, nama, jenis, kategori, saldo_normal) VALUES
 ('coa-beban-administrasi', '5100', 'BEBAN ADMINISTRASI', 'BEBAN', 'Beban Operasional', 'DEBIT')
 ON CONFLICT (id) DO NOTHING;
 
--- 2. SEED ANGGOTA (Initial Members)
+-- 3. SEED ANGGOTA (Initial Members)
 INSERT INTO anggota (id, no_anggota, nama, nip, alamat, no_hp, jenis_kelamin, status, unit_kerja, tanggal_bergabung) VALUES
 ('018e6a12-8c1d-7a01-8000-000000000001', 'AG/2026/0001', 'MARIYEM', '197201011998031001', 'DESA JATILOR', '0812345678', 'P', 'active', 'SDN Jatilor 01', '2023-01-15'),
 ('018e6a12-8c1d-7a01-8000-000000000002', 'AG/2026/0002', 'MASKUN ROZAK', '198201011998031001', 'DESA BRINGIN', '0823456789', 'L', 'active', 'SDN Bringin', '2023-02-20'),

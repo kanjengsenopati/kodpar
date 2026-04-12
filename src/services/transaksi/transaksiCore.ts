@@ -161,8 +161,14 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       jumlah: data.jumlah || 0,
       keterangan: data.keterangan || "",
       status: data.status || "Sukses",
+      referensiPinjamanId: data.referensiPinjamanId,
+      nominalPokok: data.nominalPokok,
+      nominalJasa: data.nominalJasa,
+      tenor: data.tenor,
+      createdAt: now,
       updatedAt: now,
     };
+
     
     // 3. ADD TO INDEXEDDB
     await db.transaksi.add(newTransaksi);

@@ -1,16 +1,34 @@
--- Koperasi SaaS Database Schema (PostgreSQL) - COMPREHENSIVE
--- Single Source of Truth for Kanjeng Senopati Koperasi
-
 -- 0. CLEAN SLATE (Optional for Seeding)
+DROP TRIGGER IF EXISTS update_users_modtime ON users;
+DROP TRIGGER IF EXISTS update_anggota_modtime ON anggota;
+DROP TRIGGER IF EXISTS update_transaksi_modtime ON transaksi;
+DROP TRIGGER IF EXISTS update_jadwal_modtime ON jadwal_angsuran;
+DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS jurnal_detail CASCADE;
 DROP TABLE IF EXISTS jurnal CASCADE;
 DROP TABLE IF EXISTS coa CASCADE;
 DROP TABLE IF EXISTS jadwal_angsuran CASCADE;
 DROP TABLE IF EXISTS transaksi CASCADE;
 DROP TABLE IF EXISTS anggota CASCADE;
+-- 1. USERS
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY,
 
--- 1. ANGGOTA
+    username TEXT UNIQUE NOT NULL,
+    nama TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role_id TEXT NOT NULL,
+    anggota_id UUID,
+    aktif BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. ANGGOTA
 CREATE TABLE IF NOT EXISTS anggota (
+
 
     id UUID PRIMARY KEY,
     no_anggota TEXT UNIQUE NOT NULL,

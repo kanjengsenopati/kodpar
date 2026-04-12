@@ -7,6 +7,11 @@ import * as IdUtils from "../../utils/idUtils";
 /**
  * SYNC_STATUS Constants
  */
+import { BACKEND_URL } from "@/config/apiConfig";
+
+/**
+ * SYNC_STATUS Constants
+ */
 const SYNC_STATUS = {
   PENDING: 'PENDING',
   SUCCESS: 'SUCCESS',
@@ -22,7 +27,8 @@ class CentralizedSyncService {
   private static instance: CentralizedSyncService;
   private activeSyncs: Set<string> = new Set();
   private isProcessing = false;
-  private BACKEND_URL = "http://localhost:3001";
+  private BACKEND_URL = BACKEND_URL;
+
 
   static getInstance(): CentralizedSyncService {
     if (!CentralizedSyncService.instance) {
