@@ -126,7 +126,7 @@ export async function generateTransaksiNumber(): Promise<string> {
   const today = new Date();
   
   const existingNumbers = allTransaksi
-    .map(t => extractNumericSuffix(t.nomorTransaksi || t.id))
+    .map(t => IdUtils.extractNumericSuffix(t.nomorTransaksi || t.id))
     .filter(n => !isNaN(n));
     
   const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;

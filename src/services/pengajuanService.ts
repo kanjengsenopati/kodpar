@@ -7,7 +7,7 @@ import { calculateLoanDetails, generateLoanDescription } from "../utils/loanCalc
 import { ensureAutoDeductionCategories } from "./keuangan/baseService";
 import { centralizedSync } from "./sync/centralizedSyncService";
 import { getCurrentUser } from "./auth/sessionManagement";
-import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "@/utils/idUtils";
+import * as IdUtils from "../utils/idUtils";
 
 /**
  * Get all pengajuan from IndexedDB
@@ -56,12 +56,12 @@ export async function generatePengajuanNumber(): Promise<string> {
   const today = new Date();
   
   const existingNumbers = pengajuanList
-    .map(p => extractNumericSuffix(p.nomorPengajuan || p.id))
+    .map(p => IdUtils.extractNumericSuffix(p.nomorPengajuan || p.id))
     .filter(n => !isNaN(n));
     
   const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
   
-  return formatReferenceNumber({
+  return IdUtils.formatReferenceNumber({
     prefix: "PG",
     year: today.getFullYear(),
     sequence: lastSeq + 1
@@ -77,13 +77,13 @@ export async function createPengajuan(
   const anggota = await getAnggotaById(pengajuan.anggotaId);
   if (!anggota) return null;
   
-  const id = generateUUIDv7();
+  const id = IdUtils.generateUUIDv7();
   const nomorPengajuan = await generatePengajuanNumber();
   const now = new Date().toISOString();
   
   const history: PengajuanHistory[] = [
     {
-      id: generateUUIDv7(),
+      id: IdUtils.generateUUIDv7(),
       tanggal: now,
       aksi: "Diajukan",
       oleh: `Anggota (${anggota.nama})`,
@@ -223,7 +223,7 @@ export async function approvePengajuan(id: string): Promise<SubmissionResult<Pen
 
       // --- D. Update Application State ---
       const newHistoryEntry: PengajuanHistory = {
-        id: generateUUIDv7(),
+        id: IdUtils.generateUUIDv7(),
         tanggal: now,
         aksi: "Disetujui",
         oleh: user?.name || "Admin",
@@ -275,7 +275,7 @@ export async function rejectPengajuan(id: string, alasan: string = "Ditolak oleh
       const now = new Date().toISOString();
 
       const newHistoryEntry: PengajuanHistory = {
-        id: generateUUIDv7(),
+        id: IdUtils.generateUUIDv7(),
         tanggal: now,
         aksi: "Ditolak",
         oleh: user?.name || "Admin",

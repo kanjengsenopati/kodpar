@@ -6,7 +6,7 @@ import { initializeCentralizedSync } from './services/sync/centralizedSyncServic
 import { BusinessTabProvider } from './contexts/BusinessTabContext';
 
 function App() {
-  const APP_VERSION = '1.3.5'; // Cache buster version
+  const APP_VERSION = '1.3.6'; // Cache buster version
 
   const initializeApp = async () => {
     try {
