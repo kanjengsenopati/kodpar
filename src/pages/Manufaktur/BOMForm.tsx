@@ -14,6 +14,8 @@ import { createBOM, getBOMById, updateBOM } from "@/services/manufaktur/bomServi
 import { BOM, BOMItem, BOM_CATEGORIES, MATERIAL_UNITS } from "@/types/manufaktur";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
+import * as Text from "@/components/ui/text";
+import { formatNumberInput, cleanNumberInput } from "@/utils/formatters";
 
 export default function BOMForm() {
   const navigate = useNavigate();
@@ -119,9 +121,9 @@ export default function BOMForm() {
         </div>
 
         {/* Product Info */}
-        <Card>
+        <Card className="rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none">
           <CardHeader>
-            <CardTitle className="text-base">Informasi Produk</CardTitle>
+            <Text.H2>Informasi Produk</Text.H2>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -173,10 +175,10 @@ export default function BOMForm() {
         </Card>
 
         {/* Material Items */}
-        <Card>
+        <Card className="rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Material / Bahan Baku</CardTitle>
-            <Button type="button" size="sm" variant="outline" onClick={addItem}>
+            <Text.H2>Material / Bahan Baku</Text.H2>
+            <Button type="button" size="sm" variant="outline" onClick={addItem} className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50">
               <Plus className="h-4 w-4 mr-1" /> Tambah Material
             </Button>
           </CardHeader>
@@ -187,13 +189,13 @@ export default function BOMForm() {
               <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Nama Material</TableHead>
-                      <TableHead>Kode</TableHead>
-                      <TableHead className="w-20">Qty</TableHead>
-                      <TableHead className="w-24">Satuan</TableHead>
-                      <TableHead className="w-32">Harga/Unit</TableHead>
-                      <TableHead className="w-32 text-right">Subtotal</TableHead>
+                    <TableRow className="hover:bg-transparent border-slate-100">
+                      <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Nama Material</TableHead>
+                      <TableHead className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Kode</TableHead>
+                      <TableHead className="w-32 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Qty</TableHead>
+                      <TableHead className="w-24 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Satuan</TableHead>
+                      <TableHead className="w-40 text-slate-400 font-bold uppercase text-[10px] tracking-widest">Harga/Unit</TableHead>
+                      <TableHead className="w-32 text-right text-slate-400 font-bold uppercase text-[10px] tracking-widest">Subtotal</TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -201,24 +203,29 @@ export default function BOMForm() {
                     {items.map((item, idx) => (
                       <TableRow key={item.id}>
                         <TableCell>
-                          <Input value={item.materialName} onChange={(e) => updateItem(idx, "materialName", e.target.value)} placeholder="Nama bahan" className="h-8" />
+                          <Input value={item.materialName} onChange={(e) => updateItem(idx, "materialName", e.target.value)} placeholder="Nama bahan" className="h-10 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500" />
                         </TableCell>
                         <TableCell>
-                          <Input value={item.materialCode} onChange={(e) => updateItem(idx, "materialCode", e.target.value)} placeholder="Kode" className="h-8 w-24" />
+                          <Input value={item.materialCode} onChange={(e) => updateItem(idx, "materialCode", e.target.value)} placeholder="Kode" className="h-10 w-24 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500" />
                         </TableCell>
                         <TableCell>
-                          <Input type="number" min={0} value={item.quantity} onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))} className="h-8" />
+                          <Input type="number" min={0} value={item.quantity} onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))} className="h-10 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500 font-semibold" />
                         </TableCell>
                         <TableCell>
                           <Select value={item.unit} onValueChange={(v) => updateItem(idx, "unit", v)}>
-                            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-10 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {MATERIAL_UNITS.map((u) => (<SelectItem key={u} value={u}>{u}</SelectItem>))}
                             </SelectContent>
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Input type="number" min={0} value={item.unitCost} onChange={(e) => updateItem(idx, "unitCost", Number(e.target.value))} className="h-8" />
+                          <Input 
+                            type="text" 
+                            value={formatNumberInput(item.unitCost)} 
+                            onChange={(e) => updateItem(idx, "unitCost", cleanNumberInput(e.target.value))} 
+                            className="h-10 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500 font-semibold" 
+                          />
                         </TableCell>
                         <TableCell className="text-right font-medium text-sm">
                           Rp {item.totalCost.toLocaleString("id-ID")}
@@ -238,28 +245,47 @@ export default function BOMForm() {
         </Card>
 
         {/* Cost Summary */}
-        <Card>
+        <Card className="rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-none">
           <CardHeader>
-            <CardTitle className="text-base">Ringkasan Biaya</CardTitle>
+            <Text.H2>Ringkasan Biaya</Text.H2>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Biaya Overhead (Rp)</Label>
-              <Input type="number" min={0} value={form.overheadCost} onChange={(e) => setForm((f) => ({ ...f, overheadCost: Number(e.target.value) }))} />
+              <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-1">Biaya Overhead (Rp)</Label>
+              <Input 
+                type="text" 
+                value={formatNumberInput(form.overheadCost)} 
+                onChange={(e) => setForm((f) => ({ ...f, overheadCost: cleanNumberInput(e.target.value) }))} 
+                className="h-12 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500 font-bold text-lg"
+              />
             </div>
             <div className="space-y-2">
-              <Label>Biaya Tenaga Kerja (Rp)</Label>
-              <Input type="number" min={0} value={form.laborCost} onChange={(e) => setForm((f) => ({ ...f, laborCost: Number(e.target.value) }))} />
+              <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-1">Biaya Tenaga Kerja (Rp)</Label>
+              <Input 
+                type="text" 
+                value={formatNumberInput(form.laborCost)} 
+                onChange={(e) => setForm((f) => ({ ...f, laborCost: cleanNumberInput(e.target.value) }))} 
+                className="h-12 rounded-xl bg-slate-50/50 border-none focus-visible:ring-1 focus-visible:ring-blue-500 font-bold text-lg"
+              />
             </div>
-            <div className="sm:col-span-2 flex justify-between items-center bg-muted rounded-lg p-4">
-              <div className="space-y-1 text-sm">
-                <p>Material: <span className="font-medium">Rp {totalMaterial.toLocaleString("id-ID")}</span></p>
-                <p>Overhead: <span className="font-medium">Rp {form.overheadCost.toLocaleString("id-ID")}</span></p>
-                <p>Tenaga Kerja: <span className="font-medium">Rp {form.laborCost.toLocaleString("id-ID")}</span></p>
+            <div className="sm:col-span-2 flex justify-between items-center bg-slate-50/80 rounded-[20px] p-6 border border-white">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                  <p className="text-slate-500">Material: <span className="font-bold text-slate-800 ml-1">Rp {formatNumberInput(totalMaterial)}</span></p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-400"></div>
+                  <p className="text-slate-500">Overhead: <span className="font-bold text-slate-800 ml-1">Rp {formatNumberInput(form.overheadCost)}</span></p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                  <p className="text-slate-500">Tenaga Kerja: <span className="font-bold text-slate-800 ml-1">Rp {formatNumberInput(form.laborCost)}</span></p>
+                </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Biaya Produksi</p>
-                <p className="text-2xl font-bold text-primary">Rp {totalCost.toLocaleString("id-ID")}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total Biaya Produksi</p>
+                <Text.Amount className="text-3xl text-blue-600">Rp {formatNumberInput(totalCost)}</Text.Amount>
               </div>
             </div>
           </CardContent>
