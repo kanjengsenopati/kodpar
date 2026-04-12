@@ -14,6 +14,20 @@ export class KoperasiDB extends Dexie {
   jadwal_angsuran!: Table<JadwalAngsuran>;
   audit_log!: Table<any>;
   unit_kerja!: Table<any>;
+  roles!: Table<any>;
+  permissions!: Table<any>;
+  settings!: Table<any>;
+  mst_jenis!: Table<any>;
+  users!: Table<any>;
+  mst_produk!: Table<any>;
+  mst_pemasok!: Table<any>;
+  pos_penjualan!: Table<any>;
+  pos_penjualan_item!: Table<any>;
+  pos_pembelian!: Table<any>;
+  pos_pembelian_item!: Table<any>;
+  mfg_bom!: Table<any>;
+  mfg_bom_item!: Table<any>;
+  mfg_work_order!: Table<any>;
   sync_queue!: Table<any>;
 
   constructor() {
@@ -54,6 +68,7 @@ export class KoperasiDB extends Dexie {
     });
 
     // v7: Persistent Sync Queue for SaaS & Multi-client stability
+    this.version(7).stores({
       sync_queue: 'id, entityId, type, status, updatedAt'
     });
 
@@ -104,6 +119,8 @@ export class KoperasiDB extends Dexie {
       mst_pemasok: 'id, nama',
       pos_penjualan: 'id, nomorTransaksi, tanggal, kasirId, status',
       pos_penjualan_item: 'id, penjualanId, produkId',
+      pos_pembelian: 'id, nomorTransaksi, tanggal, pemasokId, status',
+      pos_pembelian_item: 'id, pembelianId, produkId',
       mfg_bom: 'id, code, productName, productCode, status',
       mfg_bom_item: 'id, bomId, materialName',
       mfg_work_order: 'id, code, bomId, status',
