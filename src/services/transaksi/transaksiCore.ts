@@ -1,7 +1,7 @@
 import { Transaksi, SubmissionResult } from "@/types";
 import { db } from "@/db/db";
 import { initialTransaksi } from "./initialData";
-import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "../../utils/idUtils";
+import * as IdUtils from "../../utils/idUtils";
 import { getJenisByType } from "../jenisService";
 import { getCurrentUser } from "../auth/sessionManagement";
 
@@ -131,7 +131,7 @@ export async function generateTransaksiNumber(): Promise<string> {
     
   const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
   
-  return formatReferenceNumber({
+  return IdUtils.formatReferenceNumber({
     prefix: "TR",
     year: today.getFullYear(),
     month: today.getMonth() + 1,
@@ -145,7 +145,13 @@ export async function generateTransaksiNumber(): Promise<string> {
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
-    const newId = generateUUIDv7();
+    // LAZY BINDING: Ensure utility is evaluated
+    const generateId = IdUtils.generateUUIDv7;
+    if (typeof generateId !== 'function') {
+      throw new Error("ID Generator utility is not yet initialized (Circular Dependency detected)");
+    }
+    
+    const newId = generateId();
     const nomorTransaksi = await generateTransaksiNumber();
     const now = new Date().toISOString();
     
