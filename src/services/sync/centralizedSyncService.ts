@@ -15,13 +15,14 @@ const SYNC_STATUS = {
 
 /**
  * CentralizedSyncService - MISSION CRITICAL
- * Responsible for ensuring all financial transactions are reflected in the Accounting Ledger.
- * Uses a Persistent Sync Queue in IndexedDB to prevent data loss and duplicates.
+ * Responsible for ensuring all financial transactions are reflected in the Accounting Ledger
+ * AND synchronized to the Cloud Backend (Fastify + NeonDB).
  */
 class CentralizedSyncService {
   private static instance: CentralizedSyncService;
-  private activeSyncs: Set<string> = new Set(); // In-memory lock for current session
+  private activeSyncs: Set<string> = new Set();
   private isProcessing = false;
+  private BACKEND_URL = "http://localhost:3001";
 
   static getInstance(): CentralizedSyncService {
     if (!CentralizedSyncService.instance) {
@@ -39,74 +40,61 @@ class CentralizedSyncService {
     }
 
     const entityId = transaksi.id;
-    
-    // 1. In-memory locking (Prevention for rapid double-clicks/events)
     if (this.activeSyncs.has(entityId)) {
-      return { success: true, message: 'Sync already in progress in this session' };
+      return { success: true, message: 'Sync already in progress' };
     }
     this.activeSyncs.add(entityId);
 
     try {
-      // 2. Persistent Check: Look into Sync Queue table
+      // 1. Persistent Check
       const existingQueueItem = await db.sync_queue.where('entityId').equals(entityId).first();
       
-      if (existingQueueItem && existingQueueItem.status === SYNC_STATUS.SUCCESS) {
-        return { success: true, message: 'Already synced persistently' };
+      if (existingQueueItem && existingQueueItem.status === SYNC_STATUS.SUCCESS && existingQueueItem.remoteStatus === SYNC_STATUS.SUCCESS) {
+        return { success: true, message: 'Already fully synced (Lokal & Cloud)' };
       }
 
-      // 3. Deep Data Integrity Check: Verify if Journal already exists by reference
-      const referensiTXN = transaksi.nomorTransaksi || `TXN-${entityId}`;
-      const existingJournal = await getJurnalEntryByReference(referensiTXN);
-      
-      if (existingJournal) {
-        console.log(`📋 Recovery: Journal found for ${referensiTXN}. Updating queue...`);
-        await this.markAsSuccess(entityId, 'transaction', existingJournal.id);
-        return { success: true, message: 'Journal already exists, recovery success' };
-      }
-
-      // 4. Persistence: Ensure record exists in Queue
+      // 2. Ensure record exists in Queue
       if (!existingQueueItem) {
         await db.sync_queue.add({
           id: IdUtils.generateUUIDv7(),
           entityId,
           type: 'transaction',
           status: SYNC_STATUS.PENDING,
+          remoteStatus: SYNC_STATUS.PENDING,
           retryCount: 0,
           updatedAt: new Date().toISOString()
         });
       }
 
-      // 5. Execution: Call the Financial Engine
-      console.log(`🔄 Syncing transaction ${referensiTXN} [${transaksi.jenis}] to SAK EP...`);
-      const journalEntry = await syncTransactionToAccounting(transaksi);
-      
-      if (journalEntry) {
-        // A. Mark as Success in Queue
-        await this.markAsSuccess(entityId, 'transaction', journalEntry.id);
-        
-        // B. Update transaction sync status for explicit UI state
-        await db.transaksi.update(entityId, { 
-          accountingSyncStatus: 'SUCCESS',
-          updatedAt: new Date().toISOString()
-        });
-
-        // C. Notify UI
-        this.safeDispatchEvent('centralized-sync-completed', {
-          transactionId: entityId,
-          journalId: journalEntry.id,
-          journalNumber: journalEntry.nomorJurnal
-        });
-
-        console.log(`✅ Centralized sync SUCCESS for ${referensiTXN}`);
-        return { success: true, message: 'Sync completed successfully' };
-      } else {
-        throw new Error("Financial engine returned null for journal entry");
+      // --- STAGE A: LOCAL ACCOUNTING LEDGER (SAK EP) ---
+      let localJournalId = existingQueueItem?.journalId;
+      if (!localJournalId || existingQueueItem?.status !== SYNC_STATUS.SUCCESS) {
+        console.log(`🔄 [LOCAL] Syncing ${transaksi.nomorTransaksi} to Ledger...`);
+        const journalEntry = await syncTransactionToAccounting(transaksi);
+        if (journalEntry) {
+          localJournalId = journalEntry.id;
+          await db.sync_queue.update(entityId, { status: SYNC_STATUS.SUCCESS, journalId: localJournalId });
+          await db.transaksi.update(entityId, { accountingSyncStatus: 'SUCCESS' });
+        }
       }
+
+      // --- STAGE B: REMOTE CLOUD SYNC (FASTIFY + NEON) ---
+      if (!existingQueueItem?.remoteStatus || existingQueueItem.remoteStatus !== SYNC_STATUS.SUCCESS) {
+        console.log(`☁️ [CLOUD] Syncing ${transaksi.nomorTransaksi} to NeonDB...`);
+        const cloudResult = await this.syncToRemoteServer(transaksi);
+        
+        if (cloudResult.success) {
+          await this.updateRemoteQueueStatus(entityId, SYNC_STATUS.SUCCESS);
+          this.safeDispatchEvent('cloud-sync-success', { transactionId: entityId });
+        } else {
+          await this.updateRemoteQueueStatus(entityId, SYNC_STATUS.FAILED, cloudResult.message);
+        }
+      }
+
+      return { success: true, message: 'Dual-sync process completed' };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ Sync FAILED for ${entityId}:`, errorMsg);
-      
-      await this.updateQueueStatus(entityId, SYNC_STATUS.FAILED, errorMsg);
+      console.error(`❌ Sync Workflow FAILED:`, errorMsg);
       return { success: false, message: errorMsg };
     } finally {
       this.activeSyncs.delete(entityId);
@@ -114,34 +102,63 @@ class CentralizedSyncService {
   }
 
   /**
-   * Automated Queue Processor (Handles crash recovery and retry)
+   * HTTP Connector for Fastify Backend
+   */
+  private async syncToRemoteServer(transaksi: Transaksi): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/sync/transaksi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaksi)
+      });
+
+      if (response.ok) {
+        return { success: true, message: 'Synced to Cloud' };
+      } else if (response.status === 409) {
+        return { success: true, message: 'Already on Cloud' };
+      } else {
+        const errData = await response.json();
+        return { success: false, message: errData.error || 'Server rejected sync' };
+      }
+    } catch (error) {
+      return { success: false, message: 'Server unreachable (Offline)' };
+    }
+  }
+
+  private async updateRemoteQueueStatus(entityId: string, status: string, error?: string): Promise<void> {
+    const existing = await db.sync_queue.where('entityId').equals(entityId).first();
+    if (existing) {
+      await db.sync_queue.update(existing.id, {
+        remoteStatus: status,
+        lastRemoteError: error,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  /**
+   * Automated Queue Processor (Modified for Cloud Retry)
    */
   async processPendingQueue(): Promise<void> {
     if (this.isProcessing) return;
     this.isProcessing = true;
     
     try {
-      // Find items that haven't succeeded
       const pendingItems = await db.sync_queue
-        .where('status')
-        .notEqual(SYNC_STATUS.SUCCESS)
+        .filter(item => item.status !== SYNC_STATUS.SUCCESS || item.remoteStatus !== SYNC_STATUS.SUCCESS)
         .toArray();
       
       if (pendingItems.length === 0) return;
       
-      console.log(`🚀 Persistent Sync Queue: Processing ${pendingItems.length} items...`);
+      console.log(`🚀 Sync Manager: Processing ${pendingItems.length} pending items...`);
       
       for (const item of pendingItems) {
-        // Skip items with too many failures for now (manual intervention maybe?)
-        if (item.retryCount > 3) continue;
+        if (item.retryCount > 10) continue;
 
         if (item.type === 'transaction') {
           const transaksi = await db.transaksi.get(item.entityId);
           if (transaksi) {
             await this.syncTransaction(transaksi);
-          } else if (item.status === SYNC_STATUS.PENDING) {
-             // Cleanup queue if source record is missing
-             await db.sync_queue.delete(item.id);
           }
         }
       }
@@ -152,6 +169,7 @@ class CentralizedSyncService {
     }
   }
 
+  // ... (markAsSuccess, updateQueueStatus, safeDispatchEvent preserved)
   private async markAsSuccess(entityId: string, type: string, journalId?: string): Promise<void> {
     const existing = await db.sync_queue.where('entityId').equals(entityId).first();
     const now = new Date().toISOString();
@@ -168,6 +186,7 @@ class CentralizedSyncService {
         entityId,
         type,
         status: SYNC_STATUS.SUCCESS,
+        remoteStatus: SYNC_STATUS.PENDING,
         journalId,
         updatedAt: now
       });
@@ -192,9 +211,6 @@ class CentralizedSyncService {
     }
   }
 
-  /**
-   * CRITICAL: Deletes the entire queue. Use only during major schema reset.
-   */
   clearSyncCache(): void {
     db.sync_queue.clear();
     console.log('🗑️ Persistent sync queue fully cleared');
@@ -203,15 +219,19 @@ class CentralizedSyncService {
 
 export const centralizedSync = CentralizedSyncService.getInstance();
 
-/**
- * Initializes the persistent sync service and listeners
- */
 export function initializeCentralizedSync(): void {
   try {
     console.log('🚀 Initializing persistent sync service...');
     
-    // Recovery Phase: Process pending queue immediately on start
-    setTimeout(() => centralizedSync.processPendingQueue(), 2000);
+    setTimeout(() => centralizedSync.processPendingQueue(), 3000);
+
+    // Auto-retry when connection comes back
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        console.log('🌐 Connection restored! Retrying sync queue...');
+        centralizedSync.processPendingQueue();
+      });
+    }
 
     const addEventListeners = () => {
       if (typeof window === 'undefined') return;
@@ -219,7 +239,6 @@ export function initializeCentralizedSync(): void {
       window.addEventListener('transaction-created', (event: any) => {
         const transaksi = event.detail.transaction;
         if (transaksi) {
-          // Small delay to allow DB commit completion
           setTimeout(() => centralizedSync.syncTransaction(transaksi), 200);
         }
       });
@@ -243,3 +262,4 @@ export function initializeCentralizedSync(): void {
     console.error('❌ Sync service initialization failed:', error);
   }
 }
+

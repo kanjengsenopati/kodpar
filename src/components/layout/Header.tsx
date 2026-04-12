@@ -4,6 +4,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import * as Text from "@/components/ui/text";
 import { cn } from "@/lib/utils";
+import SyncStatusIndicator from '../sync/SyncStatusIndicator';
 
 type HeaderProps = {
   pageTitle: string;
@@ -68,6 +69,8 @@ export default function Header({ pageTitle, actions }: HeaderProps) {
                 LIVE
               </Text.Label>
             </div>
+            
+            <SyncStatusIndicator />
           </div>
         </div>
         
