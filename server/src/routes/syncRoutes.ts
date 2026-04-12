@@ -89,5 +89,37 @@ export async function syncRoutes(fastify: FastifyInstance) {
       });
     }
   });
+
+  /**
+   * UNIVERSAL PULL ENDPOINT (NeonDB -> Client)
+   * Fetches all master data for initial rehydration.
+   */
+  server.get('/sync/pull', async (request, reply) => {
+    try {
+      console.log('📥 [NEON-PULL] Fetching master data for rehydration...');
+
+      const [resAnggota, resTransaksi, resCOA] = await Promise.all([
+        query('SELECT * FROM anggota ORDER BY nama ASC'),
+        query('SELECT * FROM transaksi ORDER BY tanggal DESC LIMIT 500'),
+        query('SELECT * FROM coa ORDER BY kode ASC')
+      ]);
+
+      return reply.send({
+        success: true,
+        data: {
+          anggota: resAnggota.rows,
+          transaksi: resTransaksi.rows,
+          coa: resCOA.rows
+        }
+      });
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.status(500).send({
+        success: false,
+        error: `Master Data Pull Failed: ${error.message}`
+      });
+    }
+  });
 }
+
 

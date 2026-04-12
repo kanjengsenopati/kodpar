@@ -6,28 +6,19 @@ import { getJenisByType } from "../jenisService";
 import { getCurrentUser } from "../auth/sessionManagement";
 
 /**
- * Get all transaksi from IndexedDB
+ * Get all transaksi from IndexedDB (Mirror of NeonDB)
  */
 export async function getAllTransaksi(): Promise<Transaksi[]> {
   try {
     const user = getCurrentUser();
     const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
     
-    const count = await db.transaksi.count();
-    if (count === 0) {
-      if (initialTransaksi.length > 0) {
-        await db.transaksi.bulkAdd(initialTransaksi);
-      }
-      return isAnggota && user?.anggotaId
-        ? initialTransaksi.filter(t => t.anggotaId === user.anggotaId)
-        : initialTransaksi;
-    }
-    
     if (isAnggota && user?.anggotaId) {
       return await db.transaksi.where('anggotaId').equals(user.anggotaId).toArray();
     }
     
     return await db.transaksi.toArray();
+
   } catch (error) {
     console.warn("⚠️ Database access error in getAllTransaksi (likely migration in progress):", error);
     return [];

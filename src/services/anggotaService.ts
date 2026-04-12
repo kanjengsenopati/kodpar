@@ -5,102 +5,19 @@ import { logAuditEntry } from "./auditService";
 import { getCurrentUser } from "./auth/sessionManagement";
 import * as IdUtils from "../utils/idUtils";
 
-// Initial sample data with deterministic UUIDv7 for stable demo reset
-const initialAnggota: Anggota[] = [
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000001", 
-    noAnggota: "AG/2026/0001",
-    nama: "MARIYEM", 
-    nip: "197201011998031001",
-    alamat: "DESA JATILOR",
-    noHp: "0812345678",
-    jenisKelamin: "P",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SDN Jatilor 01",
-    tanggalBergabung: "2023-01-15",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "mariyem@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000002", 
-    noAnggota: "AG/2026/0002",
-    nama: "MASKUN ROZAK", 
-    nip: "198201011998031001",
-    alamat: "DESA BRINGIN",
-    noHp: "0823456789",
-    jenisKelamin: "L",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SDN Bringin",
-    tanggalBergabung: "2023-02-20",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "maskun.rozak@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000003", 
-    noAnggota: "AG/2026/0003",
-    nama: "AHMAD NURALIMIN", 
-    nip: "198801011998031001",
-    alamat: "DESA KLAMPOK",
-    noHp: "08345678912",
-    jenisKelamin: "L",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SDN Klampok 01",
-    tanggalBergabung: "2023-03-10",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "ahmad.nuralimin@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000004", 
-    noAnggota: "AG/2026/0004",
-    nama: "DJAKA KUMALATARTO, S.Pd, M.Pd", 
-    nip: "197002161210012345",
-    alamat: "Desa Ketitang, Kecamatan Godong, Kab Grobogan",
-    noHp: "08123456789",
-    jenisKelamin: "L",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SD Negeri Ketitang",
-    tanggalBergabung: "2023-04-01",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "djaka.kumalatarto@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
+import { neonMasterSync } from "./sync/neonMasterSyncService";
 
 /**
- * Reset anggota data to initial state and return the reset data
+ * Reset anggota data to initial state - TRIGGER CLOUD REHYDRATION
  */
-export async function resetAnggotaData(): Promise<Anggota[]> {
+export async function resetAnggotaData(): Promise<void> {
   await db.anggota.clear();
-  await db.anggota.bulkAdd(initialAnggota);
+  await neonMasterSync.rehydrateFromCloud();
   
   // After resetting anggota data, sync unit kerja
   syncUnitKerjaWithAnggota();
-  
-  return initialAnggota;
 }
+
 
 /**
  * Get all anggota from IndexedDB

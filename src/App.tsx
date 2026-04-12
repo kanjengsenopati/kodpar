@@ -37,10 +37,20 @@ function App() {
 
       // Ensure DB and Sync services are ready
       await initializeCentralizedSync();
+
+      // Trigger Master Sync (Cloud -> Local) only once per session
+      const isRehydrated = sessionStorage.getItem('neon_ssot_rehydrated');
+      if (!isRehydrated) {
+        const { neonMasterSync } = await import('./services/sync/neonMasterSyncService');
+        await neonMasterSync.rehydrateFromCloud();
+        sessionStorage.setItem('neon_ssot_rehydrated', 'true');
+      }
+
       console.log('✅ Koperasi App initialization successful');
     } catch (error) {
       console.error('❌ Koperasi App initialization failed:', error);
     }
+
   };
 
   useEffect(() => {
