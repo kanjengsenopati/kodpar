@@ -200,9 +200,9 @@ export default function UnitKerjaList() {
                 className="pl-9 h-10 rounded-xl"
               />
             </div>
-            <Text.Caption className="not-italic text-slate-400 hidden lg:block">
+            <Text.Body className="text-slate-500 hidden lg:block">
               {filteredUnits.length} dari {unitKerjaList.length} unit
-            </Text.Caption>
+            </Text.Body>
           </div>
           
           <div className="flex bg-slate-50 p-1 rounded-xl shadow-inner">
@@ -272,7 +272,6 @@ export default function UnitKerjaList() {
                     <div className="mt-3">
                       <Text.H2 className="block truncate">{unit.nama}</Text.H2>
                       <div className="flex items-center gap-2 mt-1">
-                        <Text.Caption className="not-italic font-bold text-slate-400">{unit.id}</Text.Caption>
                         {unit.isActive && (
                           <div className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase tracking-wider">
                             Aktif
@@ -334,20 +333,19 @@ export default function UnitKerjaList() {
                   <TableHeader>
                     <TableRow className="hover:bg-transparent border-slate-100">
                       <TableHead className="w-[60px] text-center">
-                        <Text.Label className="text-slate-500">No</Text.Label>
+                        <Text.Label className="text-slate-500 uppercase tracking-wider text-[10px]">No</Text.Label>
                       </TableHead>
-                      <TableHead><Text.Label className="text-slate-500">ID</Text.Label></TableHead>
-                      <TableHead><Text.Label className="text-slate-500">Nama Unit Kerja</Text.Label></TableHead>
-                      <TableHead><Text.Label className="text-slate-500">Keterangan</Text.Label></TableHead>
-                      <TableHead><Text.Label className="text-slate-500">Status</Text.Label></TableHead>
-                      <TableHead><Text.Label className="text-slate-500">Dibuat</Text.Label></TableHead>
-                      <TableHead className="text-right"><Text.Label className="text-slate-500">Aksi</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500 uppercase tracking-wider text-[10px]">Nama Unit Kerja</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500 uppercase tracking-wider text-[10px]">Keterangan</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500 uppercase tracking-wider text-[10px]">Status</Text.Label></TableHead>
+                      <TableHead><Text.Label className="text-slate-500 uppercase tracking-wider text-[10px]">Dibuat</Text.Label></TableHead>
+                      <TableHead className="text-right"><Text.Label className="text-slate-500 uppercase tracking-wider text-[10px]">Aksi</Text.Label></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-20">
+                        <TableCell colSpan={6} className="text-center py-20">
                           <Building2 className="h-12 w-12 mx-auto text-slate-200 mb-4" />
                           <Text.H2 className="mb-2">Data tidak tersedia</Text.H2>
                         </TableCell>
@@ -355,36 +353,35 @@ export default function UnitKerjaList() {
                     ) : (
                       paginatedData.map((unit, index) => (
                         <TableRow key={unit.id} className="group border-slate-50 hover:bg-slate-50/50 transition-colors">
-                          <TableCell className="text-center font-medium text-slate-400 text-xs">
-                            {startIndex + index + 1}
-                          </TableCell>
-                          <TableCell>
-                            <Text.Caption className="not-italic font-bold text-slate-400">{unit.id}</Text.Caption>
+                          <TableCell className="text-center">
+                            <Text.Caption className="not-italic text-slate-500 font-medium">
+                              {startIndex + index + 1}
+                            </Text.Caption>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-blue-600/50" />
-                              <Text.Body className="font-bold text-slate-800">{unit.nama}</Text.Body>
+                              <Building2 className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                              <Text.Body className="font-semibold text-slate-700">{unit.nama}</Text.Body>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Text.Body className="text-xs text-slate-500 truncate max-w-xs">
+                            <Text.Body className="text-slate-500 truncate max-w-xs">
                               {unit.keterangan || '-'}
                             </Text.Body>
                           </TableCell>
                           <TableCell>
                             {unit.isActive ? (
-                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase tracking-wider">
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
                                 Aktif
                               </div>
                             ) : (
-                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 text-[9px] font-bold uppercase tracking-wider">
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                                 Nonaktif
                               </div>
                             )}
                           </TableCell>
                           <TableCell>
-                            <Text.Caption className="not-italic text-slate-400">
+                            <Text.Caption className="not-italic text-slate-500 font-medium">
                               {new Date(unit.createdAt).toLocaleDateString('id-ID')}
                             </Text.Caption>
                           </TableCell>
