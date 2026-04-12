@@ -42,8 +42,8 @@ export class KoperasiDB extends Dexie {
       jadwal_angsuran: '++id, loanId, anggotaId, status, tanggalJatuhTempo'
     });
 
-    // v5: Modern Dual-ID Architecture (UUID v7 PKs + Reference Number Indexes)
-    this.version(5).stores({
+    // v6: Final Stabilized Schema (Migration from v5 schema extension block)
+    this.version(6).stores({
       anggota: 'id, noAnggota, nama, nip, noHp, status, unitKerja',
       transaksi: 'id, nomorTransaksi, anggotaId, jenis, tanggal, status, kategori, referensiPinjamanId',
       coa: 'id, kode, nama, jenis, kategori',

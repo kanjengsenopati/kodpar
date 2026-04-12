@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
 import { Transaksi, JadwalAngsuran } from "@/types";
 import { calculateLoanDetails } from "@/utils/loanCalculations";
-import { generateUUIDv7 } from "@/utils/idUtils";
+import { generateUUIDv7 } from "../../utils/idUtils";
 
 /**
  * Generate and persist an initial installment schedule for a new loan.
