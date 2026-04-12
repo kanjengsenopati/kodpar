@@ -27,13 +27,20 @@ export function generateUUIDv7(): string {
   // 4-bit version (7) + 12-bit sequence
   const verSeq = (0x7000 | (seq & 0x0FFF)).toString(16).padStart(4, '0');
   
-  // 2-bit variant (8, 9, a, or b) + 62-bit random
-  const varRand = (0x8000 | (Math.floor(Math.random() * 0x3FFF))).toString(16).padStart(4, '0');
-  const rand = Array.from({ length: 3 }, () => 
-    Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0')
-  ).join('');
+  // 64-bit Random with Crypto API
+  const randomValues = new Uint32Array(2);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(randomValues);
+  } else {
+    randomValues[0] = Math.floor(Math.random() * 0x100000000);
+    randomValues[1] = Math.floor(Math.random() * 0x100000000);
+  }
 
-  return `${ts.slice(0, 8)}-${ts.slice(8, 12)}-${verSeq}-${varRand}-${rand}`;
+  const varRand = (0x8000 | (randomValues[0] & 0x3FFF)).toString(16).padStart(4, '0');
+  const randRest = randomValues[1].toString(16).padStart(8, '0');
+  const randExtra = Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0');
+
+  return `${ts.slice(0, 8)}-${ts.slice(8, 12)}-${verSeq}-${varRand}-${randRest}${randExtra}`;
 }
 
 /**
