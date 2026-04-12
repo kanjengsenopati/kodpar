@@ -21,13 +21,20 @@ export async function getJenisById(id: string): Promise<Jenis | undefined> {
 }
 
 /**
+ * Get all jenis by type (e.g., 'Simpanan', 'Pinjaman', 'Pengajuan')
+ */
+export async function getJenisByType(jenisTransaksi: string): Promise<Jenis[]> {
+  return await db.table('mst_jenis')
+    .where('jenisTransaksi').equals(jenisTransaksi)
+    .toArray();
+}
+
+/**
  * Get active jenis by type
  */
 export async function getActiveJenisByType(jenisTransaksi: "Pengajuan" | "Simpanan" | "Pinjaman"): Promise<Jenis[]> {
-  return await db.table('mst_jenis')
-    .where('jenisTransaksi').equals(jenisTransaksi)
-    .filter(j => j.isActive)
-    .toArray();
+  const result = await getJenisByType(jenisTransaksi);
+  return result.filter(j => j.isActive);
 }
 
 /**
@@ -48,7 +55,6 @@ export async function createJenis(jenis: Omit<Jenis, "id" | "createdAt" | "updat
   
   // Trigger Sync
   const { centralizedSync } = await import("./sync/centralizedSyncService");
-  // @ts-ignore
   centralizedSync.syncEntity('mst_jenis', newJenis.id, newJenis);
   
   return newJenis;
@@ -62,4 +68,3 @@ export async function resetJenisData(): Promise<void> {
   await db.table('mst_jenis').clear();
   await neonMasterSync.rehydrateFromCloud();
 }
-

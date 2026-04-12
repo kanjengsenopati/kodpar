@@ -4,6 +4,7 @@ import { initialTransaksi } from "./initialData";
 import * as IdUtils from "../../utils/idUtils";
 import { getJenisByType } from "../jenisService";
 import { getCurrentUser } from "../auth/sessionManagement";
+import { generateUUIDv7 } from "../../utils/idUtils";
 
 /**
  * Get all transaksi from IndexedDB (Mirror of NeonDB)
@@ -70,9 +71,9 @@ export async function getTransaksiByTypeAndCategory(
 /**
  * Get all active kategori names by jenis
  */
-export function getAvailableKategori(jenis: "Simpan" | "Pinjam"): string[] {
+export async function getAvailableKategori(jenis: "Simpan" | "Pinjam"): Promise<string[]> {
   const jenisTransaksi = jenis === "Simpan" ? "Simpanan" : "Pinjaman";
-  const jenisList = getJenisByType(jenisTransaksi);
+  const jenisList = await getJenisByType(jenisTransaksi);
   return jenisList
     .filter(j => j.isActive)
     .map(j => j.nama);
@@ -81,10 +82,10 @@ export function getAvailableKategori(jenis: "Simpan" | "Pinjam"): string[] {
 /**
  * Validate if a kategori is valid for a specific jenis
  */
-export function isValidKategori(jenis: "Simpan" | "Pinjam" | "Angsuran", kategori: string): boolean {
+export async function isValidKategori(jenis: "Simpan" | "Pinjam" | "Angsuran", kategori: string): Promise<boolean> {
   // Angsuran uses same categories as Pinjam
   const effectiveJenis = jenis === "Angsuran" ? "Pinjam" : jenis;
-  const availableKategori = getAvailableKategori(effectiveJenis);
+  const availableKategori = await getAvailableKategori(effectiveJenis);
   
   // 1. Exact match check
   if (availableKategori.includes(kategori)) return true;
@@ -130,9 +131,6 @@ export async function generateTransaksiNumber(): Promise<string> {
     padding: 6
   });
 }
-
-import { generateUUIDv7 } from "../../utils/id-generator";
-// ... (existing imports)
 
 /**
  * Create a new transaksi with automatic accounting sync
@@ -183,4 +181,3 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
     return { success: false, error: `Critical Error: ${error.message || 'Kesalahan sistem'}` };
   }
 }
-
