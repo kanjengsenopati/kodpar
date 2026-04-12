@@ -3,7 +3,7 @@ import { db } from "@/db/db";
 import { getAllUnitKerja, syncUnitKerjaWithAnggota } from "./unitKerjaService";
 import { logAuditEntry } from "./auditService";
 import { getCurrentUser } from "./auth/sessionManagement";
-import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "@/utils/idUtils";
+import * as IdUtils from "../utils/idUtils";
 
 // Initial sample data with deterministic UUIDv7 for stable demo reset
 const initialAnggota: Anggota[] = [
@@ -150,10 +150,10 @@ export async function generateAnggotaNumber(): Promise<string> {
   
   let lastSeq = 0;
   if (lastAnggota) {
-    lastSeq = extractNumericSuffix(lastAnggota.noAnggota || lastAnggota.id);
+    lastSeq = IdUtils.extractNumericSuffix(lastAnggota.noAnggota || lastAnggota.id);
   }
   
-  return formatReferenceNumber({
+  return IdUtils.formatReferenceNumber({
     prefix: "AG",
     year: new Date().getFullYear(),
     sequence: lastSeq + 1
@@ -164,7 +164,7 @@ export async function generateAnggotaNumber(): Promise<string> {
  * Create a new anggota
  */
 export async function createAnggota(anggota: Omit<Anggota, 'id' | 'noAnggota' | 'createdAt' | 'updatedAt'>): Promise<Anggota> {
-  const id = generateUUIDv7();
+  const id = IdUtils.generateUUIDv7();
   const noAnggota = await generateAnggotaNumber();
   
   const newAnggota: Anggota = {

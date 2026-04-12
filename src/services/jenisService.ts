@@ -1,5 +1,5 @@
 import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
-import { generateUUIDv7 } from "@/utils/idUtils";
+import * as IdUtils from "../utils/idUtils";
 
 const JENIS_KEY = "koperasi_jenis";
 
@@ -138,7 +138,7 @@ export function getActiveJenisByType(jenisTransaksi: "Pengajuan" | "Simpanan" | 
 
 // Generate ID for new jenis - NOW USING UUIDv7
 function generateJenisId(): string {
-  return generateUUIDv7();
+  return IdUtils.generateUUIDv7();
 }
 
 // Create a new jenis
