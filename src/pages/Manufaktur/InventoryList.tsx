@@ -23,7 +23,7 @@ export default function InventoryList() {
   const [showMovement, setShowMovement] = useState<ManufakturInventory | null>(null);
   const [showHistory, setShowHistory] = useState<ManufakturInventory | null>(null);
   const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [newItem, setNewItem] = useState({ materialCode: '', materialName: '', category: 'Bahan Baku', unit: 'kg', currentStock: 0, minimumStock: 0, unitCost: 0, location: '' });
+  const [newItem, setNewItem] = useState({ materialCode: '', materialName: '', category: 'Bahan Baku', unit: 'pcs', currentStock: 0, minimumStock: 0, unitCost: 0, location: '' });
   const [movementForm, setMovementForm] = useState({ type: 'In' as 'In' | 'Out' | 'Adjustment', quantity: 0, notes: '', performedBy: '' });
 
   const reload = () => setInventory(getAllInventory());
@@ -43,7 +43,7 @@ export default function InventoryList() {
     createInventory(newItem);
     reload();
     setShowAdd(false);
-    setNewItem({ materialCode: '', materialName: '', category: 'Bahan Baku', unit: 'kg', currentStock: 0, minimumStock: 0, unitCost: 0, location: '' });
+    setNewItem({ materialCode: '', materialName: '', category: 'Bahan Baku', unit: 'pcs', currentStock: 0, minimumStock: 0, unitCost: 0, location: '' });
     toast.success('Material ditambahkan');
   };
 

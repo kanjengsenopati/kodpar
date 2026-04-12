@@ -41,7 +41,7 @@ export const BOM_CATEGORIES = [
 ];
 
 export const MATERIAL_UNITS = [
-  'pcs', 'kg', 'gram', 'liter', 'ml', 'meter', 'cm', 'lembar', 'batang', 'set', 'pack', 'roll',
+  'pcs', 'kg', 'gram', 'liter', 'ml', 'meter', 'cm', 'lembar', 'batang', 'set', 'pack', 'roll', 'box', 'dus', 'lsn', 'bal', 'karung',
 ];
 
 // ===== Work Orders =====
