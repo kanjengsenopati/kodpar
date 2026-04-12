@@ -250,7 +250,7 @@ export default function UnitKerjaList() {
                       <div className="bg-blue-50 p-2.5 rounded-2xl group-hover:scale-110 transition-transform">
                         <Building2 className="h-5 w-5 text-blue-600" />
                       </div>
-                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1.5 transition-opacity">
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -386,7 +386,7 @@ export default function UnitKerjaList() {
                             </Text.Caption>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex justify-end gap-1.5 transition-opacity">
                               <Button 
                                 variant="ghost" 
                                 size="icon"
