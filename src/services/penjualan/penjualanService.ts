@@ -1,143 +1,122 @@
-
 import { Penjualan, PenjualanItem } from "@/types";
-import { generateId } from "@/lib/utils";
-import { 
-  getPenjualanList, 
-  savePenjualanList, 
-  generateTransactionNumber,
-  calculateTotal
-} from "./utils";
-import { updateProdukStock } from "../produk";
+import { db } from "@/db/db";
+import { generateUUIDv7 } from "@/utils/idUtils";
 import { logAuditEntry } from "@/services/auditService";
 
-// Get all sales
-export const getAllPenjualan = (): Penjualan[] => {
-  return getPenjualanList();
+/**
+ * Get all sales transactions from local mirror
+ */
+export const getAllPenjualan = async (): Promise<Penjualan[]> => {
+  const sales = await db.table('pos_penjualan').toArray();
+  const items = await db.table('pos_penjualan_item').toArray();
+
+  return sales.map(s => ({
+    ...s,
+    items: items.filter(item => item.penjualanId === s.id)
+  }));
 };
 
-// Create new sale
-export const createPenjualan = (penjualanData: Omit<Penjualan, "id" | "nomorTransaksi" | "createdAt">): Penjualan => {
-  const penjualanList = getPenjualanList();
+/**
+ * Create a new sale with sync
+ */
+export const createPenjualan = async (penjualanData: Omit<Penjualan, "id" | "nomorTransaksi" | "createdAt">): Promise<Penjualan> => {
+  const id = generateUUIDv7();
   
   // Generate transaction number
-  const count = penjualanList.length + 1;
-  const nomorTransaksi = generateTransactionNumber(count);
-  
+  const count = await db.table('pos_penjualan').count();
+  const nomorTransaksi = `SLS-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(count + 1).padStart(4, '0')}`;
+
   const newPenjualan: Penjualan = {
-    id: generateId("POS"),
+    id,
     nomorTransaksi,
-    tanggal: penjualanData.tanggal,
-    kasirId: penjualanData.kasirId,
-    items: penjualanData.items,
-    subtotal: penjualanData.subtotal,
-    diskon: penjualanData.diskon || 0,
-    pajak: penjualanData.pajak || 0,
-    total: penjualanData.total,
-    dibayar: penjualanData.dibayar,
-    kembalian: penjualanData.kembalian,
-    metodePembayaran: penjualanData.metodePembayaran,
-    status: penjualanData.status,
-    catatan: penjualanData.catatan || "",
+    ...penjualanData,
     createdAt: new Date().toISOString()
   };
-  
-  // Update product stock for each item
-  if (newPenjualan.status === "sukses") {
-    newPenjualan.items.forEach(item => {
-      updateProdukStock(item.produkId, -item.jumlah);
-    });
-  }
-  
-  penjualanList.push(newPenjualan);
-  savePenjualanList(penjualanList);
-  
+
+  const saleItems = (penjualanData.items || []).map(item => ({
+    id: generateUUIDv7(),
+    penjualanId: id,
+    ...item
+  }));
+
+  // Atomic Transaction
+  await db.transaction('rw', [db.table('pos_penjualan'), db.table('pos_penjualan_item'), db.table('mst_produk')], async () => {
+    // 1. Add Sales Records
+    await db.table('pos_penjualan').add({ ...newPenjualan, items: undefined });
+    await db.table('pos_penjualan_item').bulkAdd(saleItems);
+
+    // 2. Adjust Stock
+    if (newPenjualan.status === "sukses") {
+      for (const item of saleItems) {
+        const prod = await db.table('mst_produk').get(item.produkId);
+        if (prod) {
+          await db.table('mst_produk').update(item.produkId, { stok: prod.stok - item.jumlah });
+        }
+      }
+    }
+  });
+
   // Log audit entry
   logAuditEntry(
     "CREATE",
     "PENJUALAN",
-    `Membuat transaksi penjualan ${newPenjualan.nomorTransaksi} sebesar Rp ${newPenjualan.total.toLocaleString('id-ID')}`,
+    `Transaksi penjualan baru: ${newPenjualan.nomorTransaksi} (Total: ${newPenjualan.total})`,
     newPenjualan.id
   );
-  
-  return newPenjualan;
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('pos_penjualan', newPenjualan.id, newPenjualan);
+
+  return { ...newPenjualan, items: saleItems };
 };
 
-// Get sale by ID
-export const getPenjualanById = (id: string): Penjualan | null => {
-  const penjualanList = getPenjualanList();
-  const penjualan = penjualanList.find(item => item.id === id);
-  
-  return penjualan || null;
+/**
+ * Get sales transaction by ID
+ */
+export const getPenjualanById = async (id: string): Promise<Penjualan | null> => {
+  const sale = await db.table('pos_penjualan').get(id);
+  if (!sale) return null;
+
+  const items = await db.table('pos_penjualan_item').where('penjualanId').equals(id).toArray();
+  return { ...sale, items };
 };
 
-// Update sale
-export const updatePenjualan = (id: string, penjualanData: Partial<Penjualan>): Penjualan | null => {
-  const penjualanList = getPenjualanList();
-  const index = penjualanList.findIndex(item => item.id === id);
-  
-  if (index === -1) return null;
-  
-  const oldPenjualan = penjualanList[index];
-  
-  // If status changes from sukses to dibatalkan, revert stock updates
-  if (oldPenjualan.status === "sukses" && penjualanData.status === "dibatalkan") {
-    oldPenjualan.items.forEach(item => {
-      updateProdukStock(item.produkId, item.jumlah); // Add stock back
-    });
-  }
-  
-  // If status changes from dibatalkan to sukses, apply stock updates
-  if (oldPenjualan.status === "dibatalkan" && penjualanData.status === "sukses") {
-    oldPenjualan.items.forEach(item => {
-      updateProdukStock(item.produkId, -item.jumlah); // Reduce stock
-    });
-  }
-  
-  penjualanList[index] = {
-    ...oldPenjualan,
-    ...penjualanData
-  };
-  
-  savePenjualanList(penjualanList);
-  
-  // Log audit entry
-  logAuditEntry(
-    "UPDATE",
-    "PENJUALAN",
-    `Memperbarui transaksi penjualan ${oldPenjualan.nomorTransaksi}: status ${oldPenjualan.status} -> ${penjualanList[index].status}`,
-    id
-  );
-  
-  return penjualanList[index];
+/**
+ * Calculate total
+ */
+export const calculateTotal = (items: PenjualanItem[]): number => {
+  return items.reduce((sum, item) => sum + item.total, 0);
 };
 
-// Delete sale
-export const deletePenjualan = (id: string): boolean => {
-  const penjualanList = getPenjualanList();
-  const penjualan = penjualanList.find(item => item.id === id);
-  
-  if (!penjualan) return false;
-  
-  // If deleting a successful sale, add back the stock
-  if (penjualan.status === "sukses") {
-    penjualan.items.forEach(item => {
-      updateProdukStock(item.produkId, item.jumlah); // Add stock back
-    });
-  }
-  
-  const newPenjualanList = penjualanList.filter(item => item.id !== id);
-  savePenjualanList(newPenjualanList);
-  
-  // Log audit entry
-  logAuditEntry(
-    "DELETE",
-    "PENJUALAN",
-    `Menghapus transaksi penjualan ${penjualan.nomorTransaksi} sebesar Rp ${penjualan.total.toLocaleString('id-ID')}`,
-    id
-  );
-  
+/**
+ * Delete sale
+ */
+export const deletePenjualan = async (id: string): Promise<boolean> => {
+  const existing = await getPenjualanById(id);
+  if (!existing) return false;
+
+  await db.transaction('rw', [db.table('pos_penjualan'), db.table('pos_penjualan_item'), db.table('mst_produk')], async () => {
+    if (existing.status === "sukses") {
+      for (const item of existing.items) {
+        const prod = await db.table('mst_produk').get(item.produkId);
+        if (prod) {
+          await db.table('mst_produk').update(item.produkId, { stok: prod.stok + item.jumlah });
+        }
+      }
+    }
+    await db.table('pos_penjualan').delete(id);
+    await db.table('pos_penjualan_item').where('penjualanId').equals(id).delete();
+  });
+
+  // Log audit
+  logAuditEntry("DELETE", "PENJUALAN", `Menghapus transaksi ${existing.nomorTransaksi}`, id);
+
+  // Sync deletion
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('pos_penjualan', id, null);
+
   return true;
 };
-
-// Export the calculateTotal function for external use
-export { calculateTotal } from "./utils";

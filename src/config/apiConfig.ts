@@ -23,7 +23,7 @@ export const getBackendUrl = (): string => {
   }
 
   // 3. Local Development Fallback
-  return "http://localhost:3001";
+  return "http://localhost:3001/api";
 };
 
 export const BACKEND_URL = getBackendUrl();

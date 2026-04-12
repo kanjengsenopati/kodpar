@@ -104,8 +104,76 @@ CREATE TABLE IF NOT EXISTS jurnal (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. JURNAL DETAILS (Double Entry)
+-- 6. PERMISSIONS & ROLES
+CREATE TABLE IF NOT EXISTS permissions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    permissions JSONB DEFAULT '[]'
+);
+
+-- 7. UNIT KERJA
+CREATE TABLE IF NOT EXISTS unit_kerja (
+    id UUID PRIMARY KEY,
+    nama TEXT NOT NULL,
+    kode TEXT UNIQUE,
+    keterangan TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. SETTINGS (JSONB for flexibility)
+CREATE TABLE IF NOT EXISTS settings (
+    id TEXT PRIMARY KEY, -- usually 'global_config'
+    config JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. AUDIT LOGS
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY,
+    user_id UUID,
+    username TEXT,
+    action TEXT NOT NULL,
+    resource TEXT NOT NULL,
+    resource_id TEXT,
+    details TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    device TEXT,
+    browser TEXT,
+    os TEXT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. MASTER JENIS (Savings & Loan Types)
+CREATE TABLE IF NOT EXISTS mst_jenis (
+    id UUID PRIMARY KEY,
+    kode TEXT UNIQUE NOT NULL,
+    nama TEXT NOT NULL,
+    jenis_transaksi TEXT NOT NULL,
+    keterangan TEXT,
+    persyaratan JSONB DEFAULT '[]',
+    bunga_persen DECIMAL(5, 2) DEFAULT 0,
+    wajib BOOLEAN DEFAULT FALSE,
+    untuk_peminjam BOOLEAN DEFAULT FALSE,
+    tenor_min INTEGER,
+    tenor_max INTEGER,
+    maksimal_pinjaman DECIMAL(15, 2),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. JURNAL DETAILS (Double Entry)
 CREATE TABLE IF NOT EXISTS jurnal_detail (
+
     id UUID PRIMARY KEY,
     jurnal_id UUID REFERENCES jurnal(id) ON DELETE CASCADE,
     coa_id TEXT REFERENCES coa(id),
@@ -113,6 +181,136 @@ CREATE TABLE IF NOT EXISTS jurnal_detail (
     kredit DECIMAL(15, 2) DEFAULT 0
 );
 
+
+
+-- 12. MASTER PRODUK (Retail & Inventory)
+CREATE TABLE IF NOT EXISTS mst_produk (
+    id UUID PRIMARY KEY,
+    kode TEXT UNIQUE NOT NULL,
+    nama TEXT NOT NULL,
+    kategori TEXT,
+    harga_beli DECIMAL(15, 2) DEFAULT 0,
+    harga_jual DECIMAL(15, 2) DEFAULT 0,
+    stok DECIMAL(15, 2) DEFAULT 0,
+    satuan TEXT DEFAULT 'pcs',
+    deskripsi TEXT,
+    gambar TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 13. MASTER PEMASOK (Suppliers)
+CREATE TABLE IF NOT EXISTS mst_pemasok (
+    id UUID PRIMARY KEY,
+    nama TEXT NOT NULL,
+    alamat TEXT,
+    telepon TEXT,
+    email TEXT,
+    kontak TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. POS PENJUALAN (Headers)
+CREATE TABLE IF NOT EXISTS pos_penjualan (
+    id UUID PRIMARY KEY,
+    nomor_transaksi TEXT UNIQUE NOT NULL,
+    tanggal TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    kasir_id UUID,
+    subtotal DECIMAL(15, 2) DEFAULT 0,
+    diskon DECIMAL(15, 2) DEFAULT 0,
+    pajak DECIMAL(15, 2) DEFAULT 0,
+    total DECIMAL(15, 2) DEFAULT 0,
+    dibayar DECIMAL(15, 2) DEFAULT 0,
+    kembalian DECIMAL(15, 2) DEFAULT 0,
+    metode_pembayaran TEXT,
+    status TEXT DEFAULT 'sukses',
+    catatan TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. POS PENJUALAN ITEMS (Details)
+CREATE TABLE IF NOT EXISTS pos_penjualan_item (
+    id UUID PRIMARY KEY,
+    penjualan_id UUID REFERENCES pos_penjualan(id) ON DELETE CASCADE,
+    produk_id UUID REFERENCES mst_produk(id),
+    jumlah DECIMAL(15, 2) NOT NULL,
+    harga_satuan DECIMAL(15, 2) NOT NULL,
+    total DECIMAL(15, 2) NOT NULL,
+    diskon DECIMAL(15, 2) DEFAULT 0
+);
+
+-- 16. MANUFAKTUR BOM (Headers)
+CREATE TABLE IF NOT EXISTS mfg_bom (
+    id UUID PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    product_name TEXT NOT NULL,
+    product_code TEXT,
+    description TEXT,
+    category TEXT,
+    total_material_cost DECIMAL(15, 2) DEFAULT 0,
+    overhead_cost DECIMAL(15, 2) DEFAULT 0,
+    labor_cost DECIMAL(15, 2) DEFAULT 0,
+    total_cost DECIMAL(15, 2) DEFAULT 0,
+    output_quantity DECIMAL(15, 2) DEFAULT 1,
+    output_unit TEXT DEFAULT 'pcs',
+    status TEXT DEFAULT 'Draft',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 17. MANUFAKTUR BOM ITEMS (Components)
+CREATE TABLE IF NOT EXISTS mfg_bom_item (
+    id UUID PRIMARY KEY,
+    bom_id UUID REFERENCES mfg_bom(id) ON DELETE CASCADE,
+    material_name TEXT NOT NULL,
+    material_code TEXT,
+    quantity DECIMAL(15, 2) NOT NULL,
+    unit TEXT,
+    unit_cost DECIMAL(15, 2) DEFAULT 0,
+    total_cost DECIMAL(15, 2) DEFAULT 0
+);
+
+-- 18. MANUFAKTUR WORK ORDERS
+CREATE TABLE IF NOT EXISTS mfg_work_order (
+    id UUID PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    bom_id UUID REFERENCES mfg_bom(id),
+    quantity DECIMAL(15, 2) NOT NULL,
+    status TEXT DEFAULT 'Draft',
+    priority TEXT DEFAULT 'Medium',
+    start_date DATE,
+    due_date DATE,
+    estimated_cost DECIMAL(15, 2) DEFAULT 0,
+    actual_cost DECIMAL(15, 2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 19. POS PEMBELIAN (Purchases from Suppliers)
+CREATE TABLE IF NOT EXISTS pos_pembelian (
+    id UUID PRIMARY KEY,
+    nomor_transaksi TEXT UNIQUE NOT NULL,
+    tanggal DATE NOT NULL,
+    pemasok_id UUID REFERENCES mst_pemasok(id),
+    subtotal DECIMAL(15, 2) DEFAULT 0,
+    diskon DECIMAL(15, 2) DEFAULT 0,
+    ppn DECIMAL(15, 2) DEFAULT 0,
+    total DECIMAL(15, 2) DEFAULT 0,
+    status TEXT DEFAULT 'proses',
+    catatan TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pos_pembelian_item (
+    id UUID PRIMARY KEY,
+    pembelian_id UUID REFERENCES pos_pembelian(id) ON DELETE CASCADE,
+    produk_id UUID REFERENCES mst_produk(id),
+    jumlah DECIMAL(15, 2) NOT NULL,
+    harga_satuan DECIMAL(15, 2) NOT NULL,
+    total DECIMAL(15, 2) NOT NULL
+);
 
 -- INDEXES
 CREATE INDEX IF NOT EXISTS idx_transaksi_anggota ON transaksi(anggota_id);

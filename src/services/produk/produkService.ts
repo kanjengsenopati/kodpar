@@ -1,33 +1,26 @@
-
 import { ProdukItem } from "@/types";
-import { generateId } from "@/lib/utils";
-import { getProdukItems, saveProdukItems, generateProductCode } from "./utils";
+import { db } from "@/db/db";
+import { generateUUIDv7 } from "@/utils/idUtils";
 import { logAuditEntry } from "@/services/auditService";
 
-// Get all products
-export const getAllProdukItems = (): ProdukItem[] => {
-  return getProdukItems();
+/**
+ * Get all products from local mirror (IndexedDB)
+ */
+export const getAllProdukItems = async (): Promise<ProdukItem[]> => {
+  return await db.table('mst_produk').toArray();
 };
 
-// Create new product
-export const createProdukItem = (produkData: Omit<ProdukItem, "id" | "createdAt">): ProdukItem => {
-  const produkItems = getProdukItems();
+/**
+ * Create a new product with sync
+ */
+export const createProdukItem = async (produkData: Omit<ProdukItem, "id" | "createdAt">): Promise<ProdukItem> => {
   const newProdukItem: ProdukItem = {
-    id: generateId("PRD"),
-    kode: produkData.kode || generateProductCode(),
-    nama: produkData.nama,
-    kategori: produkData.kategori,
-    hargaBeli: produkData.hargaBeli,
-    hargaJual: produkData.hargaJual,
-    stok: produkData.stok,
-    satuan: produkData.satuan,
-    deskripsi: produkData.deskripsi || "",
-    gambar: produkData.gambar || "",
+    id: generateUUIDv7(),
+    ...produkData,
     createdAt: new Date().toISOString()
   };
   
-  produkItems.push(newProdukItem);
-  saveProdukItems(produkItems);
+  await db.table('mst_produk').add(newProdukItem);
   
   // Log audit entry
   logAuditEntry(
@@ -36,94 +29,103 @@ export const createProdukItem = (produkData: Omit<ProdukItem, "id" | "createdAt"
     `Membuat produk baru: ${newProdukItem.nama} (${newProdukItem.kode})`,
     newProdukItem.id
   );
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('mst_produk', newProdukItem.id, newProdukItem);
   
   return newProdukItem;
 };
 
-// Get product by ID
-export const getProdukItemById = (id: string): ProdukItem | null => {
-  const produkItems = getProdukItems();
-  const produkItem = produkItems.find(item => item.id === id);
-  
-  return produkItem || null;
+/**
+ * Get product by ID
+ */
+export const getProdukItemById = async (id: string): Promise<ProdukItem | null> => {
+  const item = await db.table('mst_produk').get(id);
+  return item || null;
 };
 
-// Update product
-export const updateProdukItem = (id: string, produkData: Partial<ProdukItem>): ProdukItem | null => {
-  const produkItems = getProdukItems();
-  const index = produkItems.findIndex(item => item.id === id);
+/**
+ * Update product with sync
+ */
+export const updateProdukItem = async (id: string, produkData: Partial<ProdukItem>): Promise<ProdukItem | null> => {
+  const existing = await getProdukItemById(id);
+  if (!existing) return null;
   
-  if (index === -1) return null;
-  
-  const oldProduk = { ...produkItems[index] };
-  
-  // Preserve the image if none is provided
-  if (produkData.gambar === undefined) {
-    produkData.gambar = produkItems[index].gambar;
-  }
-  
-  // Update the product
-  produkItems[index] = {
-    ...produkItems[index],
+  const updatedProduk = {
+    ...existing,
     ...produkData
   };
   
-  saveProdukItems(produkItems);
+  await db.table('mst_produk').put(updatedProduk);
   
   // Log audit entry
   logAuditEntry(
     "UPDATE",
     "PRODUK",
-    `Memperbarui produk: ${oldProduk.nama} -> ${produkItems[index].nama}`,
+    `Memperbarui produk: ${existing.nama} -> ${updatedProduk.nama}`,
     id
   );
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('mst_produk', id, updatedProduk);
   
-  return produkItems[index];
+  return updatedProduk;
 };
 
-// Delete product
-export const deleteProdukItem = (id: string): boolean => {
-  const produkItems = getProdukItems();
-  const produkToDelete = produkItems.find(item => item.id === id);
-  const newProdukItems = produkItems.filter(item => item.id !== id);
+/**
+ * Delete product with sync
+ */
+export const deleteProdukItem = async (id: string): Promise<boolean> => {
+  const existing = await getProdukItemById(id);
+  if (!existing) return false;
   
-  if (newProdukItems.length === produkItems.length) {
-    return false;
-  }
-  
-  saveProdukItems(newProdukItems);
+  await db.table('mst_produk').delete(id);
   
   // Log audit entry
-  if (produkToDelete) {
-    logAuditEntry(
-      "DELETE",
-      "PRODUK",
-      `Menghapus produk: ${produkToDelete.nama} (${produkToDelete.kode})`,
-      id
-    );
-  }
+  logAuditEntry(
+    "DELETE",
+    "PRODUK",
+    `Menghapus produk: ${existing.nama} (${existing.kode})`,
+    id
+  );
+
+  // Trigger Sync (Deletion)
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('mst_produk', id, null);
   
   return true;
 };
 
-// Update product stock
-export const updateProdukStock = (id: string, quantity: number): boolean => {
-  const produkItems = getProdukItems();
-  const index = produkItems.findIndex(item => item.id === id);
+/**
+ * Update product stock
+ */
+export const updateProdukStock = async (id: string, quantity: number): Promise<boolean> => {
+  const existing = await getProdukItemById(id);
+  if (!existing) return false;
   
-  if (index === -1) return false;
+  const oldStok = existing.stok;
+  const newStok = existing.stok + quantity;
   
-  const oldStok = produkItems[index].stok;
-  produkItems[index].stok += quantity;
-  saveProdukItems(produkItems);
+  await db.table('mst_produk').update(id, { stok: newStok });
   
   // Log audit entry
   logAuditEntry(
     "UPDATE",
     "PRODUK",
-    `Update stok produk ${produkItems[index].nama}: ${oldStok} -> ${produkItems[index].stok}`,
+    `Update stok produk ${existing.nama}: ${oldStok} -> ${newStok}`,
     id
   );
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('mst_produk', id, { ...existing, stok: newStok });
   
   return true;
 };
+

@@ -1,204 +1,43 @@
-import { getFromLocalStorage, saveToLocalStorage } from "../utils/localStorage";
-
-const PENGATURAN_KEY = "koperasi_pengaturan";
-
-// Default pengaturan initial data with Dana Resiko Kredit and Simpanan Wajib Kredit enabled by default
-const initialPengaturan: Pengaturan = {
-  sukuBunga: {
-    pinjaman: 1.5, // 1.5% per bulan 
-    simpanan: 0.5, // 0.5% per bulan
-    metodeBunga: "flat",
-    metodePembulatan: "none",
-    biayaAdministrasi: {
-      enabled: false,
-      fixed: 0,
-      percentage: 0,
-      applyTo: ["Pinjam"]
-    },
-    danaResikoKredit: {
-      enabled: true,
-      persentase: 2.0,
-      autoDeduction: true
-    },
-    simpananWajibKredit: {
-      enabled: true,
-      persentase: 5.0,
-      autoDeduction: true
-    }
-  },
-  tenor: {
-    minTenor: 3,     // minimum 3 bulan
-    maxTenor: 36,    // maximum 36 bulan
-    defaultTenor: 12, // default 12 bulan
-    tenorOptions: [3, 6, 12, 18, 24, 36]
-  },
-  denda: {
-    persentase: 0.1, // 0.1% per hari
-    gracePeriod: 3,  // 3 hari masa tenggang
-    metodeDenda: "harian"
-  },
-  shu: {
-    formula: "simpanan_khusus * 0.03 + simpanan_wajib * 0.05 + pendapatan * 0.02", // Default SHU formula
-    thrFormula: "lama_keanggotaan * 100000 + simpanan_pokok * 0.02", // Default THR formula
-    minValue: "0",
-    maxValue: "10000000",
-    distribution: {
-      rekening_penyimpan: 25,       // 25%
-      rekening_berjasa: 25,         // 25%
-      pengurus: 10,                 // 10%
-      dana_karyawan: 5,             // 5%
-      dana_pendidikan: 10,          // 10%
-      dana_pembangunan_daerah: 2.5, // 2.5%
-      dana_sosial: 2.5,             // 2.5%
-      cadangan: 20                  // 20%
-    },
-    formulaComponents: [
-      {
-        id: "018e6a12-8c1d-7a01-8000-000000000101",
-        name: "Rumus Simpanan",
-        formula: "simpanan_khusus * 0.03 + simpanan_wajib * 0.05",
-        description: "Rumus berdasarkan simpanan anggota",
-        formulaType: "shu"
-      },
-      {
-        id: "018e6a12-8c1d-7a01-8000-000000000102",
-        name: "Rumus Pendapatan",
-        formula: "pendapatan * 0.02",
-        description: "Rumus berdasarkan pendapatan anggota",
-        formulaType: "shu"
-      },
-      {
-        id: "018e6a12-8c1d-7a01-8000-000000000103",
-        name: "Rumus THR Dasar",
-        formula: "lama_keanggotaan * 100000",
-        description: "Rumus dasar THR berdasarkan lama keanggotaan",
-        formulaType: "thr"
-      }
-    ],
-    customVariables: [] // Reset to empty array
-  },
-  profil: {
-    namaKoperasi: "Koperasi-ERP",
-    alamat: "",
-    telepon: ""
-  },
-  notifications: {
-    emailEnabled: true,
-    pushEnabled: true,
-    smsEnabled: false,
-    transactionAlerts: true,
-    dueDateReminders: true,
-    systemUpdates: false,
-    marketingEmails: false,
-    reminderTiming: "3",
-    emailFrequency: "immediate"
-  },
-  penarikan: {
-    maxWithdrawalType: "percentage",
-    maxWithdrawalValue: 100,
-    minPreservedBalanceType: "fixed",
-    minPreservedBalanceValue: 50000
-  }
-};
+import { db } from "../db/db";
 
 /**
- * Get pengaturan from local storage
+ * Get pengaturan from Local Mirror (IndexedDB)
  */
-export function getPengaturan(): Pengaturan {
-  return getFromLocalStorage<Pengaturan>(PENGATURAN_KEY, initialPengaturan);
+export async function getPengaturan(): Promise<Pengaturan> {
+  const settings = await db.table('settings').get('global_config');
+  // If not found in DB, settings will rehydrate on next sync
+  return settings as Pengaturan;
 }
 
 /**
- * Save pengaturan to local storage
+ * Save pengaturan to Local Mirror and Sync Queue
  */
-export function savePengaturan(pengaturan: Pengaturan): void {
-  saveToLocalStorage(PENGATURAN_KEY, pengaturan);
+export async function savePengaturan(pengaturan: Pengaturan): Promise<void> {
+  await db.table('settings').put({ id: 'global_config', ...pengaturan });
+  
+  // Trigger sync to cloud
+  const { centralizedSync } = await import("./sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('settings', 'global_config', pengaturan);
 }
 
 /**
  * Update specific pengaturan fields
  */
-export function updatePengaturan(updatedFields: Partial<Pengaturan>): Pengaturan {
-  const currentPengaturan = getPengaturan();
-  
-  // Deep merge the current pengaturan with the updated fields
-  const updatedPengaturan = {
-    ...currentPengaturan,
-    ...updatedFields,
-    sukuBunga: {
-      ...currentPengaturan.sukuBunga,
-      ...(updatedFields.sukuBunga || {})
-    },
-    tenor: {
-      ...currentPengaturan.tenor,
-      ...(updatedFields.tenor || {})
-    },
-    denda: {
-      ...currentPengaturan.denda,
-      ...(updatedFields.denda || {})
-    },
-    shu: {
-      ...currentPengaturan.shu,
-      ...(updatedFields.shu || {})
-    },
-    profil: {
-      ...currentPengaturan.profil,
-      ...(updatedFields.profil || {})
-    },
-    notifications: {
-      ...currentPengaturan.notifications,
-      ...(updatedFields.notifications || {})
-    },
-    penarikan: {
-      ...currentPengaturan.penarikan,
-      ...(updatedFields.penarikan || {})
-    }
-  };
-  
-  saveToLocalStorage(PENGATURAN_KEY, updatedPengaturan);
-  return updatedPengaturan;
+export async function updatePengaturan(updatedFields: Partial<Pengaturan>): Promise<Pengaturan> {
+  const current = await getPengaturan();
+  const updated = { ...current, ...updatedFields };
+  await savePengaturan(updated);
+  return updated;
 }
 
 /**
- * Reset pengaturan to default values
+ * Reset pengaturan to default values (Trigger Cloud Rehydration)
  */
-export function resetPengaturan(): Pengaturan {
-  saveToLocalStorage(PENGATURAN_KEY, initialPengaturan);
-  return initialPengaturan;
-}
-
-/**
- * Reset specific section of settings to default
- */
-export function resetPengaturanSection(section: keyof Pengaturan): Pengaturan {
-  const currentPengaturan = getPengaturan();
-  
-  // Create updated pengaturan with specified section reset to defaults
-  const updatedPengaturan = {
-    ...currentPengaturan,
-    [section]: initialPengaturan[section]
-  };
-  
-  saveToLocalStorage(PENGATURAN_KEY, updatedPengaturan);
-  return updatedPengaturan;
-}
-
-/**
- * Reset only custom variables in SHU settings
- */
-export function resetSHUCustomVariables(): Pengaturan {
-  const currentPengaturan = getPengaturan();
-  
-  const updatedPengaturan = {
-    ...currentPengaturan,
-    shu: {
-      ...currentPengaturan.shu,
-      customVariables: [] // Reset to empty array
-    }
-  };
-  
-  saveToLocalStorage(PENGATURAN_KEY, updatedPengaturan);
-  return updatedPengaturan;
+export async function resetPengaturan(): Promise<void> {
+  const { neonMasterSync } = await import("./sync/neonMasterSyncService");
+  await db.table('settings').clear();
+  await neonMasterSync.rehydrateFromCloud();
 }
 
 /**
@@ -207,3 +46,4 @@ export function resetSHUCustomVariables(): Pengaturan {
 export function getDefaultOfficerName(): string {
   return "Retno";
 }
+

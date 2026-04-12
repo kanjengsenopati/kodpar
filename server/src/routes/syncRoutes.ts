@@ -98,10 +98,30 @@ export async function syncRoutes(fastify: FastifyInstance) {
     try {
       console.log('📥 [NEON-PULL] Fetching master data for rehydration...');
 
-      const [resAnggota, resTransaksi, resCOA] = await Promise.all([
+      const [
+        resAnggota, resTransaksi, resCOA, resSettings, resUnitKerja, 
+        resRoles, resMstJenis, resUsers, resPermissions,
+        resProduk, resPemasok, resPenjualan, resPenjualanItem,
+        resBom, resBomItem, resWorkOrder, resPembelian, resPembelianItem
+      ] = await Promise.all([
         query('SELECT * FROM anggota ORDER BY nama ASC'),
         query('SELECT * FROM transaksi ORDER BY tanggal DESC LIMIT 500'),
-        query('SELECT * FROM coa ORDER BY kode ASC')
+        query('SELECT * FROM coa'),
+        query('SELECT * FROM settings'),
+        query('SELECT * FROM unit_kerja'),
+        query('SELECT * FROM roles'),
+        query('SELECT * FROM mst_jenis'),
+        query('SELECT id, username, nama, email, role_id, anggota_id, aktif, last_login, created_at, updated_at FROM users'),
+        query('SELECT * FROM permissions'),
+        query('SELECT * FROM mst_produk'),
+        query('SELECT * FROM mst_pemasok'),
+        query('SELECT * FROM pos_penjualan ORDER BY tanggal DESC LIMIT 100'),
+        query('SELECT * FROM pos_penjualan_item'),
+        query('SELECT * FROM mfg_bom'),
+        query('SELECT * FROM mfg_bom_item'),
+        query('SELECT * FROM mfg_work_order'),
+        query('SELECT * FROM pos_pembelian'),
+        query('SELECT * FROM pos_pembelian_item')
       ]);
 
       return reply.send({
@@ -109,9 +129,28 @@ export async function syncRoutes(fastify: FastifyInstance) {
         data: {
           anggota: resAnggota.rows,
           transaksi: resTransaksi.rows,
-          coa: resCOA.rows
+          coa: resCOA.rows,
+          settings: resSettings.rows,
+          unitKerja: resUnitKerja.rows,
+          roles: resRoles.rows,
+          mstJenis: resMstJenis.rows,
+          users: resUsers.rows,
+          permissions: resPermissions.rows,
+          produk: resProduk.rows,
+          pemasok: resPemasok.rows,
+          penjualan: resPenjualan.rows,
+          penjualanItem: resPenjualanItem.rows,
+          bom: resBom.rows,
+          bomItem: resBomItem.rows,
+          workOrder: resWorkOrder.rows,
+          pembelian: resPembelian.rows,
+          pembelianItem: resPembelianItem.rows
         }
       });
+
+
+
+
     } catch (error: any) {
       fastify.log.error(error);
       return reply.status(500).send({

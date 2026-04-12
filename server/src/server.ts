@@ -22,8 +22,8 @@ await server.register(cors, {
 });
 
 // Register Routes
-await server.register(syncRoutes);
-await server.register(authRoutes);
+await server.register(syncRoutes, { prefix: '/api' });
+await server.register(authRoutes, { prefix: '/api' });
 
 
 const start = async () => {

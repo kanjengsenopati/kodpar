@@ -35,22 +35,13 @@ import {
   hasModulePermission as hasModulePermissionFromUtils
 } from "./user-management/permissionUtils";
 
-// Initialize all data
-export const initUserManagementData = (): void => {
-  initPermissionsFromService();
-  initRolesFromService();
-  initUsersFromService();
-
-  // Make sure users are initialized - fallback
-  const existingUsers = getFromLocalStorage("koperasi_users", []);
-  if (existingUsers.length === 0) {
-    console.log("No users found, initializing default users");
-    saveToLocalStorage("koperasi_users", defaultUsers);
-  }
+// Initialize all data (Trigger Cloud Sync)
+export const initUserManagementData = async (): Promise<void> => {
+  await initPermissionsFromService();
+  await initRolesFromService();
+  await initUsersFromService();
 };
 
-// Make sure data is initialized
-initUserManagementData();
 
 // Export all functions
 export const getUsers = getUsersFromService;
