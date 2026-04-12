@@ -33,20 +33,11 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
     const result = await createTransactionWithSync(data);
     
     if (result.success && result.data && result.data.status === "Sukses") {
-      // Accounting sync is now handled solely via 'transaction-created' event listener
-      // to prevent double-processing. No explicit call needed here.
-      
       handleTransactionCreateSuccess(result.data);
       
-      // Process auto deductions for loan transactions AFTER centralized sync
+      // Process auto deductions for loan transactions
       if (result.data.jenis === "Pinjam") {
         await processLoanAutoDeductions(result.data);
-      }
-      
-      // Link payment to installment schedule for Angsuran transactions
-      if (result.data.jenis === "Angsuran") {
-        const { linkPaymentToSchedule } = await import("./installmentScheduleService");
-        await linkPaymentToSchedule(result.data);
       }
     } else if (result.success && result.data) {
       handleTransactionPending(result.data);
