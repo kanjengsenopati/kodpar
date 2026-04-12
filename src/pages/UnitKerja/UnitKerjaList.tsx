@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { createUnitKerja, updateUnitKerja, deleteUnitKerja } from "@/services/unitKerjaService";
 import { UnitKerja } from "@/types/unitKerja";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 export default function UnitKerjaList() {
   const { unitKerjaList, isLoading, error, refreshUnitKerja, syncWithAnggota } = useUnitKerja();
@@ -128,6 +129,13 @@ export default function UnitKerjaList() {
       }
     }
   };
+
+  // Filter units based on search query
+  const filteredUnits = unitKerjaList.filter(unit =>
+    unit.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    unit.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (unit.keterangan && unit.keterangan.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   // Initialize pagination
   const {
