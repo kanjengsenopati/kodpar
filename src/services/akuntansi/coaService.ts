@@ -12,35 +12,10 @@ const CURRENT_COA_VERSION = "3.0"; // Increment this to force reset for all user
  * Get all Chart of Accounts from Local Mirror (IndexedDB)
  */
 export function getAllChartOfAccounts(): ChartOfAccount[] {
-  // coaService will read from Dexie 'coa' table
-  // This is handled by UI components calling coa table directly
-  // or filtered by this service.
-  return []; // Placeholder for direct table access pattern
+  // coaService now relies on neonMasterSync for data and Dexie for local access
+  return []; // UI components should use useLiveQuery with db.coa
 }
 
-
-/**
- * Get all Chart of Accounts with version check and automatic reset
- */
-export function getAllChartOfAccounts(): ChartOfAccount[] {
-  try {
-    const data = localStorage.getItem(COA_STORAGE_KEY);
-    const version = localStorage.getItem(COA_VERSION_KEY);
-    
-    // Force reset if no data, no version, or version mismatch
-    if (!data || !version || version !== CURRENT_COA_VERSION) {
-      console.log(`🔄 Standardizing Chart of Accounts to version ${CURRENT_COA_VERSION}...`);
-      localStorage.setItem(COA_STORAGE_KEY, JSON.stringify(initialChartOfAccounts));
-      localStorage.setItem(COA_VERSION_KEY, CURRENT_COA_VERSION);
-      return initialChartOfAccounts;
-    }
-    
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Error loading chart of accounts:", error);
-    return initialChartOfAccounts;
-  }
-}
 
 /**
  * Get COA ID by account code
