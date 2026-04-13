@@ -110,3 +110,54 @@ export async function resetJenisData(): Promise<void> {
   await neonMasterSync.rehydrateFromCloud();
   await getAllJenis(); // Refill cache
 }
+
+/**
+ * Delete a jenis with sync
+ */
+export async function deleteJenis(id: string): Promise<boolean> {
+  try {
+    await db.table('mst_jenis').delete(id);
+
+    // Update cache
+    jenisCache = jenisCache.filter(j => j.id !== id);
+
+    // Trigger Sync (Deletion)
+    const { centralizedSync } = await import("./sync/centralizedSyncService");
+    // Passing null data as signal for deletion if backend supports it,
+    // or you might have a dedicated delete sync method.
+    centralizedSync.syncEntity('mst_jenis', id, null);
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting jenis:", error);
+    return false;
+  }
+}
+
+/**
+ * Update an existing jenis with sync
+ */
+export async function updateJenis(id: string, updates: Partial<Jenis>): Promise<Jenis | undefined> {
+  const existing = await getJenisById(id);
+  if (!existing) return undefined;
+
+  const updatedJenis: Jenis = {
+    ...existing,
+    ...updates,
+    updatedAt: new Date().toISOString()
+  } as Jenis;
+
+  await db.table('mst_jenis').put(updatedJenis);
+
+  // Update cache
+  const index = jenisCache.findIndex(j => j.id === id);
+  if (index !== -1) {
+    jenisCache[index] = updatedJenis;
+  }
+
+  // Trigger Sync
+  const { centralizedSync } = await import("./sync/centralizedSyncService");
+  centralizedSync.syncEntity('mst_jenis', id, updatedJenis);
+
+  return updatedJenis;
+}

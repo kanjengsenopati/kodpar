@@ -120,3 +120,51 @@ export const deletePenjualan = async (id: string): Promise<boolean> => {
 
   return true;
 };
+
+/**
+ * Update sale transaction status
+ */
+export const updatePenjualan = async (id: string, updates: Partial<Penjualan>): Promise<Penjualan | null> => {
+  const existing = await getPenjualanById(id);
+  if (!existing) return null;
+
+  const updatedPenjualan = {
+    ...existing,
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+
+  await db.transaction('rw', [db.table('pos_penjualan'), db.table('pos_penjualan_item'), db.table('mst_produk')], async () => {
+    // Handle stock reversal if status changes from sukses to cancelled
+    if (existing.status === "sukses" && updates.status === "batal") {
+       for (const item of existing.items) {
+        const prod = await db.table('mst_produk').get(item.produkId);
+        if (prod) {
+          await db.table('mst_produk').update(item.produkId, { stok: prod.stok + item.jumlah });
+        }
+      }
+    }
+
+    // Handle stock deduction if status changes from pending/cancelled to sukses
+    if (existing.status !== "sukses" && updates.status === "sukses") {
+       for (const item of existing.items) {
+        const prod = await db.table('mst_produk').get(item.produkId);
+        if (prod) {
+          await db.table('mst_produk').update(item.produkId, { stok: prod.stok - item.jumlah });
+        }
+      }
+    }
+
+    await db.table('pos_penjualan').update(id, updates);
+  });
+
+  // Log audit
+  logAuditEntry("UPDATE", "PENJUALAN", `Memperbarui transaksi ${existing.nomorTransaksi}`, id);
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  // @ts-ignore
+  centralizedSync.syncEntity('pos_penjualan', id, updatedPenjualan);
+
+  return updatedPenjualan;
+};
