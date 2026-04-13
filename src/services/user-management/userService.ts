@@ -1,148 +1,91 @@
 import { User } from "@/types/user";
-import { generateId } from "@/lib/utils";
-import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
-import { getRoleById } from "./roleService";
+import { db } from "@/db/db";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
-// Local Storage Key
-const USERS_KEY = "koperasi_users";
-
-// Default users
-export const defaultUsers: User[] = [
-  {
-    id: "user_1",
-    username: "superadmin",
-    nama: "Super Administrator",
-    email: "superadmin@koperasi.com",
-    roleId: "role_superadmin",
-    foto: "",
-    jabatan: "Super Administrator",
-    noHP: "081234567890",
-    alamat: "Jl. Admin No. 1",
-    aktif: true,
-    lastLogin: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "user_2",
-    username: "admin",
-    nama: "Administrator",
-    email: "admin@koperasi.com",
-    roleId: "role_admin",
-    foto: "",
-    jabatan: "Administrator",
-    noHP: "081234567891",
-    alamat: "Jl. Admin No. 2",
-    aktif: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "user_3",
-    username: "demo",
-    nama: "Demo User",
-    email: "demo@koperasi.com",
-    roleId: "role_admin",
-    foto: "",
-    jabatan: "Demo Administrator",
-    noHP: "081234567892",
-    alamat: "Jl. Demo No. 1",
-    aktif: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "user_4",
-    username: "kasir1",
-    nama: "Kasir Utama",
-    email: "kasir@koperasi.com",
-    roleId: "role_kasir",
-    foto: "",
-    jabatan: "Kasir",
-    noHP: "081234567893",
-    alamat: "Jl. Kasir No. 1",
-    aktif: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "user_5",
-    username: "anggota1",
-    nama: "Budi Santoso",
-    email: "anggota@koperasi.com",
-    roleId: "role_kasir",
-    anggotaId: "AGT001",
-    foto: "",
-    jabatan: "Anggota",
-    noHP: "081234567894",
-    alamat: "Jl. Anggota No. 1",
-    aktif: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
-export const getUsersFromStorage = (): User[] => {
-  return getFromLocalStorage(USERS_KEY, []);
+/**
+ * Get all users from local mirror (IndexedDB)
+ */
+export const getUsers = async (): Promise<User[]> => {
+  return await db.table('users').toArray();
 };
 
-export const getUsers = (): User[] => {
-  return getUsersFromStorage();
+/**
+ * Get user by ID
+ */
+export const getUserById = async (id: string): Promise<User | undefined> => {
+  return await db.table('users').get(id);
 };
 
-export const getUserById = (id: string): User | undefined => {
-  const users = getUsers();
-  return users.find(user => user.id === id);
-};
-
-export const createUser = (userData: Omit<User, "id" | "createdAt" | "updatedAt">): User => {
-  const users = getUsers();
+/**
+ * Create a new user with sync (Registration driven by cloud)
+ */
+export const createUser = async (userData: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User> => {
   const newUser: User = {
-    id: generateId("user"),
+    id: generateUUIDv7(),
     ...userData,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
   
-  users.push(newUser);
-  saveToLocalStorage(USERS_KEY, users);
+  await db.table('users').add(newUser);
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('users', newUser.id, newUser);
+
   return newUser;
 };
 
-export const updateUser = (id: string, userData: Partial<User>): User | null => {
-  const users = getUsers();
-  const index = users.findIndex(user => user.id === id);
+/**
+ * Update user with sync
+ */
+export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
+  const existing = await getUserById(id);
+  if (!existing) return null;
   
-  if (index === -1) return null;
-  
-  // Update user data
   const updatedUser = {
-    ...users[index],
+    ...existing,
     ...userData,
     updatedAt: new Date().toISOString()
   };
   
-  users[index] = updatedUser;
-  saveToLocalStorage(USERS_KEY, users);
+  await db.table('users').put(updatedUser);
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('users', id, updatedUser);
+
   return updatedUser;
 };
 
-export const deleteUser = (id: string): boolean => {
-  const users = getUsers();
-  const filteredUsers = users.filter(user => user.id !== id);
+/**
+ * Delete user with sync
+ */
+export const deleteUser = async (id: string): Promise<boolean> => {
+  const existing = await getUserById(id);
+  if (!existing) return false;
   
-  if (filteredUsers.length === users.length) {
-    return false;
-  }
+  await db.table('users').delete(id);
+
+  // Trigger sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('users', id, null);
   
-  saveToLocalStorage(USERS_KEY, filteredUsers);
   return true;
 };
 
-export const initUsers = (): void => {
-  // Initialize users
-  const existingUsers = getUsersFromStorage();
-  if (existingUsers.length === 0) {
-    saveToLocalStorage(USERS_KEY, defaultUsers);
+/**
+ * Default Users (Empty fallback to fix imports)
+ */
+export const defaultUsers: User[] = [];
+
+/**
+ * Initialize users (Rehydration Trigger)
+ */
+export const initUsers = async (): Promise<void> => {
+  const users = await getUsers();
+  if (users.length === 0) {
+    const { neonMasterSync } = await import("../sync/neonMasterSyncService");
+    await neonMasterSync.rehydrateFromCloud();
   }
 };

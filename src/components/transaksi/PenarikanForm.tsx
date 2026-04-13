@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { createTransaksi } from "@/services/transaksiService";
 import { calculateTotalSimpanan } from "@/services/transaksiService";
 import { getJenisOptions } from "@/services/jenisService";
-import { Transaksi } from "@/types";
+import { Transaksi, Jenis } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 
 interface PenarikanFormProps {
@@ -31,9 +31,16 @@ export function PenarikanForm({ anggotaList, initialData, onSuccess }: Penarikan
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [simpananCategories, setSimpananCategories] = useState<Jenis[]>([]);
 
-  // Get available simpanan categories
-  const simpananCategories = getJenisOptions("Simpanan");
+  // Load available simpanan categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categories = await getJenisOptions("Simpanan");
+      setSimpananCategories(categories);
+    };
+    loadCategories();
+  }, []);
 
   const handleAnggotaChange = async (anggotaId: string) => {
     setFormData(prev => ({ ...prev, anggotaId }));
@@ -218,4 +225,3 @@ export function PenarikanForm({ anggotaList, initialData, onSuccess }: Penarikan
     </Card>
   );
 }
-

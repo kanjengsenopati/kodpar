@@ -31,12 +31,12 @@ export async function getAllUnitKerjaWithInit(): Promise<UnitKerja[]> {
 /**
  * Create a new unit kerja
  */
-export function createUnitKerja(nama: string, keterangan?: string): UnitKerja {
+export async function createUnitKerja(nama: string, keterangan?: string): Promise<UnitKerja> {
   try {
     // Validate input
-    validateForCreate(nama, keterangan);
+    await validateForCreate(nama, keterangan);
     
-    const unitKerjaList = getAllUnitKerja();
+    const unitKerjaList = await getAllUnitKerja();
     
     const newUnitKerja: UnitKerja = {
       id: generateUnitKerjaId(),
@@ -48,7 +48,7 @@ export function createUnitKerja(nama: string, keterangan?: string): UnitKerja {
     };
     
     unitKerjaList.push(newUnitKerja);
-    saveUnitKerjaList(unitKerjaList);
+    await saveUnitKerjaList(unitKerjaList);
     
     // Log audit entry
     logAuditEntry(
@@ -68,9 +68,9 @@ export function createUnitKerja(nama: string, keterangan?: string): UnitKerja {
 /**
  * Update an existing unit kerja
  */
-export function updateUnitKerja(id: string, nama: string, keterangan?: string): UnitKerja | null {
+export async function updateUnitKerja(id: string, nama: string, keterangan?: string): Promise<UnitKerja | null> {
   try {
-    const unitKerjaList = getAllUnitKerja();
+    const unitKerjaList = await getAllUnitKerja();
     const index = unitKerjaList.findIndex(uk => uk.id === id);
     
     if (index === -1) {
@@ -78,7 +78,7 @@ export function updateUnitKerja(id: string, nama: string, keterangan?: string): 
     }
     
     // Validate input
-    validateForUpdate(id, nama, keterangan);
+    await validateForUpdate(id, nama, keterangan);
     
     const oldUnitKerja = unitKerjaList[index];
     unitKerjaList[index] = {
@@ -88,7 +88,7 @@ export function updateUnitKerja(id: string, nama: string, keterangan?: string): 
       updatedAt: new Date().toISOString(),
     };
     
-    saveUnitKerjaList(unitKerjaList);
+    await saveUnitKerjaList(unitKerjaList);
     
     // Log audit entry
     logAuditEntry(
@@ -108,9 +108,9 @@ export function updateUnitKerja(id: string, nama: string, keterangan?: string): 
 /**
  * Delete a unit kerja by ID
  */
-export function deleteUnitKerja(id: string): boolean {
+export async function deleteUnitKerja(id: string): Promise<boolean> {
   try {
-    const unitKerjaList = getAllUnitKerja();
+    const unitKerjaList = await getAllUnitKerja();
     const unitKerjaToDelete = unitKerjaList.find(uk => uk.id === id);
     
     if (!unitKerjaToDelete) {
@@ -118,10 +118,10 @@ export function deleteUnitKerja(id: string): boolean {
     }
     
     // Validate deletion
-    validateForDelete(unitKerjaToDelete);
+    await validateForDelete(unitKerjaToDelete);
     
     const filteredList = unitKerjaList.filter(unitKerja => unitKerja.id !== id);
-    saveUnitKerjaList(filteredList);
+    await saveUnitKerjaList(filteredList);
     
     // Log audit entry
     logAuditEntry(
@@ -144,13 +144,13 @@ export { syncUnitKerjaWithAnggota };
 /**
  * Reset unit kerja data to initial state - add alias for UI compatibility
  */
-export function resetUnitKerja(): UnitKerja[] {
-  return resetUnitKerjaFromAnggota();
+export async function resetUnitKerja(): Promise<UnitKerja[]> {
+  return await resetUnitKerjaFromAnggota();
 }
 
 /**
  * Reset unit kerja data to data from anggota - keep original function name
  */
-export function resetUnitKerjaData(): UnitKerja[] {
-  return resetUnitKerjaFromAnggota();
+export async function resetUnitKerjaData(): Promise<UnitKerja[]> {
+  return await resetUnitKerjaFromAnggota();
 }

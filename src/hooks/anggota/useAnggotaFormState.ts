@@ -59,8 +59,8 @@ export const useAnggotaFormState = () => {
 
   // Load unit kerja options
   useEffect(() => {
-    const loadUnitKerja = () => {
-      const unitKerjaData = getAllUnitKerja();
+    const loadUnitKerja = async () => {
+      const unitKerjaData = await getAllUnitKerja();
       setUnitKerjaOptions(unitKerjaData.map(unit => unit.nama));
     };
     

@@ -87,7 +87,7 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
       return;
     }
 
-    const jumlahAngsuran = parseInt(formData.jumlah);
+    const jumlahAngsuran = Math.round(Number(formData.jumlah));
     if (jumlahAngsuran <= 0) {
       toast({
         title: "Jumlah tidak valid",
@@ -98,14 +98,22 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
     }
 
     setIsSubmitting(true);
-
     try {
+      // Direct Fresh Calculation to prevent race conditions
+      const pinjaman = await getTransaksiById(selectedLoanId);
+      let finalNominalPokok = allocationPreview?.nominalPokok ?? 0;
+      let finalNominalJasa = allocationPreview?.nominalJasa ?? 0;
+
+      if (pinjaman) {
+        const allocation = calculateAngsuranAllocation(pinjaman, jumlahAngsuran);
+        finalNominalPokok = allocation.nominalPokok;
+        finalNominalJasa = allocation.nominalJasa;
+      }
+
       // Enhanced keterangan with allocation info
       let enhancedKeterangan = `${formData.keterangan} - Pinjaman: ${selectedLoanId}`;
-      if (allocationPreview) {
-        const allocationInfo = ` (Jasa Bulanan: ${formatCurrency(allocationPreview.nominalJasa)}, Pokok: ${formatCurrency(allocationPreview.nominalPokok)})`;
-        enhancedKeterangan += allocationInfo;
-      }
+      const allocationInfo = ` (Jasa Bulanan: ${formatCurrency(finalNominalJasa)}, Pokok: ${formatCurrency(finalNominalPokok)})`;
+      enhancedKeterangan += allocationInfo;
 
       if (initialData) {
         // Update existing transaction
@@ -117,8 +125,8 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           kategori: "Pinjaman Reguler",
           keterangan: enhancedKeterangan,
           referensiPinjamanId: selectedLoanId,
-          nominalPokok: allocationPreview?.nominalPokok ?? 0,
-          nominalJasa: allocationPreview?.nominalJasa ?? 0,
+          nominalPokok: finalNominalPokok,
+          nominalJasa: finalNominalJasa,
           status: initialData.status
         });
 
@@ -141,8 +149,8 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           jumlah: jumlahAngsuran,
           keterangan: enhancedKeterangan,
           referensiPinjamanId: selectedLoanId,
-          nominalPokok: allocationPreview?.nominalPokok ?? 0,
-          nominalJasa: allocationPreview?.nominalJasa ?? 0,
+          nominalPokok: finalNominalPokok,
+          nominalJasa: finalNominalJasa,
           status: "Sukses"
         });
 
@@ -211,140 +219,148 @@ export function AngsuranForm({ anggotaList, initialData, onSuccess }: AngsuranFo
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Text.Label>Tanggal Transaksi</Text.Label>
-              <Input
-                id="tanggal"
-                type="date"
-                value={formData.tanggal}
-                onChange={(e) => handleInputChange("tanggal", e.target.value)}
-                required
-                className="rounded-2xl border-slate-100 bg-slate-50 focus:bg-white transition-all"
-              />
-            </div>
+      <CardContent className="p-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            <div className="space-y-2">
-              <Text.Label>Pilih Anggota</Text.Label>
-              <Select
-                value={formData.anggotaId}
-                onValueChange={(value) => handleInputChange("anggotaId", value)}
-              >
-                <SelectTrigger className="rounded-2xl border-slate-100 bg-slate-50">
-                  <SelectValue placeholder="Pilih anggota" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl">
-                  {Array.isArray(anggotaList) && anggotaList.map((anggota: any) => (
-                    <SelectItem key={anggota.id} value={anggota.id}>
-                      {anggota.nama} - {anggota.id}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {formData.anggotaId && (
-            <div className="bg-slate-50/50 p-4 rounded-[24px] border border-slate-100/50">
-              <LoanSelectionPreview
-                anggotaId={formData.anggotaId}
-                onLoanSelect={setSelectedLoanId}
-                onAmountChange={handleAmountSuggestion}
-                selectedLoanId={selectedLoanId}
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Text.Label>Jumlah Angsuran</Text.Label>
-              <div className="space-y-2">
-                <Input
-                  id="jumlah"
-                  type="number"
-                  min="1"
-                  placeholder="Masukkan jumlah angsuran"
-                  value={formData.jumlah}
-                  onChange={(e) => handleInputChange("jumlah", e.target.value)}
-                  required
-                  className="rounded-xl border-slate-100 bg-slate-50 focus:bg-white transition-all text-lg font-semibold"
-                />
-                
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  {suggestedAmount > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <Text.Caption className="not-italic text-slate-500">
-                        Saran: {formatCurrency(suggestedAmount)}
-                      </Text.Caption>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={applySuggestedAmount}
-                        className="h-7 text-[10px] font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full"
-                      >
-                        Gunakan
-                      </Button>
-                    </div>
-                  ) : <div></div>}
-                  
-                  {formData.jumlah && (
-                    <Text.Amount className="text-sm">
-                      {formatCurrency(parseInt(formData.jumlah || "0"))}
-                    </Text.Amount>
-                  )}
+            {/* KOLOM KIRI: SELEKSI DATA (col-span-7) */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Text.Label>Tanggal Transaksi</Text.Label>
+                  <Input
+                    id="tanggal"
+                    type="date"
+                    value={formData.tanggal}
+                    onChange={(e) => handleInputChange("tanggal", e.target.value)}
+                    required
+                    className="h-10 rounded-xl border-slate-100 bg-slate-50 focus:bg-white transition-all text-sm"
+                  />
                 </div>
-                
-                {/* Enhanced Allocation Preview */}
-                {allocationPreview && (
-                  <div className="mt-4 p-4 bg-white border border-slate-100 rounded-[18px] shadow-sm">
-                    <Text.Label className="block mb-3 text-slate-500">Alokasi Pembayaran Bulanan</Text.Label>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <Text.Body className="text-slate-500">Jasa Bulanan (Prioritas)</Text.Body>
-                        <Text.Body className="font-bold text-emerald-600">{formatCurrency(allocationPreview.nominalJasa)}</Text.Body>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <Text.Body className="text-slate-500">Pokok (Sisa)</Text.Body>
-                        <Text.Body className="font-bold text-blue-600">{formatCurrency(allocationPreview.nominalPokok)}</Text.Body>
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-slate-50 flex gap-2">
-                      <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5" />
-                      <Text.Caption className="leading-tight">
-                        Sistem secara otomatis memecah pendapatan jasa dan pengurangan piutang pada laporan keuangan.
-                      </Text.Caption>
+
+                <div className="space-y-1.5">
+                  <Text.Label>Pilih Anggota</Text.Label>
+                  <Select
+                    value={formData.anggotaId}
+                    onValueChange={(value) => handleInputChange("anggotaId", value)}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl border-slate-100 bg-slate-50 text-sm">
+                      <SelectValue placeholder="Pilih anggota" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {Array.isArray(anggotaList) && anggotaList.map((anggota: any) => (
+                        <SelectItem key={anggota.id} value={anggota.id}>
+                          {anggota.nama}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.anggotaId ? (
+                <div className="bg-slate-50/50 p-3 rounded-[20px] border border-slate-100/50 min-h-[300px]">
+                  <LoanSelectionPreview
+                    anggotaId={formData.anggotaId}
+                    onLoanSelect={setSelectedLoanId}
+                    onAmountChange={handleAmountSuggestion}
+                    selectedLoanId={selectedLoanId}
+                  />
+                </div>
+              ) : (
+                <div className="bg-slate-50 flex items-center justify-center h-[300px] rounded-[24px] border border-dashed border-slate-200">
+                  <Text.Caption>Silakan pilih anggota untuk melihat pinjaman aktif</Text.Caption>
+                </div>
+              )}
+            </div>
+
+            {/* KOLOM KANAN: INPUT & KONFIRMASI (col-span-5) */}
+            <div className="lg:col-span-5 space-y-4 bg-slate-50/30 p-4 rounded-[24px] border border-slate-100">
+              <div className="space-y-1.5">
+                <Text.Label>Jumlah Pembayaran</Text.Label>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Input
+                      id="jumlah"
+                      type="number"
+                      min="1"
+                      placeholder="Rp 0"
+                      value={formData.jumlah}
+                      onChange={(e) => handleInputChange("jumlah", e.target.value)}
+                      required
+                      className="h-14 pl-4 rounded-xl border-slate-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 transition-all text-xl font-bold text-emerald-600"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <Calculator className="h-5 w-5 text-slate-300" />
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
+                  
+                  <div className="flex items-center justify-between px-1">
+                    {suggestedAmount > 0 ? (
+                      <div className="flex items-center gap-1.5">
+                        <Text.Caption className="not-italic text-slate-400">Saran:</Text.Caption>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={applySuggestedAmount}
+                          className="h-6 px-2 text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg"
+                        >
+                          {formatCurrency(suggestedAmount)}
+                        </Button>
+                      </div>
+                    ) : <div />}
 
-            <div className="space-y-2">
-              <Text.Label>Keterangan Tambahan</Text.Label>
-              <div className="h-full">
+                    {formData.jumlah && (
+                      <div className="bg-white px-2 py-0.5 rounded-lg border border-slate-100 shadow-sm">
+                        <Text.Amount className="text-[14px]">
+                          {formatCurrency(parseInt(formData.jumlah || "0"))}
+                        </Text.Amount>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Enhanced Allocation Preview */}
+                  {allocationPreview && (
+                    <div className="p-4 bg-white border border-slate-100 rounded-[20px] shadow-sm space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <Text.Body className="text-slate-400 text-xs">Jasa Bulanan (SAK EP)</Text.Body>
+                        <Text.Body className="font-bold text-emerald-600">{formatCurrency(allocationPreview.nominalJasa)}</Text.Body>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <Text.Body className="text-slate-400 text-xs">Pokok (Piutang)</Text.Body>
+                        <Text.Body className="font-bold text-blue-600">{formatCurrency(allocationPreview.nominalPokok)}</Text.Body>
+                      </div>
+                      <div className="h-0.5 bg-slate-50 w-full" />
+                      <Text.Caption className="text-[10px] leading-tight text-slate-400">
+                        * Alokasi otomatis dicatat sebagai Jasa & Pelunasan Pokok pada Jurnal Akuntansi.
+                      </Text.Caption>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Text.Label>Keterangan</Text.Label>
                 <Textarea
                   id="keterangan"
-                  placeholder="Contoh: Pembayaran angsuran ke-5 via transfer"
+                  placeholder="Catatan transaksi..."
                   value={formData.keterangan}
                   onChange={(e) => handleInputChange("keterangan", e.target.value)}
-                  rows={4}
-                  className="rounded-xl border-slate-100 bg-slate-50 focus:bg-white transition-all resize-none"
+                  rows={2}
+                  className="rounded-xl border-slate-100 bg-white focus:bg-white transition-all resize-none text-sm p-3"
                 />
               </div>
-            </div>
-          </div>
 
-          <div className="pt-4">
-            <Button 
-              type="submit" 
-              className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100" 
-              disabled={isSubmitting || !selectedLoanId || !formData.jumlah || parseInt(formData.jumlah || "0") <= 0}
-            >
-              {isSubmitting ? "Menyimpan Transaksi..." : initialData ? "Update Angsuran" : "Konfirmasi & Simpan Angsuran"}
-            </Button>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 font-bold"
+                  disabled={isSubmitting || !selectedLoanId || !formData.jumlah || parseInt(formData.jumlah || "0") <= 0}
+                >
+                  {isSubmitting ? "Memproses..." : initialData ? "Update Angsuran" : "Simpan Angsuran"}
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
       </CardContent>

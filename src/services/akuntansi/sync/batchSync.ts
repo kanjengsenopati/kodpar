@@ -13,7 +13,6 @@ export async function syncPengajuanToAccounting(pengajuan: Pengajuan): Promise<a
   const tempTransaction: Transaksi = {
     id: `PG-${pengajuan.id}`,
     anggotaId: pengajuan.anggotaId,
-    anggotaId: pengajuan.anggotaId,
     jenis: pengajuan.jenis,
     jumlah: pengajuan.jumlah,
     tanggal: pengajuan.tanggal,

@@ -22,18 +22,16 @@ async function getUnitKerjaFromAnggotaData(): Promise<UnitKerja[]> {
 
   // Convert to UnitKerja objects with generated IDs
   const unitKerjaList: UnitKerja[] = [];
-  let idCounter = 1;
 
   uniqueUnitKerja.forEach((nama) => {
     unitKerjaList.push({
-      id: `UK${String(idCounter).padStart(3, "0")}`,
+      id: generateUnitKerjaId(),
       nama,
       keterangan: `Unit kerja ${nama}`,
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    idCounter++;
   });
 
   return unitKerjaList;
@@ -43,13 +41,13 @@ async function getUnitKerjaFromAnggotaData(): Promise<UnitKerja[]> {
  * Initialize unit kerja data from anggota if empty
  */
 export async function initializeUnitKerjaFromAnggota(): Promise<UnitKerja[]> {
-  const existingData = getAllUnitKerja();
+  const existingData = await getAllUnitKerja();
   
   if (existingData.length === 0) {
     const unitKerjaFromAnggota = await getUnitKerjaFromAnggotaData();
     if (unitKerjaFromAnggota.length > 0) {
       console.log("Initializing unit kerja from anggota data...");
-      saveUnitKerjaList(unitKerjaFromAnggota);
+      await saveUnitKerjaList(unitKerjaFromAnggota);
       return unitKerjaFromAnggota;
     }
   }
@@ -60,21 +58,21 @@ export async function initializeUnitKerjaFromAnggota(): Promise<UnitKerja[]> {
 /**
  * Reset unit kerja data to initial mock data
  */
-export function resetUnitKerjaFromAnggota(): UnitKerja[] {
-  return resetToInitialUnitKerjaData();
+export async function resetUnitKerjaFromAnggota(): Promise<UnitKerja[]> {
+  return await resetToInitialUnitKerjaData();
 }
 
 /**
  * Sync unit kerja with current anggota data
  */
 export async function syncUnitKerjaWithAnggota(): Promise<number> {
-  const currentUnitKerja = getAllUnitKerja();
+  const currentUnitKerja = await getAllUnitKerja();
   const unitKerjaFromAnggota = await getUnitKerjaFromAnggotaData();
   
   let addedCount = 0;
   const existingNames = new Set(currentUnitKerja.map(uk => uk.nama));
   
-  unitKerjaFromAnggota.forEach(newUnitKerja => {
+  for (const newUnitKerja of unitKerjaFromAnggota) {
     if (!existingNames.has(newUnitKerja.nama)) {
       currentUnitKerja.push({
         ...newUnitKerja,
@@ -84,10 +82,10 @@ export async function syncUnitKerjaWithAnggota(): Promise<number> {
       });
       addedCount++;
     }
-  });
+  }
   
   if (addedCount > 0) {
-    saveUnitKerjaList(currentUnitKerja);
+    await saveUnitKerjaList(currentUnitKerja);
     
     logAuditEntry(
       "UPDATE",

@@ -33,20 +33,11 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
     const result = await createTransactionWithSync(data);
     
     if (result.success && result.data && result.data.status === "Sukses") {
-      // Accounting sync is now handled solely via 'transaction-created' event listener
-      // to prevent double-processing. No explicit call needed here.
-      
       handleTransactionCreateSuccess(result.data);
       
-      // Process auto deductions for loan transactions AFTER centralized sync
+      // Process auto deductions for loan transactions
       if (result.data.jenis === "Pinjam") {
         await processLoanAutoDeductions(result.data);
-      }
-      
-      // Link payment to installment schedule for Angsuran transactions
-      if (result.data.jenis === "Angsuran") {
-        const { linkPaymentToSchedule } = await import("./installmentScheduleService");
-        await linkPaymentToSchedule(result.data);
       }
     } else if (result.success && result.data) {
       handleTransactionPending(result.data);
@@ -60,78 +51,44 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
   }
 }
 
+import { updateTransactionWithSync } from "./operations/transactionCore";
+// ... (imports preserved)
+
 /**
- * Update an existing transaksi dengan centralized sync
+ * Update an existing transaksi dengan centralized sync ATOMIC
  */
 export async function updateTransaksi(id: string, transaksi: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
-  const existing = await db.transaksi.get(id);
-  
-  if (!existing) {
-    handleTransactionNotFound();
-    return { success: false, error: "Transaksi tidak ditemukan" };
-  }
-  
-  const oldTransaksi = { ...existing };
-  
-  // If anggotaId is being updated, we check if it exists
-  if (transaksi.anggotaId) {
-    const anggota = await getAnggotaById(transaksi.anggotaId);
-    if (!anggota) {
-      handleMemberNotFound();
-      return { success: false, error: "Anggota tidak ditemukan" };
-    }
-  }
-  
-  const updatedTransaksi: Transaksi = {
-    ...existing,
-    ...transaksi,
-    updatedAt: new Date().toISOString(),
-  };
-  
   try {
-    await db.transaksi.put(updatedTransaksi);
-  } catch (error: any) {
-    return { success: false, error: `Database Error: ${error.message || 'Gagal memperbarui transaksi'}` };
-  }
-  
-  handleTransactionUpdateSuccess(updatedTransaksi);
-  
-  // Centralized sync for updated transaction
-  if (updatedTransaksi.status === "Sukses") {
-    console.log(`🔄 Triggering centralized sync for updated transaction ${id}`);
-    const syncResult = await centralizedSync.syncTransaction(updatedTransaksi);
+    // Audit data integrity before atomic update
+    if (transaksi.anggotaId) {
+      const anggota = await getAnggotaById(transaksi.anggotaId);
+      if (!anggota) {
+        handleMemberNotFound();
+        return { success: false, error: "Anggota tidak ditemukan" };
+      }
+    }
+
+    // Execute ATOMIC UPDATE (Transaction + Accounting Jurnal)
+    const result = await updateTransactionWithSync(id, transaksi);
     
-    if (syncResult.success) {
-      console.log(`✅ Update centralized sync completed for transaction ${id}: ${syncResult.message}`);
+    if (result.success && result.data) {
+      handleTransactionUpdateSuccess(result.data);
+
+      // Secondary non-accounting sync (e.g. reports)
+      try {
+        await syncTransactionToKeuangan(result.data);
+      } catch (err) {
+        console.warn("Non-fatal secondary sync warning:", err);
+      }
     }
+
+    return result;
+  } catch (error: any) {
+    console.error("Error updating transaksi in crud wrapper:", error);
+    return { success: false, error: `Critical Update Error: ${error.message || 'Gagal memproses update'}` };
   }
-  
-  // Comprehensive sync for updated transaction (non-accounting)
-  const keuanganSync = await syncTransactionToKeuangan(updatedTransaksi);
-  if (keuanganSync.success) {
-    console.log(`Update comprehensive sync completed for transaction ${id}`);
-  }
-  
-  // Emit transaction updated event
-  window.dispatchEvent(new CustomEvent('transaction-updated', {
-    detail: { 
-      transaction: updatedTransaksi,
-      previousTransaction: oldTransaksi,
-      timestamp: new Date().toISOString()
-    }
-  }));
-  
-  // Log audit entry
-  const anggota = await getAnggotaById(updatedTransaksi.anggotaId);
-  logAuditEntry(
-    "UPDATE",
-    "TRANSAKSI", 
-    `Memperbarui transaksi ${oldTransaksi.jenis} dari Rp ${oldTransaksi.jumlah.toLocaleString('id-ID')} menjadi Rp ${updatedTransaksi.jumlah.toLocaleString('id-ID')} untuk anggota ${anggota?.nama || updatedTransaksi.anggotaId} dengan centralized sync`,
-    id
-  );
-  
-  return { success: true, data: updatedTransaksi };
 }
+
 
 /**
  * Delete a transaksi by ID with real-time sync cleanup

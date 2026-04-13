@@ -10,7 +10,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { createTransaksi } from "@/services/transaksiService";
 import { getTransaksiByAnggotaId } from "@/services/transaksiService";
 import { getJenisOptions } from "@/services/jenisService";
-import { Transaksi } from "@/types";
+import { Transaksi, Jenis } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -39,9 +39,16 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [simpananByJenis, setSimpananByJenis] = useState<SimpananByJenis>({});
   const [selectedJenisBalance, setSelectedJenisBalance] = useState(0);
+  const [simpananCategories, setSimpananCategories] = useState<Jenis[]>([]);
 
-  // Get available simpanan categories
-  const simpananCategories = getJenisOptions("Simpanan");
+  // Load available simpanan categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categories = await getJenisOptions("Simpanan");
+      setSimpananCategories(categories);
+    };
+    loadCategories();
+  }, []);
 
   const calculateSimpananByJenis = async (anggotaId: string): Promise<SimpananByJenis> => {
     const transaksi = await getTransaksiByAnggotaId(anggotaId);
@@ -297,4 +304,3 @@ export function PenarikanFormEnhanced({ anggotaList, initialData, onSuccess }: P
     </Card>
   );
 }
-

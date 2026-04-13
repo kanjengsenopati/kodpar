@@ -1,0 +1,28 @@
+{
+  "name": "koperasi-backend",
+  "version": "1.0.0",
+  "description": "Fastify Backend for Koperasi Sync Engine",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.26.2",
+    "fastify-type-provider-zod": "^1.1.9",
+    "pg": "^8.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}

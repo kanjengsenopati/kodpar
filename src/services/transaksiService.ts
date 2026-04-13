@@ -27,7 +27,7 @@ import {
   generateInstallmentSchedule
 } from "./transaksi/loanOperations";
 
-import { generateTransaksiId } from "./transaksi/idGenerator";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
 // Import modular operations
 import {
@@ -72,7 +72,7 @@ export const transaksiService = {
   getAvailableKategori,
   isValidKategori,
   getTransaksiByTypeAndCategory,
-  generateId: generateTransaksiId,
+  generateId: generateUUIDv7,
   
   // CRUD
   create: createTransaksi,
@@ -116,7 +116,7 @@ export {
   getAvailableKategori,
   isValidKategori,
   getTransaksiByTypeAndCategory,
-  generateTransaksiId,
+  generateUUIDv7 as generateTransaksiId,
   createTransaksi,
   updateTransaksi,
   deleteTransaksi,

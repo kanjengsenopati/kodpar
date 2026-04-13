@@ -28,7 +28,8 @@ export function calculateAngsuranAllocation(
   const nominalJasa = Math.round(remainingPrincipal * (sukuBungaPersen / 100));
   
   // 3. Principal payment is the remainder of the installment
-  const nominalPokok = Math.max(0, totalAngsuran - nominalJasa);
+  // Force to round to ensure integer balance
+  const nominalPokok = Math.max(0, Math.round(totalAngsuran - nominalJasa));
   
   return {
     pokok: nominalPokok,
