@@ -1,35 +1,25 @@
 import { Transaksi, SubmissionResult } from "@/types";
 import { db } from "@/db/db";
 import { initialTransaksi } from "./initialData";
-import { generateTransaksiId, generateTransaksiNumber } from "./idGenerator";
-import { getAnggotaById } from "@/services/anggotaService";
-import { getJenisByType } from "@/services/jenisService";
-import { getCurrentUser } from "@/services/auth/sessionManagement";
-import { generateUUIDv7 } from "@/utils/idUtils";
+import * as IdUtils from "../../utils/idUtils";
+import { getJenisByType } from "../jenisService";
+import { getCurrentUser } from "../auth/sessionManagement";
+import { generateUUIDv7 } from "../../utils/idUtils";
 
 /**
- * Get all transaksi from IndexedDB
+ * Get all transaksi from IndexedDB (Mirror of NeonDB)
  */
 export async function getAllTransaksi(): Promise<Transaksi[]> {
   try {
     const user = getCurrentUser();
     const isAnggota = user?.roleId === "role_anggota" || user?.roleId === "anggota";
     
-    const count = await db.transaksi.count();
-    if (count === 0) {
-      if (initialTransaksi.length > 0) {
-        await db.transaksi.bulkAdd(initialTransaksi);
-      }
-      return isAnggota && user?.anggotaId
-        ? initialTransaksi.filter(t => t.anggotaId === user.anggotaId)
-        : initialTransaksi;
-    }
-    
     if (isAnggota && user?.anggotaId) {
       return await db.transaksi.where('anggotaId').equals(user.anggotaId).toArray();
     }
     
     return await db.transaksi.toArray();
+
   } catch (error) {
     console.warn("⚠️ Database access error in getAllTransaksi (likely migration in progress):", error);
     return [];
@@ -81,9 +71,9 @@ export async function getTransaksiByTypeAndCategory(
 /**
  * Get all active kategori names by jenis
  */
-export function getAvailableKategori(jenis: "Simpan" | "Pinjam"): string[] {
+export async function getAvailableKategori(jenis: "Simpan" | "Pinjam"): Promise<string[]> {
   const jenisTransaksi = jenis === "Simpan" ? "Simpanan" : "Pinjaman";
-  const jenisList = getJenisByType(jenisTransaksi);
+  const jenisList = await getJenisByType(jenisTransaksi);
   return jenisList
     .filter(j => j.isActive)
     .map(j => j.nama);
@@ -92,14 +82,16 @@ export function getAvailableKategori(jenis: "Simpan" | "Pinjam"): string[] {
 /**
  * Validate if a kategori is valid for a specific jenis
  */
-export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): boolean {
-  const availableKategori = getAvailableKategori(jenis);
+export async function isValidKategori(jenis: "Simpan" | "Pinjam" | "Angsuran", kategori: string): Promise<boolean> {
+  // Angsuran uses same categories as Pinjam
+  const effectiveJenis = jenis === "Angsuran" ? "Pinjam" : jenis;
+  const availableKategori = await getAvailableKategori(effectiveJenis);
   
   // 1. Exact match check
   if (availableKategori.includes(kategori)) return true;
   
   // 2. Backward compatibility: check with "Pinjaman " prefix if the type is "Pinjam"
-  if (jenis === "Pinjam") {
+  if (effectiveJenis === "Pinjam") {
     // If input is "Reguler", check for "Pinjaman Reguler"
     if (availableKategori.includes(`Pinjaman ${kategori}`)) return true;
     
@@ -109,7 +101,7 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): b
   }
   
   // 3. Same for Simpan if needed (future proofing)
-  if (jenis === "Simpan") {
+  if (effectiveJenis === "Simpan") {
     if (availableKategori.includes(`Simpanan ${kategori}`)) return true;
     const cleaned = kategori.replace(/^Simpanan\s+/, "");
     if (availableKategori.includes(cleaned)) return true;
@@ -119,25 +111,42 @@ export function isValidKategori(jenis: "Simpan" | "Pinjam", kategori: string): b
 }
 
 /**
+ * Generate a new human-readable transaksi reference number
+ */
+export async function generateTransaksiNumber(): Promise<string> {
+  const allTransaksi = await db.transaksi.toArray();
+  const today = new Date();
+
+  const existingNumbers = allTransaksi
+    .map(t => IdUtils.extractNumericSuffix(t.nomorTransaksi || t.id))
+    .filter(n => !isNaN(n));
+
+  const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+
+  return IdUtils.formatReferenceNumber({
+    prefix: "TR",
+    year: today.getFullYear(),
+    month: today.getMonth() + 1,
+    sequence: lastSeq + 1,
+    padding: 6
+  });
+}
+
+/**
  * Create a new transaksi with automatic accounting sync
  */
 export async function createTransaksi(data: Partial<Transaksi>): Promise<SubmissionResult<Transaksi>> {
   try {
+    // 1. GENERATE ID BEFORE ANY DB OPERATION (SaaS Sync Readiness)
     const newId = generateUUIDv7();
+
+    // 2. GENERATE TRANSACTION NUMBER
     const nomorTransaksi = await generateTransaksiNumber();
     const now = new Date().toISOString();
     
-    // VALIDATION: Ensure required fields are present
+    // VALIDATION
     if (!data.anggotaId) {
       return { success: false, error: "ID Anggota wajib diisi" };
-    }
-    
-    // Validate kategori if provided
-    if (data.jenis && data.kategori) {
-      // Check if kategori is valid for the given jenis
-      if (!isValidKategori(data.jenis as "Simpan" | "Pinjam", data.kategori)) {
-        console.warn(`Kategori '${data.kategori}' is not valid for jenis ${data.jenis}`);
-      }
     }
     
     const newTransaksi: Transaksi = {
@@ -150,25 +159,25 @@ export async function createTransaksi(data: Partial<Transaksi>): Promise<Submiss
       jumlah: data.jumlah || 0,
       keterangan: data.keterangan || "",
       status: data.status || "Sukses",
-      accountingSyncStatus: data.status === "Sukses" ? "PENDING" : undefined,
+      referensiPinjamanId: data.referensiPinjamanId,
+      nominalPokok: data.nominalPokok,
+      nominalJasa: data.nominalJasa,
+      tenor: data.tenor,
       createdAt: now,
       updatedAt: now,
     };
+
     
-    // Add to database
-    try {
-      await db.transaksi.add(newTransaksi);
-    } catch (dbError: any) {
-      if (dbError.name === 'ConstraintError') {
-        console.warn(`🔄 Primary key collision for transaction ${newId}, retrying with a new ID...`);
-        return await createTransaksi(data);
-      }
-      return { success: false, error: `Database Error: ${dbError.message || 'Gagal menulis ke IndexedDB'}` };
-    }
+    // 3. ADD TO INDEXEDDB
+    await db.transaksi.add(newTransaksi);
     
     return { success: true, data: newTransaksi };
   } catch (error: any) {
+    if (error.name === 'ConstraintError') {
+      console.warn(`🔄 ID collision detector: Retrying...`);
+      return await createTransaksi(data);
+    }
     console.error("Error in core createTransaksi:", error);
-    return { success: false, error: `Critical Error: ${error.message || 'Kesalahan sistem saat membuat transaksi'}` };
+    return { success: false, error: `Critical Error: ${error.message || 'Kesalahan sistem'}` };
   }
 }

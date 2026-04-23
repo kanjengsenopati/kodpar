@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { getJenisById } from "@/services/jenisService";
+import { getJenisById, getJenisByIdSync } from "@/services/jenisService";
 import { Jenis } from "@/types";
 
 // Simple in-memory cache to prevent multiple queries
@@ -26,8 +27,7 @@ export function useCategoryLookup(categoryId?: string) {
 
     const fetchName = async () => {
       try {
-        // jenisService is currently synchronous (localStorage)
-        const data = getJenisById(categoryId);
+        const data = await getJenisById(categoryId);
         const name = data?.nama || "Kategori Unknown";
         categoryCache[categoryId] = name;
         setCategoryName(name);
@@ -51,7 +51,8 @@ export function getCategoryNameSync(categoryId?: string): string {
   if (!categoryId) return "-";
   if (categoryCache[categoryId]) return categoryCache[categoryId];
   
-  const data = getJenisById(categoryId);
+  // Try to find in the new synchronous cache in the service
+  const data = getJenisByIdSync(categoryId);
   if (data) {
     categoryCache[categoryId] = data.nama;
     return data.nama;

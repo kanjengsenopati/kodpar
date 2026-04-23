@@ -3,104 +3,21 @@ import { db } from "@/db/db";
 import { getAllUnitKerja, syncUnitKerjaWithAnggota } from "./unitKerjaService";
 import { logAuditEntry } from "./auditService";
 import { getCurrentUser } from "./auth/sessionManagement";
-import { generateUUIDv7, formatReferenceNumber, extractNumericSuffix } from "../utils/idUtils";
+import * as IdUtils from "../utils/idUtils";
 
-// Initial sample data with deterministic UUIDv7 for stable demo reset
-const initialAnggota: Anggota[] = [
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000001", 
-    noAnggota: "AG/2026/0001",
-    nama: "MARIYEM", 
-    nip: "197201011998031001",
-    alamat: "DESA JATILOR",
-    noHp: "0812345678",
-    jenisKelamin: "P",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SDN Jatilor 01",
-    tanggalBergabung: "2023-01-15",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "mariyem@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000002", 
-    noAnggota: "AG/2026/0002",
-    nama: "MASKUN ROZAK", 
-    nip: "198201011998031001",
-    alamat: "DESA BRINGIN",
-    noHp: "0823456789",
-    jenisKelamin: "L",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SDN Bringin",
-    tanggalBergabung: "2023-02-20",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "maskun.rozak@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000003", 
-    noAnggota: "AG/2026/0003",
-    nama: "AHMAD NURALIMIN", 
-    nip: "198801011998031001",
-    alamat: "DESA KLAMPOK",
-    noHp: "08345678912",
-    jenisKelamin: "L",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SDN Klampok 01",
-    tanggalBergabung: "2023-03-10",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "ahmad.nuralimin@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  { 
-    id: "018e6a12-8c1d-7a01-8000-000000000004", 
-    noAnggota: "AG/2026/0004",
-    nama: "DJAKA KUMALATARTO, S.Pd, M.Pd", 
-    nip: "197002161210012345",
-    alamat: "Desa Ketitang, Kecamatan Godong, Kab Grobogan",
-    noHp: "08123456789",
-    jenisKelamin: "L",
-    agama: "ISLAM",
-    status: "active",
-    unitKerja: "SD Negeri Ketitang",
-    tanggalBergabung: "2023-04-01",
-    tanggalRegistrasi: "2023",
-    foto: undefined,
-    email: "djaka.kumalatarto@example.com",
-    dokumen: [],
-    keluarga: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
+import { neonMasterSync } from "./sync/neonMasterSyncService";
 
 /**
- * Reset anggota data to initial state and return the reset data
+ * Reset anggota data to initial state - TRIGGER CLOUD REHYDRATION
  */
-export async function resetAnggotaData(): Promise<Anggota[]> {
+export async function resetAnggotaData(): Promise<void> {
   await db.anggota.clear();
-  await db.anggota.bulkAdd(initialAnggota);
+  await neonMasterSync.rehydrateFromCloud();
   
   // After resetting anggota data, sync unit kerja
-  syncUnitKerjaWithAnggota();
-  
-  return initialAnggota;
+  await syncUnitKerjaWithAnggota();
 }
+
 
 /**
  * Get all anggota from IndexedDB
@@ -145,15 +62,15 @@ export async function getAnggotaById(id: string): Promise<Anggota | undefined> {
 }
 
 export async function generateAnggotaNumber(): Promise<string> {
-  const anggotaList = await db.anggota.toArray();
+  // Optimization: Get only the last record by index to determine sequence
+  const lastAnggota = await db.anggota.orderBy('noAnggota').last();
   
-  const existingNumbers = anggotaList
-    .map(a => extractNumericSuffix(a.noAnggota || a.id))
-    .filter(n => !isNaN(n));
-    
-  const lastSeq = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+  let lastSeq = 0;
+  if (lastAnggota) {
+    lastSeq = IdUtils.extractNumericSuffix(lastAnggota.noAnggota || lastAnggota.id);
+  }
   
-  return formatReferenceNumber({
+  return IdUtils.formatReferenceNumber({
     prefix: "AG",
     year: new Date().getFullYear(),
     sequence: lastSeq + 1
@@ -164,7 +81,7 @@ export async function generateAnggotaNumber(): Promise<string> {
  * Create a new anggota
  */
 export async function createAnggota(anggota: Omit<Anggota, 'id' | 'noAnggota' | 'createdAt' | 'updatedAt'>): Promise<Anggota> {
-  const id = generateUUIDv7();
+  const id = IdUtils.generateUUIDv7();
   const noAnggota = await generateAnggotaNumber();
   
   const newAnggota: Anggota = {
@@ -178,7 +95,7 @@ export async function createAnggota(anggota: Omit<Anggota, 'id' | 'noAnggota' | 
   await db.anggota.add(newAnggota);
   
   // Sync unit kerja after creating anggota
-  syncUnitKerjaWithAnggota();
+  await syncUnitKerjaWithAnggota();
   
   // Log audit entry
   logAuditEntry(
@@ -210,7 +127,7 @@ export async function updateAnggota(id: string, anggota: Partial<Anggota>): Prom
   await db.anggota.put(updatedAnggota);
   
   // Sync unit kerja after updating anggota (in case unit kerja changed)
-  syncUnitKerjaWithAnggota();
+  await syncUnitKerjaWithAnggota();
   
   // Log audit entry
   logAuditEntry(
@@ -251,7 +168,8 @@ export async function deleteAnggota(id: string): Promise<boolean> {
  */
 export async function validateAnggotaUnitKerja(): Promise<number> {
   const anggotaList = await getAllAnggota();
-  const unitKerjaList = getAllUnitKerja().map(uk => uk.nama);
+  const allUnitKerja = await getAllUnitKerja();
+  const unitKerjaList = allUnitKerja.map(uk => uk.nama);
   
   const defaultUnitKerja = unitKerjaList.length > 0 ? unitKerjaList[0] : "";
   

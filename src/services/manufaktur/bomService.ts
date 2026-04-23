@@ -1,34 +1,58 @@
-
 import { BOM, BOMItem } from "@/types/manufaktur";
-import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
-import { v4 as uuidv4 } from "uuid";
+import { db } from "@/db/db";
+import { generateUUIDv7 } from "@/utils/idUtils";
 
-const BOM_KEY = "manufaktur_bom";
+/**
+ * Get all BOMs from local mirror
+ */
+export const getAllBOM = async (): Promise<BOM[]> => {
+  const boms = await db.table('mfg_bom').toArray();
+  const items = await db.table('mfg_bom_item').toArray();
 
-export function getAllBOM(): BOM[] {
-  return getFromLocalStorage<BOM[]>(BOM_KEY, []);
+  return boms.map(bom => ({
+    ...bom,
+    items: items.filter(item => item.bomId === bom.id)
+  }));
+};
+
+/**
+ * Get BOM by ID
+ */
+export const getBOMById = async (id: string): Promise<BOM | undefined> => {
+  const bom = await db.table('mfg_bom').get(id);
+  if (!bom) return undefined;
+
+  const items = await db.table('mfg_bom_item').where('bomId').equals(id).toArray();
+  return { ...bom, items };
+};
+
+/**
+ * Helper to generate internal BOM codes
+ */
+async function generateBOMCode(): Promise<string> {
+  const count = await db.table('mfg_bom').count();
+  return `BOM-${String(count + 1).padStart(3, "0")}`;
 }
 
-export function getBOMById(id: string): BOM | undefined {
-  return getAllBOM().find((b) => b.id === id);
-}
-
-function generateBOMCode(): string {
-  const list = getAllBOM();
-  const num = list.length + 1;
-  return `BOM-${String(num).padStart(3, "0")}`;
-}
-
-export function createBOM(data: Partial<BOM>): BOM {
+/**
+ * Create a new BOM with sync
+ */
+export const createBOM = async (data: Partial<BOM>): Promise<BOM> => {
   const now = new Date().toISOString();
-  const items: BOMItem[] = data.items || [];
+  const bomId = generateUUIDv7();
+  const items: BOMItem[] = (data.items || []).map(item => ({
+    ...item,
+    id: generateUUIDv7(),
+    bomId: bomId
+  }));
+
   const totalMaterialCost = items.reduce((sum, i) => sum + i.totalCost, 0);
   const overheadCost = data.overheadCost || 0;
   const laborCost = data.laborCost || 0;
 
   const newBOM: BOM = {
-    id: uuidv4(),
-    code: generateBOMCode(),
+    id: bomId,
+    code: await generateBOMCode(),
     productName: data.productName || "",
     productCode: data.productCode || "",
     description: data.description || "",
@@ -45,24 +69,34 @@ export function createBOM(data: Partial<BOM>): BOM {
     updatedAt: now,
   };
 
-  const list = getAllBOM();
-  list.push(newBOM);
-  saveToLocalStorage(BOM_KEY, list);
+  // Atomic Transaction
+  await db.transaction('rw', [db.table('mfg_bom'), db.table('mfg_bom_item')], async () => {
+    const { items: bomItems, ...bomData } = newBOM;
+    await db.table('mfg_bom').add(bomData);
+    await db.table('mfg_bom_item').bulkAdd(bomItems);
+  });
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('mfg_bom', newBOM.id, newBOM);
+
   return newBOM;
-}
+};
 
-export function updateBOM(id: string, data: Partial<BOM>): BOM | null {
-  const list = getAllBOM();
-  const idx = list.findIndex((b) => b.id === id);
-  if (idx === -1) return null;
+/**
+ * Update BOM with sync
+ */
+export const updateBOM = async (id: string, data: Partial<BOM>): Promise<BOM | null> => {
+  const existing = await getBOMById(id);
+  if (!existing) return null;
 
-  const items = data.items || list[idx].items;
+  const items = data.items || existing.items;
   const totalMaterialCost = items.reduce((sum, i) => sum + i.totalCost, 0);
-  const overheadCost = data.overheadCost ?? list[idx].overheadCost;
-  const laborCost = data.laborCost ?? list[idx].laborCost;
+  const overheadCost = data.overheadCost ?? existing.overheadCost;
+  const laborCost = data.laborCost ?? existing.laborCost;
 
-  list[idx] = {
-    ...list[idx],
+  const updatedBOM = {
+    ...existing,
     ...data,
     items,
     totalMaterialCost,
@@ -70,14 +104,35 @@ export function updateBOM(id: string, data: Partial<BOM>): BOM | null {
     updatedAt: new Date().toISOString(),
   };
 
-  saveToLocalStorage(BOM_KEY, list);
-  return list[idx];
-}
+  await db.transaction('rw', [db.table('mfg_bom'), db.table('mfg_bom_item')], async () => {
+    const { items: bomItems, ...bomData } = updatedBOM;
+    await db.table('mfg_bom').put(bomData);
+    await db.table('mfg_bom_item').where('bomId').equals(id).delete();
+    await db.table('mfg_bom_item').bulkAdd(bomItems);
+  });
 
-export function deleteBOM(id: string): boolean {
-  const list = getAllBOM();
-  const filtered = list.filter((b) => b.id !== id);
-  if (filtered.length === list.length) return false;
-  saveToLocalStorage(BOM_KEY, filtered);
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('mfg_bom', id, updatedBOM);
+
+  return updatedBOM;
+};
+
+/**
+ * Delete BOM
+ */
+export const deleteBOM = async (id: string): Promise<boolean> => {
+  const existing = await db.table('mfg_bom').get(id);
+  if (!existing) return false;
+
+  await db.transaction('rw', [db.table('mfg_bom'), db.table('mfg_bom_item')], async () => {
+    await db.table('mfg_bom').delete(id);
+    await db.table('mfg_bom_item').where('bomId').equals(id).delete();
+  });
+
+  // Trigger Sync
+  const { centralizedSync } = await import("../sync/centralizedSyncService");
+  centralizedSync.syncEntity('mfg_bom', id, null);
+
   return true;
-}
+};

@@ -86,7 +86,7 @@ export function LoanSelectionPreview({
             
             // Calculate suggested monthly installment (interest + some principal)
             const suggestedPrincipal = Math.min(remainingAmount * 0.1, remainingAmount); // 10% of remaining or full amount
-            const suggestedAmount = monthlyInterest + suggestedPrincipal;
+            const suggestedAmount = Math.round(monthlyInterest + suggestedPrincipal);
 
             setLoanDetails({
               ...selectedLoan,
@@ -132,105 +132,94 @@ export function LoanSelectionPreview({
   }
 
   return (
-    <Card className="border-blue-200 bg-blue-50">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-blue-800">
-          <Calculator className="h-5 w-5" />
-          Pilih Pinjaman untuk Angsuran
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-2">
-          {availableLoans.map((loan) => (
-            <div
-              key={loan.id}
-              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                selectedLoanId === loan.id
-                  ? "border-blue-500 bg-blue-100"
-                  : "border-gray-200 bg-white hover:border-blue-300"
-              }`}
-              onClick={() => onLoanSelect(loan.id)}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">#{loan.id}</span>
-                    <Badge variant="outline">{loan.kategori || "Umum"}</Badge>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Tanggal: {new Date(loan.tanggal).toLocaleDateString('id-ID')}
-                  </p>
-                  <p className="text-sm font-medium">
-                    Sisa: {formatCurrency(loan.actualRemaining)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-blue-600">
-                    {formatCurrency(loan.jumlah)}
-                  </p>
-                  <p className="text-xs text-gray-500">Total Pinjaman</p>
-                </div>
-              </div>
-            </div>
-          ))}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
+          <Calculator className="h-4 w-4 text-blue-500" />
+          <span className="text-sm">Pilih Pinjaman</span>
         </div>
+        <Badge variant="outline" className="text-[10px] h-5 bg-blue-50 text-blue-600 border-blue-100">
+          {availableLoans.length} Aktif
+        </Badge>
+      </div>
 
-        {loanDetails && (
-          <div className="mt-4 p-4 bg-white rounded-lg border border-blue-200">
-            <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Detail Angsuran Bulanan
-            </h4>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Suku Bunga:</span>
-                <p className="font-medium">{loanDetails.sukuBunga.toFixed(2)}% per bulan</p>
+      <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
+        {availableLoans.map((loan) => (
+          <div
+            key={loan.id}
+            className={`p-2 rounded-xl border transition-all cursor-pointer ${
+              selectedLoanId === loan.id
+                ? "border-blue-500 bg-blue-50/50 shadow-sm"
+                : "border-slate-100 bg-white hover:border-blue-200"
+            }`}
+            onClick={() => onLoanSelect(loan.id)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-6 rounded-full ${selectedLoanId === loan.id ? 'bg-blue-500' : 'bg-slate-200'}`} />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-bold text-slate-700">
+                      {loan.nomorTransaksi || `#${loan.id.substring(0, 5)}`}
+                    </span>
+                    <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
+                      {loan.kategori || "Umum"}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Sisa: <span className="font-semibold text-slate-700">{formatCurrency(loan.actualRemaining)}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="text-gray-600">Jasa Bulanan:</span>
-                <p className="font-medium text-green-600">{formatCurrency(loanDetails.monthlyInterest)}</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Sisa Pokok:</span>
-                <p className="font-medium">{formatCurrency(loanDetails.remainingAmount)}</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Pokok Bulanan (Saran):</span>
-                <p className="font-medium text-blue-600">{formatCurrency(loanDetails.suggestedAmount - loanDetails.monthlyInterest)}</p>
-              </div>
-              <div className="col-span-2">
-                <span className="text-gray-600">Jatuh Tempo:</span>
-                <p className="font-medium text-red-500">{new Date(loanDetails.jatuhTempo).toLocaleDateString('id-ID')}</p>
+              <div className="text-right">
+                <div className="text-[13px] font-bold text-blue-600">
+                  {formatCurrency(loan.jumlah)}
+                </div>
+                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Limit Awal</div>
               </div>
             </div>
+          </div>
+        ))}
+      </div>
 
-            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-              <p className="text-sm font-medium text-blue-800 mb-2">
-                <Clock className="h-4 w-4 inline mr-1" />
-                Prioritas Pembayaran Bulanan:
-              </p>
-              <div className="space-y-1 text-sm">
-                <p><span className="font-medium text-green-600">1. Jasa Bulanan ({loanDetails.sukuBunga.toFixed(2)}%):</span> {formatCurrency(loanDetails.monthlyInterest)} → Pendapatan Jasa</p>
-                <p><span className="font-medium text-blue-600">2. Pokok (Sisa):</span> Mengurangi Piutang Pinjaman</p>
-              </div>
-              <div className="mt-2 text-xs text-blue-600">
-                <strong>Formula Jasa:</strong> Sisa Pokok × {loanDetails.sukuBunga.toFixed(2)}% = {formatCurrency(loanDetails.remainingAmount)} × {(loanDetails.sukuBungaDecimal * 100).toFixed(2)}% = {formatCurrency(loanDetails.monthlyInterest)}
-              </div>
+      {loanDetails && (
+        <div className="mt-4 pt-3 border-t border-slate-100 space-y-3">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+            <div className="bg-white p-2 rounded-xl border border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Suku Bunga</span>
+              <p className="text-[13px] font-bold text-slate-700">{loanDetails.sukuBunga.toFixed(2)}% <span className="text-[10px] font-normal text-slate-400 italic">/ bln</span></p>
             </div>
+            <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+              <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest block mb-0.5">Jasa Bulanan</span>
+              <p className="text-[13px] font-bold text-emerald-600">{formatCurrency(loanDetails.monthlyInterest)}</p>
+            </div>
+            <div className="bg-white p-2 rounded-xl border border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Sisa Hutang Pokok</span>
+              <p className="text-[13px] font-bold text-slate-700">{formatCurrency(loanDetails.remainingAmount)}</p>
+            </div>
+            <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100">
+              <span className="text-[10px] font-bold text-blue-600/60 uppercase tracking-widest block mb-0.5">Jatuh Tempo</span>
+              <p className="text-[12px] font-bold text-blue-600">{new Date(loanDetails.jatuhTempo).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
+            </div>
+          </div>
 
+          <div className="bg-slate-50 p-2.5 rounded-xl flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saran Pembayaran</span>
+              <span className="text-[14px] font-bold text-slate-800">{formatCurrency(loanDetails.suggestedAmount)}</span>
+            </div>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className="w-full mt-3"
+              className="h-8 px-4 text-[11px] font-bold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
               onClick={() => onAmountChange(loanDetails.suggestedAmount)}
             >
-              Gunakan Saran: {formatCurrency(loanDetails.suggestedAmount)}
+              Gunakan
             </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -1,33 +1,34 @@
 import { Transaksi, Pengajuan } from "@/types";
 import { syncTransactionToAccounting } from "../akuntansi/accountingSyncService";
 import { getJurnalEntryByReference } from "../akuntansi/jurnalService";
-// refreshFinancialCalculations removed (Decommissioned Legacy Logic)
 import { db } from "@/db/db";
+import * as IdUtils from "../../utils/idUtils";
 
-// Global sync tracker dengan persistent storage
-const SYNC_TRACKER_KEY = "centralized_sync_tracker";
-const RECENT_SYNC_KEY = "recent_sync_tracker";
+/**
+ * SYNC_STATUS Constants
+ */
+import { BACKEND_URL } from "@/config/apiConfig";
 
-interface SyncRecord {
-  transactionId: string;
-  type: 'transaction' | 'pengajuan';
-  journalId?: string;
-  syncedAt: string;
-  status: 'synced' | 'failed';
-}
+/**
+ * SYNC_STATUS Constants
+ */
+const SYNC_STATUS = {
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED'
+};
 
-interface RecentSyncRecord {
-  itemKey: string;
-  timestamp: number;
-}
-
+/**
+ * CentralizedSyncService - MISSION CRITICAL
+ * Responsible for ensuring all financial transactions are reflected in the Accounting Ledger
+ * AND synchronized to the Cloud Backend (Fastify + NeonDB).
+ */
 class CentralizedSyncService {
   private static instance: CentralizedSyncService;
-  private syncedItems: Set<string> = new Set();
-  private recentSyncs: Map<string, number> = new Map();
-  private activeSyncs: Set<string> = new Set(); // Prevent concurrent syncs
-  private readonly RECENT_THRESHOLD = 5000; // 5 seconds
-  private isInitialized = false;
+  private activeSyncs: Set<string> = new Set();
+  private isProcessing = false;
+  private BACKEND_URL = BACKEND_URL;
+
 
   static getInstance(): CentralizedSyncService {
     if (!CentralizedSyncService.instance) {
@@ -36,349 +37,227 @@ class CentralizedSyncService {
     return CentralizedSyncService.instance;
   }
 
-  private safeLocalStorageAccess<T>(key: string, defaultValue: T, operation: 'get' | 'set', value?: any): T {
-    try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        return defaultValue;
-      }
-      
-      if (operation === 'get') {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-      } else {
-        localStorage.setItem(key, JSON.stringify(value));
-        return value;
-      }
-    } catch (error) {
-      console.warn(`LocalStorage ${operation} failed for key ${key}:`, error);
-      return defaultValue;
-    }
-  }
-
-  private loadSyncHistory(): void {
-    if (this.isInitialized) return;
-    
-    try {
-      // Load persistent sync records
-      const syncRecords = this.safeLocalStorageAccess<SyncRecord[]>(SYNC_TRACKER_KEY, [], 'get');
-      syncRecords.forEach(record => {
-        const itemKey = `${record.type}-${record.transactionId}`;
-        this.syncedItems.add(itemKey);
-      });
-
-      // Load recent sync records (with cleanup)
-      const recentRecords = this.safeLocalStorageAccess<RecentSyncRecord[]>(RECENT_SYNC_KEY, [], 'get');
-      const now = Date.now();
-      recentRecords.forEach(record => {
-        if (now - record.timestamp < this.RECENT_THRESHOLD * 2) {
-          this.recentSyncs.set(record.itemKey, record.timestamp);
-        }
-      });
-
-      this.isInitialized = true;
-      console.log(`📚 Loaded ${syncRecords.length} persistent sync records and ${recentRecords.length} recent records`);
-    } catch (error) {
-      console.error("Error loading sync history:", error);
-      this.isInitialized = true;
-    }
-  }
-
-  private saveSyncRecord(record: SyncRecord): void {
-    try {
-      const existingRecords = this.safeLocalStorageAccess<SyncRecord[]>(SYNC_TRACKER_KEY, [], 'get');
-      const itemKey = `${record.type}-${record.transactionId}`;
-      
-      // Remove existing record if present
-      const filteredRecords = existingRecords.filter(r => 
-        `${r.type}-${r.transactionId}` !== itemKey
-      );
-      
-      filteredRecords.push(record);
-      this.safeLocalStorageAccess(SYNC_TRACKER_KEY, [], 'set', filteredRecords);
-    } catch (error) {
-      console.error("Error saving sync record:", error);
-    }
-  }
-
-  private markRecentSync(itemKey: string): void {
-    const now = Date.now();
-    this.recentSyncs.set(itemKey, now);
-    
-    // Save to persistent storage
-    try {
-      const recentRecords: RecentSyncRecord[] = Array.from(this.recentSyncs.entries()).map(([key, timestamp]) => ({
-        itemKey: key,
-        timestamp
-      }));
-      this.safeLocalStorageAccess(RECENT_SYNC_KEY, [], 'set', recentRecords);
-    } catch (error) {
-      console.error("Error saving recent sync record:", error);
-    }
-  }
-
-  private wasRecentlySynced(itemKey: string): boolean {
-    const lastSync = this.recentSyncs.get(itemKey);
-    if (lastSync) {
-      const timeDiff = Date.now() - lastSync;
-      return timeDiff < this.RECENT_THRESHOLD;
-    }
-    return false;
-  }
-
-  private isAlreadySynced(itemKey: string): boolean {
-    return this.syncedItems.has(itemKey);
-  }
-
   /**
-   * Central sync method dengan enhanced duplicate prevention (Asynchronous)
+   * Main entry point for syncing transactions (Async)
    */
-  async syncTransaction(transaksi: Transaksi): Promise<{ success: boolean; journalId?: string; message: string }> {
-    this.loadSyncHistory();
-    
-    const itemKey = `transaction-${transaksi.id}`;
-    
-    // Prevent concurrent processing - ATOMIC LOCKING
-    if (this.activeSyncs.has(transaksi.id)) {
-      console.log(`🔄 Transaction ${transaksi.id} sync already in progress, skipping`);
-      return { success: true, message: 'Sync in progress, skipping duplicate' };
-    }
-    
-    // Set lock immediately to prevent race conditions during async checks
-    this.activeSyncs.add(transaksi.id);
-
-    // Check persistent sync status
-    if (this.isAlreadySynced(itemKey)) {
-      console.log(`🔄 Transaction ${transaksi.id} already synced (persistent), skipping`);
-      return { success: true, message: 'Already synced (persistent)' };
+  async syncTransaction(transaksi: Transaksi): Promise<{ success: boolean; message: string }> {
+    if (transaksi.status !== "Sukses") {
+      return { success: false, message: 'Transaction not successful, skipping sync' };
     }
 
-    // Check recent sync
-    if (this.wasRecentlySynced(itemKey)) {
-      console.log(`🔄 Transaction ${transaksi.id} was recently synced, skipping rapid duplicate`);
-      return { success: true, message: 'Recently synced, skipping duplicate' };
+    const entityId = transaksi.id;
+    if (this.activeSyncs.has(entityId)) {
+      return { success: true, message: 'Sync already in progress' };
     }
-
-    // Check if journal entry already exists by reference
-    // Prioritize human-readable nomorTransaksi for better auditability
-    const referensiTXN = transaksi.nomorTransaksi || `TXN-${transaksi.id}`;
-    let existingJournal = await getJurnalEntryByReference(referensiTXN);
-    
-    // If not found, and it looks like it might have come from a Pengajuan
-    if (!existingJournal && transaksi.keterangan) {
-      // Support NEW slash-based patterns and OLD dash-based legacy
-      const pgMatch = transaksi.keterangan.match(/Pengajuan #([A-Z0-9/]+)/);
-      if (pgMatch) {
-        const pgRef = pgMatch[1]; // NOMOR_PENGAJUAN is enough for reference lookup
-        existingJournal = await getJurnalEntryByReference(pgRef);
-        
-        // Fallback to legacy PG- prefix if needed
-        if (!existingJournal) {
-          existingJournal = await getJurnalEntryByReference(`PG-${pgMatch[1]}`);
-        }
-      }
-    }
-
-    if (existingJournal) {
-      console.log(`📋 Journal already exists for transaction ${transaksi.id}: ${existingJournal.nomorJurnal}`);
-      
-      this.syncedItems.add(itemKey);
-      this.markRecentSync(itemKey);
-      this.saveSyncRecord({
-        transactionId: transaksi.id,
-        type: 'transaction',
-        journalId: existingJournal.id,
-        syncedAt: new Date().toISOString(),
-        status: 'synced'
-      });
-
-      return { success: true, journalId: existingJournal.id, message: 'Journal already exists' };
-    }
-
-    // Lock already set at top of function
+    this.activeSyncs.add(entityId);
 
     try {
-      if (transaksi.status !== "Sukses") {
-        return { success: false, message: 'Transaction not successful, skipping sync' };
+      // 1. Persistent Check
+      const existingQueueItem = await db.sync_queue.where('entityId').equals(entityId).first();
+      
+      if (existingQueueItem && existingQueueItem.status === SYNC_STATUS.SUCCESS && existingQueueItem.remoteStatus === SYNC_STATUS.SUCCESS) {
+        return { success: true, message: 'Already fully synced (Lokal & Cloud)' };
       }
 
-      // Add small jitter (delay) to sequester timestamp-based ID generation from other threads
-      const jitter = Math.floor(Math.random() * 40) + 10;
-      await new Promise(resolve => setTimeout(resolve, jitter));
-
-      console.log(`🔄 Starting centralized sync for transaction ${transaksi.id} (${transaksi.jenis}) [Ref: ${referensiTXN}]`);
-      
-      const journalEntry = await syncTransactionToAccounting(transaksi);
-      
-      if (journalEntry) {
-        this.syncedItems.add(itemKey);
-        this.markRecentSync(itemKey);
-        
-        this.saveSyncRecord({
-          transactionId: transaksi.id,
+      // 2. Ensure record exists in Queue
+      if (!existingQueueItem) {
+        await db.sync_queue.add({
+          id: IdUtils.generateUUIDv7(),
+          entityId,
           type: 'transaction',
-          journalId: journalEntry.id,
-          syncedAt: new Date().toISOString(),
-          status: 'synced'
-        });
-
-        // Refresh member financial data
-        this.refreshMemberFinancialData(transaksi.anggotaId);
-
-        this.safeDispatchEvent('centralized-sync-completed', {
-          transactionId: transaksi.id,
-          transactionType: transaksi.jenis,
-          journalId: journalEntry.id,
-          journalNumber: journalEntry.nomorJurnal,
-          timestamp: new Date().toISOString()
-        });
-
-        console.log(`✅ Centralized sync completed for ${transaksi.jenis} transaction ${transaksi.id} -> Journal ${journalEntry.nomorJurnal}`);
-        
-        // Update database with sync status for consistency
-        await db.transaksi.update(transaksi.id, { 
-          accountingSyncStatus: 'SUCCESS',
+          status: SYNC_STATUS.PENDING,
+          remoteStatus: SYNC_STATUS.PENDING,
+          retryCount: 0,
           updatedAt: new Date().toISOString()
         });
-        
-        return { success: true, journalId: journalEntry.id, message: 'Sync completed successfully' };
-      } else {
-        console.error(`❌ Failed to create journal entry for transaction ${transaksi.id}`);
-        return { success: false, message: 'Failed to create journal entry' };
       }
+
+      // --- STAGE A: LOCAL ACCOUNTING LEDGER (SAK EP) ---
+      let localJournalId = existingQueueItem?.journalId;
+      if (!localJournalId || existingQueueItem?.status !== SYNC_STATUS.SUCCESS) {
+        console.log(`🔄 [LOCAL] Syncing ${transaksi.nomorTransaksi} to Ledger...`);
+        const journalEntry = await syncTransactionToAccounting(transaksi);
+        if (journalEntry) {
+          localJournalId = journalEntry.id;
+          await db.sync_queue.update(entityId, { status: SYNC_STATUS.SUCCESS, journalId: localJournalId });
+          await db.transaksi.update(entityId, { accountingSyncStatus: 'SUCCESS' });
+        }
+      }
+
+      // --- STAGE B: REMOTE CLOUD SYNC (FASTIFY + NEON) ---
+      if (!existingQueueItem?.remoteStatus || existingQueueItem.remoteStatus !== SYNC_STATUS.SUCCESS) {
+        console.log(`☁️ [CLOUD] Syncing ${transaksi.nomorTransaksi} to NeonDB...`);
+        const cloudResult = await this.syncToRemoteServer(transaksi);
+
+        if (cloudResult.success) {
+          await this.updateRemoteQueueStatus(entityId, SYNC_STATUS.SUCCESS);
+          this.safeDispatchEvent('cloud-sync-success', { transactionId: entityId });
+        } else {
+          await this.updateRemoteQueueStatus(entityId, SYNC_STATUS.FAILED, cloudResult.message);
+        }
+      }
+
+      return { success: true, message: 'Dual-sync process completed' };
     } catch (error) {
-      console.error(`❌ Error syncing transaction ${transaksi.id}:`, error);
-      
-      this.saveSyncRecord({
-        transactionId: transaksi.id,
-        type: 'transaction',
-        status: 'failed'
-      });
-      
-      // Update database with failed status for consistency
-      await db.transaksi.update(transaksi.id, { 
-        accountingSyncStatus: 'FAILED',
-        lastSyncError: error instanceof Error ? error.message : 'Unknown error',
-        updatedAt: new Date().toISOString()
-      });
-      
-      return { success: false, message: `Sync error: ${error instanceof Error ? error.message : 'Unknown error'}` };
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Sync Workflow FAILED:`, errorMsg);
+      return { success: false, message: errorMsg };
     } finally {
-      this.activeSyncs.delete(transaksi.id);
+      this.activeSyncs.delete(entityId);
     }
   }
 
   /**
-   * Central sync method untuk pengajuan (Asynchronous)
+   * HTTP Connector for Fastify Backend
    */
-  async syncPengajuan(pengajuan: Pengajuan): Promise<{ success: boolean; journalId?: string; message: string }> {
-    this.loadSyncHistory();
-    
-    const itemKey = `pengajuan-${pengajuan.id}`;
-    
-    if (pengajuan.status !== "Disetujui") {
-      return { success: false, message: 'Pengajuan not approved, skipping sync' };
-    }
-
-    if (this.isAlreadySynced(itemKey)) {
-      console.log(`🔄 Pengajuan ${pengajuan.id} already synced (persistent), skipping`);
-      return { success: true, message: 'Already synced (persistent)' };
-    }
-
-    if (this.wasRecentlySynced(itemKey)) {
-      console.log(`🔄 Pengajuan ${pengajuan.id} was recently synced, skipping rapid duplicate`);
-      return { success: true, message: 'Recently synced, skipping duplicate' };
-    }
-
+  private async syncToRemoteServer(transaksi: Transaksi): Promise<{ success: boolean; message: string }> {
     try {
-      console.log(`🔄 Starting centralized sync for pengajuan ${pengajuan.id}`);
-      
-      const tempTransaction: Transaksi = {
-        id: pengajuan.id, // Keep the same UUID for internal ID
-        nomorTransaksi: pengajuan.nomorPengajuan, // Use nomorPengajuan as nomorTransaksi
-        anggotaId: pengajuan.anggotaId,
-        jenis: pengajuan.jenis,
-        jumlah: pengajuan.jumlah,
-        tanggal: pengajuan.tanggal,
-        kategori: pengajuan.kategori,
-        keterangan: `Approved from Application ${pengajuan.nomorPengajuan}: ${pengajuan.keterangan}`,
-        status: "Sukses",
-        createdAt: pengajuan.createdAt,
-        updatedAt: pengajuan.updatedAt
-      };
+      const response = await fetch(`${this.BACKEND_URL}/sync/transaksi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaksi)
+      });
 
-      const journalEntry = await syncTransactionToAccounting(tempTransaction);
-      
-      if (journalEntry) {
-        this.syncedItems.add(itemKey);
-        this.markRecentSync(itemKey);
-        
-        this.saveSyncRecord({
-          transactionId: pengajuan.id,
-          type: 'pengajuan',
-          journalId: journalEntry.id,
-          syncedAt: new Date().toISOString(),
-          status: 'synced'
-        });
-
-        this.refreshMemberFinancialData(pengajuan.anggotaId);
-
-        console.log(`✅ Centralized sync completed for pengajuan ${pengajuan.id} -> Journal ${journalEntry.nomorJurnal}`);
-        return { success: true, journalId: journalEntry.id, message: 'Pengajuan sync completed successfully' };
+      if (response.ok) {
+        return { success: true, message: 'Synced to Cloud' };
+      } else if (response.status === 409) {
+        return { success: true, message: 'Already on Cloud' };
       } else {
-        return { success: false, message: 'Failed to create journal entry for pengajuan' };
+        const errData = await response.json();
+        return { success: false, message: errData.error || 'Server rejected sync' };
       }
     } catch (error) {
-      console.error(`❌ Error syncing pengajuan ${pengajuan.id}:`, error);
-      return { success: false, message: `Pengajuan sync error: ${error instanceof Error ? error.message : 'Unknown error'}` };
+      return { success: false, message: 'Server unreachable (Offline)' };
+    }
+  }
+
+  private async updateRemoteQueueStatus(entityId: string, status: string, error?: string): Promise<void> {
+    const existing = await db.sync_queue.where('entityId').equals(entityId).first();
+    if (existing) {
+      await db.sync_queue.update(existing.id, {
+        remoteStatus: status,
+        lastRemoteError: error,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  /**
+   * Automated Queue Processor (Modified for Cloud Retry)
+   */
+  async processPendingQueue(): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+    
+    try {
+      const pendingItems = await db.sync_queue
+        .filter(item => item.status !== SYNC_STATUS.SUCCESS || item.remoteStatus !== SYNC_STATUS.SUCCESS)
+        .toArray();
+      
+      if (pendingItems.length === 0) return;
+      
+      console.log(`🚀 Sync Manager: Processing ${pendingItems.length} pending items...`);
+
+      for (const item of pendingItems) {
+        if (item.retryCount > 10) continue;
+
+        if (item.type === 'transaction') {
+          const transaksi = await db.transaksi.get(item.entityId);
+          if (transaksi) {
+            await this.syncTransaction(transaksi);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ Queue Processor Error:", error);
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  /**
+   * Generic entry point for syncing Module Entities (Users, Roles, Products, etc.)
+   */
+  async syncEntity(type: string, entityId: string, data: any | null): Promise<void> {
+    const now = new Date().toISOString();
+    
+    // 1. Check if already exists in queue
+    const existing = await db.sync_queue.where('entityId').equals(entityId).first();
+    
+    if (existing) {
+      await db.sync_queue.update(existing.id, {
+        type,
+        data: data ? JSON.stringify(data) : null,
+        status: SYNC_STATUS.PENDING,
+        remoteStatus: SYNC_STATUS.PENDING,
+        updatedAt: now
+      });
+    } else {
+      await db.sync_queue.add({
+        id: IdUtils.generateUUIDv7(),
+        entityId,
+        type,
+        data: data ? JSON.stringify(data) : null,
+        status: SYNC_STATUS.PENDING,
+        remoteStatus: SYNC_STATUS.PENDING,
+        retryCount: 0,
+        updatedAt: now
+      });
+    }
+
+    console.log(`📡 [SYNC-QUEUE] Queued ${type} (${entityId}) for cloud synchronization.`);
+
+    // Optional: Trigger immediate background processing if online
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      this.processPendingQueue();
+    }
+  }
+
+  // ... (markAsSuccess, updateQueueStatus, safeDispatchEvent preserved)
+  private async markAsSuccess(entityId: string, type: string, journalId?: string): Promise<void> {
+    const existing = await db.sync_queue.where('entityId').equals(entityId).first();
+    const now = new Date().toISOString();
+
+    if (existing) {
+      await db.sync_queue.update(existing.id, {
+        status: SYNC_STATUS.SUCCESS,
+        journalId,
+        updatedAt: now
+      });
+    } else {
+      await db.sync_queue.add({
+        id: IdUtils.generateUUIDv7(),
+        entityId,
+        type,
+        status: SYNC_STATUS.SUCCESS,
+        remoteStatus: SYNC_STATUS.PENDING,
+        journalId,
+        updatedAt: now
+      });
+    }
+  }
+
+  private async updateQueueStatus(entityId: string, status: string, error?: string): Promise<void> {
+    const existing = await db.sync_queue.where('entityId').equals(entityId).first();
+    if (existing) {
+      await db.sync_queue.update(existing.id, {
+        status,
+        lastError: error,
+        retryCount: (existing.retryCount || 0) + 1,
+        updatedAt: new Date().toISOString()
+      });
     }
   }
 
   private safeDispatchEvent(eventName: string, detail: any): void {
-    try {
-      if (typeof window !== 'undefined' && window.dispatchEvent) {
-        window.dispatchEvent(new CustomEvent(eventName, { detail }));
-      }
-    } catch (error) {
-      console.warn(`Failed to dispatch event ${eventName}:`, error);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(eventName, { detail }));
     }
-  }
-
-  private refreshMemberFinancialData(anggotaId: string): void {
-    try {
-      // Legacy refreshFinancialCalculations call removed. 
-      // Financial data updates are now handled via event dispatch.
-      
-      this.safeDispatchEvent('member-financial-data-updated', {
-        anggotaId,
-        timestamp: new Date().toISOString()
-      });
-      
-      this.safeDispatchEvent('anggota-data-refresh-needed', {
-        anggotaId,
-        timestamp: new Date().toISOString()
-      });
-      
-      console.log(`📊 Financial data refreshed for member ${anggotaId}`);
-    } catch (error) {
-      console.error(`Error refreshing financial data for member ${anggotaId}:`, error);
-    }
-  }
-
-  getSyncStatus(): { totalSynced: number; syncedTransactions: string[] } {
-    this.loadSyncHistory();
-    return {
-      totalSynced: this.syncedItems.size,
-      syncedTransactions: Array.from(this.syncedItems)
-    };
   }
 
   clearSyncCache(): void {
-    this.syncedItems.clear();
-    this.recentSyncs.clear();
-    this.activeSyncs.clear();
-    this.safeLocalStorageAccess(SYNC_TRACKER_KEY, [], 'set', []);
-    this.safeLocalStorageAccess(RECENT_SYNC_KEY, [], 'set', []);
-    console.log('🗑️ Centralized sync cache cleared');
+    db.sync_queue.clear();
+    console.log('🗑️ Persistent sync queue fully cleared');
   }
 }
 
@@ -386,33 +265,34 @@ export const centralizedSync = CentralizedSyncService.getInstance();
 
 export function initializeCentralizedSync(): void {
   try {
-    console.log('🚀 Initializing centralized sync service...');
+    console.log('🚀 Initializing persistent sync service...');
     
-    // Cleanup old and potentially stale sync cache for version stabilization
-    // This ensures that any previously failed or stuck syncs are cleared
-    centralizedSync.clearSyncCache();
-    console.log('🧹 Centralized sync cache cleared for stabilization');
-    
+    setTimeout(() => centralizedSync.processPendingQueue(), 3000);
+
+    // Auto-retry when connection comes back
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        console.log('🌐 Connection restored! Retrying sync queue...');
+        centralizedSync.processPendingQueue();
+      });
+    }
+
     const addEventListeners = () => {
       if (typeof window === 'undefined') return;
       
       window.addEventListener('transaction-created', (event: any) => {
         const transaksi = event.detail.transaction;
         if (transaksi) {
-          setTimeout(() => centralizedSync.syncTransaction(transaksi), 100);
+          setTimeout(() => centralizedSync.syncTransaction(transaksi), 200);
         }
       });
 
       window.addEventListener('transaction-updated', (event: any) => {
         const transaksi = event.detail.transaction;
         if (transaksi) {
-          setTimeout(() => centralizedSync.syncTransaction(transaksi), 100);
+          setTimeout(() => centralizedSync.syncTransaction(transaksi), 200);
         }
       });
-
-      // Note: pengajuan-approved listener removed to prevent double-sync.
-      // Accounting sync is now handled solely via 'transaction-created' 
-      // which is dispatched after the transaction is actually created.
     };
 
     if (document.readyState === 'loading') {
@@ -421,8 +301,8 @@ export function initializeCentralizedSync(): void {
       addEventListeners();
     }
 
-    console.log('✅ Centralized sync service initialized');
+    console.log('✅ Persistent sync service initialized');
   } catch (error) {
-    console.error('❌ Error initializing centralized sync service:', error);
+    console.error('❌ Sync service initialization failed:', error);
   }
 }

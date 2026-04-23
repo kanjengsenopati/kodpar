@@ -24,7 +24,6 @@ export function processLoanAutoDeductions(newTransaksi: Transaksi): void {
         const pseudoTransaksi: Transaksi = {
           id: createdTransaction.id,
           anggotaId: newTransaksi.anggotaId,
-          anggotaId: newTransaksi.anggotaId,
           jenis: "Simpan", // Auto deductions are treated as deposits
           jumlah: createdTransaction.amount,
           tanggal: newTransaksi.tanggal,

@@ -1,22 +1,21 @@
 
 import { UnitKerja } from "@/types/unitKerja";
-import { getFromLocalStorage, saveToLocalStorage } from "@/utils/localStorage";
 import { initialUnitKerjaData } from "./unitKerjaInitialData";
+import { db } from "@/db/db";
 import { logAuditEntry } from "../auditService";
-
-const UNIT_KERJA_KEY = "koperasi_unit_kerja";
+import { getAllUnitKerja, saveUnitKerjaList } from "./unitKerjaData";
 
 /**
  * Initialize unit kerja with mock data if not exists
  */
-export function initializeUnitKerjaData(): UnitKerja[] {
+export async function initializeUnitKerjaData(): Promise<UnitKerja[]> {
   try {
-    const existingData = getFromLocalStorage<UnitKerja[]>(UNIT_KERJA_KEY, []);
+    const existingData = await getAllUnitKerja();
     
     // If no data exists, initialize with mock data
     if (existingData.length === 0) {
       console.log("Initializing unit kerja with mock data...");
-      saveToLocalStorage(UNIT_KERJA_KEY, initialUnitKerjaData);
+      await saveUnitKerjaList(initialUnitKerjaData);
       
       // Log audit entry
       logAuditEntry(
@@ -26,8 +25,10 @@ export function initializeUnitKerjaData(): UnitKerja[] {
       );
       
       // Notify that unit kerja has been initialized
-      localStorage.setItem('unit_kerja_updated', new Date().toISOString());
-      window.dispatchEvent(new CustomEvent('unitKerjaUpdated'));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('unit_kerja_updated', new Date().toISOString());
+        window.dispatchEvent(new CustomEvent('unitKerjaUpdated'));
+      }
       
       return initialUnitKerjaData;
     }
@@ -39,7 +40,7 @@ export function initializeUnitKerjaData(): UnitKerja[] {
     if (missingData.length > 0) {
       console.log(`Adding ${missingData.length} missing unit kerja mock data...`);
       const updatedData = [...existingData, ...missingData];
-      saveToLocalStorage(UNIT_KERJA_KEY, updatedData);
+      await saveUnitKerjaList(updatedData);
       
       // Log audit entry
       logAuditEntry(
@@ -49,8 +50,10 @@ export function initializeUnitKerjaData(): UnitKerja[] {
       );
       
       // Notify that unit kerja has been updated
-      localStorage.setItem('unit_kerja_updated', new Date().toISOString());
-      window.dispatchEvent(new CustomEvent('unitKerjaUpdated'));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('unit_kerja_updated', new Date().toISOString());
+        window.dispatchEvent(new CustomEvent('unitKerjaUpdated'));
+      }
       
       return updatedData;
     }
@@ -65,10 +68,10 @@ export function initializeUnitKerjaData(): UnitKerja[] {
 /**
  * Reset unit kerja to initial mock data
  */
-export function resetToInitialUnitKerjaData(): UnitKerja[] {
+export async function resetToInitialUnitKerjaData(): Promise<UnitKerja[]> {
   try {
     console.log("Resetting unit kerja to initial mock data...");
-    saveToLocalStorage(UNIT_KERJA_KEY, initialUnitKerjaData);
+    await saveUnitKerjaList(initialUnitKerjaData);
     
     // Log audit entry
     logAuditEntry(
@@ -78,8 +81,10 @@ export function resetToInitialUnitKerjaData(): UnitKerja[] {
     );
     
     // Notify that unit kerja has been updated
-    localStorage.setItem('unit_kerja_updated', new Date().toISOString());
-    window.dispatchEvent(new CustomEvent('unitKerjaUpdated'));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('unit_kerja_updated', new Date().toISOString());
+      window.dispatchEvent(new CustomEvent('unitKerjaUpdated'));
+    }
     
     return initialUnitKerjaData;
   } catch (error) {
